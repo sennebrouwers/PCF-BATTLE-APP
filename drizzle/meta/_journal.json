@@ -1,0 +1,125 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1788713003645,
+      "tag": "0000_little_freak",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1788714716651,
+      "tag": "0001_hesitant_spyke",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1788717657805,
+      "tag": "0002_rapid_lester",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1788730501201,
+      "tag": "0003_familiar_cannonball",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1788778854371,
+      "tag": "0004_watery_mother_askani",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1788780746982,
+      "tag": "0005_bouncy_magma",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1788783384430,
+      "tag": "0006_gigantic_sleepwalker",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1788796907862,
+      "tag": "0007_rapid_the_hood",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1788799441457,
+      "tag": "0008_harsh_salo",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1788800306104,
+      "tag": "0009_fixed_titanium_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1788892579529,
+      "tag": "0011_goal_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1789049500000,
+      "tag": "0013_login_security",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1789062000000,
+      "tag": "0014_tournament_operations",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1789138800000,
+      "tag": "0015_scoreboard_clock",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1789142400000,
+      "tag": "0016_scoreboard_experience",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1789146000000,
+      "tag": "0017_match_dates",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1789149600000,
+      "tag": "0018_livestream_and_match_lock",
+      "breakpoints": true
+    }
+  ]
+}

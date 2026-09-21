@@ -1,0 +1,1 @@
+ALTER TABLE `rooms` ADD `price` real DEFAULT 0 NOT NULL;

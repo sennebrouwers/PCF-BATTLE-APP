@@ -1,0 +1,1 @@
+ALTER TABLE `tournaments` ADD `show_about` integer DEFAULT 1 NOT NULL;
