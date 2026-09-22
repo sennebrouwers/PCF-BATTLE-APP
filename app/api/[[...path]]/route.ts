@@ -276,7 +276,8 @@ async function buildOnboardingStatuses(teamIds: string[]) {
   const unitPrice = Number(settings?.price_per_person || 325), depositPercentage = Number(settings?.deposit_percentage || 30), singleSupplement = Number(tournament?.single_room_supplement || 0);
   return (teamRows.results as any[]).map((team) => {
     const members = membersByTeam.get(team.id) || [], assigned = assignedByTeam.get(team.id) || new Set<string>(), unassigned = members.filter((member) => !assigned.has(member.id));
-    const issues = members.filter((member) => member.member_type === "PLAYER" && (!member.player_role || member.classification_points === null || !Number.isFinite(Number(member.classification_points))));
+    const memberIssues = members.filter((member) => member.member_type === "PLAYER" && (!member.player_role || member.classification_points === null || !Number.isFinite(Number(member.classification_points))));
+    const issues = [...memberIssues];
     const hasValue = (value: unknown) => String(value || "").trim().length > 0;
     const hasAddress = hasValue(team.address) || [team.address_street, team.address_number, team.address_postal_code, team.address_city, team.address_country].some(hasValue);
     if (!members.length) issues.push({});
@@ -285,7 +286,7 @@ async function buildOnboardingStatuses(teamIds: string[]) {
     const invoices = invoicesByTeam.get(team.id) || [], deposit = invoices.find((item) => item.invoice_type === "DEPOSIT"), balance = invoices.find((item) => item.invoice_type === "BALANCE");
     const depositPaid = Number(paymentsByInvoice.get(deposit?.id) || 0), balancePaid = Number(paymentsByInvoice.get(balance?.id) || 0), depositTotal = Number(deposit?.total_amount || depositAmount), balanceTotal = Number(balance?.total_amount || balanceAmount);
     const depositOpen = team.review_status === "approved_payment_open" && Boolean(deposit), depositDone = depositOpen && depositPaid >= depositTotal && depositTotal > 0, balanceOpen = depositDone && Boolean(balance), balanceDone = balanceOpen && balancePaid >= balanceTotal && balanceTotal > 0;
-    const setupDone = hasValue(team.contact_person) && hasValue(team.phone) && hasAddress, delegationDone = members.length > 0 && issues.length === 0, roomsDone = unassigned.length === 0 && members.length > 0, complete = issues.length === 0;
+    const setupDone = hasValue(team.contact_person) && hasValue(team.phone) && hasAddress, delegationDone = members.length > 0 && memberIssues.length === 0, roomsDone = unassigned.length === 0 && members.length > 0, complete = issues.length === 0;
     const stages = [
       { key: "registration", label: "Registration", done: true, state: "completed" },
       { key: "selection", label: "Selection", done: true, state: "completed" },
