@@ -2314,7 +2314,12 @@ export async function POST(
         return out({ error: "Only valid images and PDF files are supported" }, 415);
       const clean = file.name.replace(/[^a-zA-Z0-9._-]/g, "-").slice(-80),
         key = `${u.id}-${uuid()}-${clean}`;
-      if (!process.env.BLOB_READ_WRITE_TOKEN) return out({ error: "File storage is not available" }, 503);
+      const blobConfigured = Boolean(
+        process.env.BLOB_READ_WRITE_TOKEN ||
+          process.env.BLOB_STORE_ID ||
+          process.env.VERCEL_OIDC_TOKEN,
+      );
+      if (!blobConfigured) return out({ error: "File storage is not available" }, 503);
       await writeBlob(key, file.stream(), file.type);
       return out(
         {
