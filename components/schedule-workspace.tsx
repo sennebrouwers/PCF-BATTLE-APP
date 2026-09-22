@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { errorMessage, type Match, type Referee, type Team, type Tournament } from "@/types/app";
 import { clientApi } from "@/lib/api-client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 type Item = {
   id: string;
   item_type: "match" | "break" | "ceremony";
@@ -421,8 +422,12 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
         })}
       </div>
       {selected && (
-        <aside key={selected.id} className="schedule-editor">
-          <h4>Edit item</h4>
+        <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}>
+          <DialogContent className="schedule-editor-dialog">
+            <DialogHeader>
+              <DialogTitle>Edit scheduled item</DialogTitle>
+            </DialogHeader>
+            <div key={selected.id} className="schedule-editor">
           {selected.item_type === "match" && <>
             <p className="schedule-editor-match">{teamName(by[selected.match_id || ""]?.home_team_id, by[selected.match_id || ""], "home")} — {teamName(by[selected.match_id || ""]?.away_team_id, by[selected.match_id || ""], "away")}</p>
             <label>
@@ -498,7 +503,9 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
           <button className="btn" onClick={() => setSelected(null)}>
             Close
           </button>
-        </aside>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </section>
   );
