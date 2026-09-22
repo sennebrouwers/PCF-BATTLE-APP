@@ -164,6 +164,21 @@ async function ensureScheduleSchema() {
   })();
   try { await scheduleSchemaReady; } catch (error) { scheduleSchemaReady = null; throw error; }
 }
+function groupTeamRooms(rows: any[]) {
+  const rooms = new Map<string, { id: string; number: string; capacity: number; room_type: string; members: { id: string; name: string }[] }>();
+  for (const row of rows) {
+    const room = rooms.get(row.room_id) || {
+      id: row.room_id,
+      number: row.number,
+      capacity: row.capacity,
+      room_type: row.room_type,
+      members: [] as { id: string; name: string }[],
+    };
+    if (row.member_id) room.members.push({ id: row.member_id, name: row.member_name });
+    rooms.set(row.room_id, room);
+  }
+  return [...rooms.values()];
+}
 async function buildTeamReview(teamId: string, prepareSchema = true) {
   if (prepareSchema) {
     await ensureScheduleSchema();
@@ -176,17 +191,11 @@ async function buildTeamReview(teamId: string, prepareSchema = true) {
     db().prepare("SELECT r.id room_id,r.number,r.capacity,r.room_type,dm.id member_id,dm.name member_name FROM rooms r LEFT JOIN room_assignments ra ON ra.room_id=r.id LEFT JOIN delegation_members dm ON dm.id=ra.member_id AND dm.team_id=? WHERE r.team_id IS NULL OR r.team_id=? ORDER BY r.number,dm.name").bind(teamId, teamId).all(),
     db().prepare("SELECT single_room_supplement,fixed_tournament_costs FROM tournaments WHERE active=1 LIMIT 1").first(),
     db().prepare("SELECT * FROM finance_settings WHERE id='default'").first(),
-  ]) as [any, any, any, any, any];
+  ]);
   if (!team) return null;
   const members = memberResult.results as any[];
   const roomRows = roomResult.results as any[];
-  const roomsById = new Map<string, any>();
-  for (const row of roomRows) {
-    const room = roomsById.get(row.room_id) || { id: row.room_id, number: row.number, capacity: row.capacity, room_type: row.room_type, members: [] };
-    if (row.member_id) room.members.push({ id: row.member_id, name: row.member_name });
-    roomsById.set(row.room_id, room);
-  }
-  const rooms = [...roomsById.values()];
+  const rooms = groupTeamRooms(roomRows);
   const assigned = new Set(rooms.flatMap((room: any) => room.members.map((member: any) => member.id)));
   const unassigned = members.filter((member) => !assigned.has(member.id));
   const unitPrice = Number(settings?.price_per_person || 325), singleSupplement = Number(tournament?.single_room_supplement || 0);

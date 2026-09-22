@@ -129,6 +129,19 @@ const recentGetResponses = new Map<
   { expiresAt: number; data: unknown }
 >();
 const GET_CACHE_MS = 1500;
+function resetSubmittingControls() {
+  document
+    .querySelectorAll<HTMLButtonElement>('button[data-submitting="true"]')
+    .forEach((button) => {
+      button.dataset.submitting = "false";
+      button.disabled = false;
+      button.removeAttribute("aria-busy");
+      if (button.textContent === "Saving…") button.textContent = "Save";
+    });
+  document
+    .querySelectorAll<HTMLFormElement>('form[data-submitting="true"]')
+    .forEach((form) => delete form.dataset.submitting);
+}
 async function api(path: string, options: RequestInit = {}) {
   const method = String(options.method || "GET").toUpperCase();
   if (method === "GET") {
@@ -161,21 +174,7 @@ async function api(path: string, options: RequestInit = {}) {
   })();
   if (method !== "GET") {
     recentGetResponses.clear();
-    return request.finally(() => {
-      document
-        .querySelectorAll<HTMLButtonElement>('button[data-submitting="true"]')
-        .forEach((button) => {
-          button.dataset.submitting = "false";
-          button.disabled = false;
-          button.removeAttribute("aria-busy");
-          if (button.textContent === "Saving…") button.textContent = "Save";
-        });
-      document
-        .querySelectorAll<HTMLFormElement>('form[data-submitting="true"]')
-        .forEach((form) => {
-          delete form.dataset.submitting;
-        });
-    });
+    return request.finally(resetSubmittingControls);
   }
   pendingGetRequests.set(path, request);
   try {
