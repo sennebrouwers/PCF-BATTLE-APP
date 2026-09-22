@@ -2096,7 +2096,7 @@ function Tournament({ refresh }: { refresh: number }) {
     [pauseMinutes, setPauseMinutes] = useState("10"),
     [scheduleStart, setScheduleStart] = useState("09:00"),
     [scheduleEnd, setScheduleEnd] = useState("18:00"),
-    [scheduleCourtCount, setScheduleCourtCount] = useState("2");
+    [scheduleCourtCount, setScheduleCourtCount] = useState("1");
   const autoBracketStarted = useRef(false);
   useEffect(() => {
     const groupMatches = matches.data.filter((match: Row) =>
@@ -2271,11 +2271,8 @@ function Tournament({ refresh }: { refresh: number }) {
                 onChange={(event) => setScheduleCourtCount(event.target.value)}
               >
                 <option value="1">1 court</option>
-                <option value="2">2 courts</option>
-                <option value="3">3 courts</option>
-                <option value="4">4 courts</option>
               </select>
-              <small>Matches use Court 1, Court 2, etc.</small>
+              <small>All matches use Court 1.</small>
             </label>
           </div>
         </section>
