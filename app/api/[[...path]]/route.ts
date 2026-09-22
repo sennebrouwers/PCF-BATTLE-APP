@@ -1854,7 +1854,7 @@ export async function GET(
       if (!u || !permit(u, ["ADMIN", "TEAM"])) return out({ error: "Forbidden" }, 403);
       const requestedTeam = new URL(req.url).searchParams.get("team_id") || u.teamId;
       if (u.role === "TEAM" && requestedTeam !== u.teamId) return out({ error: "Forbidden" }, 403);
-      const review = await buildTeamReview(String(requestedTeam || ""), false);
+      const review = await buildTeamReview(String(requestedTeam || ""));
       return review ? out(review) : out({ error: "Team not found" }, 404);
     }
     if (path === "team-onboarding") {
