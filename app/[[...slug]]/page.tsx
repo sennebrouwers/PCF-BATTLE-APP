@@ -1506,7 +1506,7 @@ function TeamOverview({ id }: { id: string }) {
   const { language } = usePublicLanguage(), copy = publicCopy[language],
     d = usePublicData(), t = d.tournaments.find((x: any) => x.active) || d.tournaments[0] || {},
     team = d.teams.find((x: any) => x.id === id || teamSlug(x.name, x.id) === id), players = d.players.filter((x: any) => x.team_id === team?.id),
-    matches = [...d.matches].filter((match: any) => match.home_team_id === id || match.away_team_id === id).sort((a: any,b: any) => `${a.match_date || "9999-12-31"}T${a.start_time || "23:59"}`.localeCompare(`${b.match_date || "9999-12-31"}T${b.start_time || "23:59"}`));
+    matches = [...d.matches].filter((match: any) => match.home_team_id === team?.id || match.away_team_id === team?.id).sort((a: any,b: any) => `${a.match_date || "9999-12-31"}T${a.start_time || "23:59"}`.localeCompare(`${b.match_date || "9999-12-31"}T${b.start_time || "23:59"}`));
   return <><PublicHeader settings={t} currentPath="/about" loading={!d.ready}/><main className="public team-detail-page">
     {!d.ready ? <div className="route-loading"/> : !team ? <Panel title={copy.teamNotFound}><p>{copy.teamNotFound}</p></Panel> : <>
       <div className="team-detail-hero">{team.team_photo || team.logo ? <img src={team.team_photo || team.logo} alt={team.name}/> : <LiveMark team={team}/>}<div>{team.logo && <img className="team-detail-logo" src={team.logo} alt=""/>}<span>PARTICIPATING TEAM · GROUP {team.group_id || "—"}</span><h1>{team.name}</h1><p>{team.description || "Competing at PCF Battle."}</p>{team.website && <a href={team.website} target="_blank" rel="noreferrer">Visit team website <ChevronRight/></a>}</div></div>
