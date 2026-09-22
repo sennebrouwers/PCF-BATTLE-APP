@@ -1755,6 +1755,7 @@ export async function GET(
     }
     if (path === "tournament-checks") {
       if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
+      await ensureScheduleSchema();
       const tournament: any = await db().prepare("SELECT * FROM tournaments WHERE active=1 LIMIT 1").first(),
         teams: any[] = await list("teams", "ORDER BY name"),
         matches: any[] = await list("matches", tournament ? "WHERE tournament_id=?" : "WHERE 1=0", tournament ? [tournament.id] : []),
