@@ -4285,7 +4285,7 @@ input:not([type="checkbox"]):not([type="radio"]), select { min-height:var(--cont
 }
 .team-overview-card { display:grid; justify-items:center; gap:8px; border:1px solid var(--line); border-radius:16px; padding:18px; color:inherit; background:var(--card); text-align:center; text-decoration:none; transition:transform .18s,border-color .18s; }
 .team-overview-card:hover { transform:translateY(-2px); border-color:var(--pink); }
-.team-overview-card img { width:82px; height:82px; border-radius:15px; object-fit:cover; }
+.team-overview-card img { width:82px; height:82px; border-radius:15px; object-fit:contain; background:transparent; }
 .maps-link { display:inline-flex; align-items:center; gap:7px; margin-top:14px; color:var(--pink-dark); font-weight:750; text-decoration:none; }
 .maps-link svg { width:18px; height:18px; }
 .team-detail-page { display:grid; gap:28px; }
