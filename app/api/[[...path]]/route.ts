@@ -1447,7 +1447,7 @@ export async function GET(
           )
           .all()
           .then((r: any) => r.results), []),
-        safe("players", db().prepare("SELECT id,team_id,name,number,photo FROM delegation_members WHERE role='PLAYER' ORDER BY team_id,number,name").all().then((r: any) => r.results), []),
+        safe("players", db().prepare("SELECT id,team_id,name,number,photo,role,staff_role FROM delegation_members WHERE role IN ('PLAYER','COACH') OR staff_role IN ('COACH','ASSISTANT_COACH') ORDER BY team_id,number,name").all().then((r: any) => r.results), []),
       ]);
       const payload = {
         tournaments,

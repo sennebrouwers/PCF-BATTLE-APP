@@ -1505,12 +1505,15 @@ function FAQ() {
 function TeamOverview({ id }: { id: string }) {
   const { language } = usePublicLanguage(), copy = publicCopy[language],
     d = usePublicData(), t = d.tournaments.find((x: any) => x.active) || d.tournaments[0] || {},
-    team = d.teams.find((x: any) => x.id === id || teamSlug(x.name, x.id) === id), players = d.players.filter((x: any) => x.team_id === team?.id),
+    team = d.teams.find((x: any) => x.id === id || teamSlug(x.name, x.id) === id), teamMembers = d.players.filter((x: any) => x.team_id === team?.id),
     matches = [...d.matches].filter((match: any) => match.home_team_id === team?.id || match.away_team_id === team?.id).sort((a: any,b: any) => `${a.match_date || "9999-12-31"}T${a.start_time || "23:59"}`.localeCompare(`${b.match_date || "9999-12-31"}T${b.start_time || "23:59"}`));
+  const players = teamMembers.filter((member: any) => member.role === "PLAYER");
+  const coaches = teamMembers.filter((member: any) => member.role === "COACH" || member.staff_role === "COACH" || member.staff_role === "ASSISTANT_COACH");
   return <><PublicHeader settings={t} currentPath="/about" loading={!d.ready}/><main className="public team-detail-page">
     {!d.ready ? <div className="route-loading"/> : !team ? <Panel title={copy.teamNotFound}><p>{copy.teamNotFound}</p></Panel> : <>
       <div className="team-detail-hero">{team.team_photo || team.logo ? <img src={team.team_photo || team.logo} alt={team.name}/> : <LiveMark team={team}/>}<div>{team.logo && <img className="team-detail-logo" src={team.logo} alt=""/>}<span>PARTICIPATING TEAM · GROUP {team.group_id || "—"}</span><h1>{team.name}</h1><p>{team.description || "Competing at PCF Battle."}</p>{team.website && <a href={team.website} target="_blank" rel="noreferrer">Visit team website <ChevronRight/></a>}</div></div>
       <section className="block"><div className="title"><h2>{copy.teamSelection}</h2></div><div className="player-list">{players.map((player: any) => <article key={player.id}>{player.photo ? <img src={player.photo} alt={player.name || "Player"}/> : <span aria-hidden="true">{player.name?.[0]}</span>}<b>{player.name}</b><strong>#{player.number ?? "—"}</strong></article>)}{!players.length && <p>{copy.noPlayers}</p>}</div></section>
+      {coaches.length > 0 && <section className="block"><div className="title"><h2>Coaches</h2></div><div className="player-list">{coaches.map((coach: any) => <article key={coach.id}>{coach.photo ? <img src={coach.photo} alt={coach.name || "Coach"}/> : <span aria-hidden="true">{coach.name?.[0]}</span>}<b>{coach.name}</b><strong>{coach.staff_role === "ASSISTANT_COACH" ? "Assistant coach" : "Coach"}</strong></article>)}</div></section>}
       <section className="block"><div className="title"><h2>{copy.matches}</h2><span>{matches.length} {copy.scheduled}</span></div><div className="team-match-list">{matches.map((match: any) => <LiveMatch key={match.id} match={match} teams={d.teams} referees={d.referees}/>)}{!matches.length && <p>{copy.noTeamMatches}</p>}</div></section>
     </>}
   </main><PublicChat /></>;
