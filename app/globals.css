@@ -3564,6 +3564,7 @@ html[data-theme="dark"] .sponsor-banner {
 .reference-home {
   display: flex;
   flex-direction: column;
+  min-height: calc(100svh - 76px);
 }
 .reference-hero {
   order: 1;
@@ -3584,6 +3585,7 @@ html[data-theme="dark"] .sponsor-banner {
   background: #fff;
   border-top: 1px solid #ece8ed;
   font-size: 13px;
+  margin-top: auto;
 }
 .site-footer-inner { width: min(1180px, 100%); margin: 0 auto; }
 .site-footer-links {
