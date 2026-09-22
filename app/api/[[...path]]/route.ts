@@ -746,9 +746,9 @@ async function syncAccommodation(teamId: string) {
     )
     .run();
 }
-async function list(table: string, where = "", values: any[] = []) {
+async function list(table: string, where = "", values: any[] = [], columns = "*") {
   const r = await db()
-    .prepare(`SELECT * FROM ${table} ${where}`)
+    .prepare(`SELECT ${columns} FROM ${table} ${where}`)
     .bind(...values)
     .all();
   return r.results.map((x: any) => {
@@ -1354,13 +1354,13 @@ export async function GET(
         scorers,
         players,
       ] = await Promise.all([
-        safe("tournaments", list("tournaments"), []),
-        safe("teams", list("teams"), []),
-        safe("matches", db().prepare("SELECT * FROM matches WHERE home_team_id<>away_team_id").all().then((r: any) => r.results.map((x: any) => { for (const k of ["referee_ids"]) if (typeof x[k] === "string") try { x[k] = JSON.parse(x[k]); } catch {} return x; })), []),
+        safe("tournaments", list("tournaments", "", [], "id,name,start_date,end_date,city,country,active,registration_mode,registration_enabled,live_enabled,show_tournament,show_referees,show_livestream,livestream_url,show_teams,show_matches,show_standings,show_brackets,show_statistics,show_about,show_gallery,gallery_url,public_message,opening_hours,hotel_name,hotel_address,venue_name,venue_address,parking_info,accessibility_info,catering_info,award_info,visitor_info,format_rules"), []),
+        safe("teams", list("teams", "", [], "id,name,color,logo,team_photo,group_id"), []),
+        safe("matches", db().prepare("SELECT id,tournament_id,home_team_id,away_team_id,home_score,away_score,status,confirmed,court,match_date,start_time,referee_ids,group_id,period,clock,clock_running,clock_started_at,scoreboard_mode,version,created_at,updated_at FROM matches WHERE home_team_id<>away_team_id").all().then((r: any) => r.results.map((x: any) => { for (const k of ["referee_ids"]) if (typeof x[k] === "string") try { x[k] = JSON.parse(x[k]); } catch {} return x; })), []),
         safe("standings", standings(), []),
-        safe("links", list("links"), []),
-        safe("brackets", list("brackets"), []),
-        safe("schedule", db().prepare("SELECT * FROM schedule_items WHERE active=1 ORDER BY sort_order,id").all().then((r: any) => r.results), []),
+        safe("links", list("links", "", [], "id,title,url,dark_url,target_url,description,category,sort_order,active"), []),
+        safe("brackets", list("brackets", "", [], "id,active,mode,data,created_at,updated_at"), []),
+        safe("schedule", db().prepare("SELECT id,tournament_id,item_type,match_id,label,match_date,start_time,duration_minutes,court,sort_order,active,created_at,updated_at FROM schedule_items WHERE active=1 ORDER BY sort_order,id").all().then((r: any) => r.results), []),
         safe("referees", db()
           .prepare(
             "SELECT id,name,country,photo,NULL team_id,'USER' source FROM users WHERE role='REFEREE' AND active=1 UNION ALL SELECT dm.id,dm.name,NULL country,dm.photo,dm.team_id,'DELEGATION' source FROM delegation_members dm WHERE dm.role='REFEREE' AND dm.id NOT IN (SELECT id FROM users) ORDER BY name",
@@ -1977,7 +1977,21 @@ export async function POST(
       const payment = db().prepare("INSERT INTO finance_payments (id,invoice_id,team_id,amount,method,reference,received_at,note,idempotency_key,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)").bind(paymentId, invoiceId, invoice.team_id, amount, "BANK_TRANSFER", String(body.reference || "").trim() || null, body.received_at || timestamp, String(body.note || "").trim() || null, idempotencyKey, timestamp, timestamp);
       const paid: any = await db().prepare("SELECT COALESCE(SUM(amount),0) total FROM finance_payments WHERE invoice_id=?").bind(invoiceId).first();
       const paidTotal = roundMoney(Number(paid?.total || 0) + amount), status = paidTotal >= roundMoney(Number(invoice.total_amount)) ? "paid" : "partially_paid";
-      await db().batch([payment, db().prepare("UPDATE invoices SET status=?,updated_at=? WHERE id=?").bind(status, timestamp, invoiceId)]);
+      try {
+        await db().batch([payment, db().prepare("UPDATE invoices SET status=?,updated_at=? WHERE id=?").bind(status, timestamp, invoiceId)]);
+      } catch (error) {
+        // A concurrent administrator may have won the same idempotency key.
+        // Return the existing result instead of reporting a misleading failure.
+        if (/unique|constraint/i.test(String(error instanceof Error ? error.message : error))) {
+          const concurrent: any = await db().prepare("SELECT id,invoice_id FROM finance_payments WHERE idempotency_key=? LIMIT 1").bind(idempotencyKey).first();
+          if (concurrent) {
+            const currentPaid: any = await db().prepare("SELECT COALESCE(SUM(amount),0) total FROM finance_payments WHERE invoice_id=?").bind(concurrent.invoice_id).first();
+            const currentInvoice: any = await db().prepare("SELECT total_amount FROM invoices WHERE id=?").bind(concurrent.invoice_id).first();
+            return out({ ok: true, duplicate: true, payment_id: concurrent.id, paid: roundMoney(Number(currentPaid?.total || 0)), outstanding: roundMoney(Math.max(0, Number(currentInvoice?.total_amount || 0) - Number(currentPaid?.total || 0))) });
+          }
+        }
+        throw error;
+      }
       if (invoice.invoice_type === "DEPOSIT" && paidTotal >= roundMoney(Number(invoice.total_amount))) {
         const existingBalance: any = await db().prepare("SELECT id FROM invoices WHERE team_id=? AND invoice_type='BALANCE' AND status!='cancelled' LIMIT 1").bind(invoice.team_id).first();
         if (!existingBalance) {

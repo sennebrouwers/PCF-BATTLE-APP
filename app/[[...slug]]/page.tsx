@@ -403,11 +403,12 @@ const emptyPublicData: PublicData = {
   };
 let publicDataCache: PublicData | null = null;
 const publicDataStorageKey = "pcf-public-data-cache";
+const publicDataCacheVersion = 2;
 function readPublicDataCache(): PublicData | null {
   if (publicDataCache) return publicDataCache;
   try {
     const stored = JSON.parse(localStorage.getItem(publicDataStorageKey) || "null");
-    if (stored?.payload && Date.now() - Number(stored.savedAt || 0) < 60_000) {
+    if (stored?.version === publicDataCacheVersion && stored?.payload && Date.now() - Number(stored.savedAt || 0) < 60_000) {
       publicDataCache = stored.payload;
     }
   } catch {}
@@ -427,7 +428,11 @@ function usePublicData(): PublicData {
         const next = { ...current, ...values };
         if (next.ready) {
           publicDataCache = next;
-          try { localStorage.setItem(publicDataStorageKey, JSON.stringify({ savedAt: Date.now(), payload: next })); } catch {}
+          try {
+            const serialized = JSON.stringify({ version: publicDataCacheVersion, savedAt: Date.now(), payload: next });
+            if (serialized.length <= 1_500_000) localStorage.setItem(publicDataStorageKey, serialized);
+            else localStorage.removeItem(publicDataStorageKey);
+          } catch { try { localStorage.removeItem(publicDataStorageKey); } catch {} }
         }
         return next;
       });
