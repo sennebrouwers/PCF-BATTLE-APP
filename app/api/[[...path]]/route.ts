@@ -255,6 +255,54 @@ async function buildOnboardingStatus(teamId: string) {
   const ready = balanceDone && team.review_status === "approved_payment_open";
   return { team: { id: team.id, name: team.name }, status: team.review_status, stages: [...stages, { key: "ready", label: "Tournament Ready", done: ready, state: ready ? "completed" : "upcoming" }], current: current.label, action, review: { issues: review.issues.length, members: review.members.length, unassigned: review.unassigned.length }, payment: { deposit: Number(deposit?.total_amount || review.pricing.deposit || 0), paid: depositPaid, due: deposit?.due_at || null, balance: Number(balance?.total_amount || review.pricing.balance || 0), balancePaid } };
 }
+async function buildOnboardingStatuses(teamIds: string[]) {
+  if (!teamIds.length) return [];
+  await ensureFinanceSchema();
+  const placeholders = teamIds.map(() => "?").join(",");
+  const [teamRows, memberRows, assignmentRows, invoiceRows, paymentRows, settings, tournament] = await Promise.all([
+    db().prepare(`SELECT * FROM teams WHERE id IN (${placeholders}) ORDER BY name`).bind(...teamIds).all(),
+    db().prepare(`SELECT id,team_id,name,member_type,player_role,classification_points FROM delegation_members WHERE team_id IN (${placeholders}) ORDER BY team_id,member_type,name`).bind(...teamIds).all(),
+    db().prepare(`SELECT ra.member_id,dm.team_id FROM room_assignments ra JOIN delegation_members dm ON dm.id=ra.member_id WHERE dm.team_id IN (${placeholders})`).bind(...teamIds).all(),
+    db().prepare(`SELECT id,team_id,invoice_type,total_amount,due_at,status FROM invoices WHERE team_id IN (${placeholders}) AND status!='cancelled' ORDER BY issued_at`).bind(...teamIds).all(),
+    db().prepare(`SELECT invoice_id,team_id,amount FROM finance_payments WHERE team_id IN (${placeholders})`).bind(...teamIds).all(),
+    db().prepare("SELECT price_per_person,deposit_percentage FROM finance_settings WHERE id='default'").first<any>(),
+    db().prepare("SELECT single_room_supplement FROM tournaments WHERE active=1 LIMIT 1").first<any>(),
+  ]);
+  const membersByTeam = new Map<string, any[]>(), assignedByTeam = new Map<string, Set<string>>(), invoicesByTeam = new Map<string, any[]>(), paymentsByInvoice = new Map<string, number>();
+  for (const member of memberRows.results as any[]) (membersByTeam.get(member.team_id) || (membersByTeam.set(member.team_id, []), membersByTeam.get(member.team_id)!)).push(member);
+  for (const assignment of assignmentRows.results as any[]) (assignedByTeam.get(assignment.team_id) || (assignedByTeam.set(assignment.team_id, new Set()), assignedByTeam.get(assignment.team_id)!)).add(assignment.member_id);
+  for (const invoice of invoiceRows.results as any[]) (invoicesByTeam.get(invoice.team_id) || (invoicesByTeam.set(invoice.team_id, []), invoicesByTeam.get(invoice.team_id)!)).push(invoice);
+  for (const payment of paymentRows.results as any[]) paymentsByInvoice.set(payment.invoice_id, roundMoney((paymentsByInvoice.get(payment.invoice_id) || 0) + Number(payment.amount || 0)));
+  const unitPrice = Number(settings?.price_per_person || 325), depositPercentage = Number(settings?.deposit_percentage || 30), singleSupplement = Number(tournament?.single_room_supplement || 0);
+  return (teamRows.results as any[]).map((team) => {
+    const members = membersByTeam.get(team.id) || [], assigned = assignedByTeam.get(team.id) || new Set<string>(), unassigned = members.filter((member) => !assigned.has(member.id));
+    const issues = members.filter((member) => member.member_type === "PLAYER" && (!member.player_role || member.classification_points === null || !Number.isFinite(Number(member.classification_points))));
+    const hasValue = (value: unknown) => String(value || "").trim().length > 0;
+    const hasAddress = hasValue(team.address) || [team.address_street, team.address_number, team.address_postal_code, team.address_city, team.address_country].some(hasValue);
+    if (!members.length) issues.push({});
+    if (!hasValue(team.contact_person) || !hasValue(team.phone) || !hasAddress) issues.push({});
+    const total = roundMoney(members.length * unitPrice + unassigned.length * 0), depositAmount = roundMoney(total * depositPercentage / 100), balanceAmount = roundMoney(total - depositAmount);
+    const invoices = invoicesByTeam.get(team.id) || [], deposit = invoices.find((item) => item.invoice_type === "DEPOSIT"), balance = invoices.find((item) => item.invoice_type === "BALANCE");
+    const depositPaid = Number(paymentsByInvoice.get(deposit?.id) || 0), balancePaid = Number(paymentsByInvoice.get(balance?.id) || 0), depositTotal = Number(deposit?.total_amount || depositAmount), balanceTotal = Number(balance?.total_amount || balanceAmount);
+    const depositOpen = team.review_status === "approved_payment_open" && Boolean(deposit), depositDone = depositOpen && depositPaid >= depositTotal && depositTotal > 0, balanceOpen = depositDone && Boolean(balance), balanceDone = balanceOpen && balancePaid >= balanceTotal && balanceTotal > 0;
+    const setupDone = hasValue(team.contact_person) && hasValue(team.phone) && hasAddress, delegationDone = members.length > 0 && issues.length === 0, roomsDone = unassigned.length === 0 && members.length > 0, complete = issues.length === 0;
+    const stages = [
+      { key: "registration", label: "Registration", done: true, state: "completed" },
+      { key: "selection", label: "Selection", done: true, state: "completed" },
+      { key: "portal", label: "Portal activated", done: true, state: "completed" },
+      { key: "setup", label: "Team setup", done: setupDone, state: setupDone ? "completed" : "current" },
+      { key: "delegation", label: "Delegation", done: delegationDone, state: delegationDone ? "completed" : setupDone ? "current" : "upcoming" },
+      { key: "rooms", label: "Rooms", done: roomsDone, state: roomsDone ? "completed" : delegationDone ? "current" : "upcoming" },
+      { key: "review", label: "Review", done: complete, state: complete ? "completed" : roomsDone ? "current" : "upcoming" },
+      { key: "confirmation", label: "Team Confirmation", done: ["awaiting_admin", "approved_payment_open"].includes(team.review_status), state: ["awaiting_admin", "approved_payment_open"].includes(team.review_status) ? "completed" : "upcoming" },
+      { key: "registration_review", label: "Registration Review", done: team.review_status === "approved_payment_open", state: team.review_status === "awaiting_admin" ? "current" : team.review_status === "approved_payment_open" ? "completed" : "upcoming" },
+      { key: "deposit", label: "Deposit", done: depositDone, state: depositDone ? "completed" : depositOpen ? "current" : "upcoming" },
+      { key: "balance", label: "Remaining balance", done: balanceDone, state: balanceDone ? "completed" : balanceOpen ? "current" : "upcoming" },
+    ];
+    const ready = balanceDone && team.review_status === "approved_payment_open", current = stages.find((stage) => stage.state === "current") || stages.find((stage) => !stage.done) || stages[stages.length - 1];
+    return { team: { id: team.id, name: team.name }, status: team.review_status, stages: [...stages, { key: "ready", label: "Tournament Ready", done: ready, state: ready ? "completed" : "upcoming" }], current: current.label, action: ready ? "Tournament onboarding is complete" : "Complete the next registration step", review: { issues: issues.length, members: members.length, unassigned: unassigned.length }, payment: { deposit: depositTotal, paid: depositPaid, due: deposit?.due_at || null, balance: balanceTotal, balancePaid } };
+  });
+}
 const fmtMoneyServer = (value: number) => `€${value.toFixed(2)}`;
 function simplePdf(lines: string[]) {
   const clean = (value: string) => value.normalize("NFKD").replace(/[^\x20-\x7E]/g, "").replace(/([\\()])/g, "\\$1"),
@@ -1792,7 +1840,7 @@ export async function GET(
     if (path === "team-onboardings") {
       if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
       const teams = (await db().prepare("SELECT id FROM teams ORDER BY name").all()).results as { id: string }[];
-      const statuses = (await Promise.all(teams.map((team) => buildOnboardingStatus(team.id)))).filter(Boolean);
+      const statuses = await buildOnboardingStatuses(teams.map((team) => team.id));
       return out(statuses);
     }
     if (path === "team-reviews") {
