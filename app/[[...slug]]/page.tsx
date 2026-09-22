@@ -1516,7 +1516,7 @@ function TeamOverview({ id }: { id: string }) {
       {coaches.length > 0 && <section className="block"><div className="title"><h2>Coaches</h2></div><div className="player-list">{coaches.map((coach: any) => <article key={coach.id}>{coach.photo ? <img src={coach.photo} alt={coach.name || "Coach"}/> : <span aria-hidden="true">{coach.name?.[0]}</span>}<b>{coach.name}</b><strong>{coach.staff_role === "ASSISTANT_COACH" ? "Assistant coach" : "Coach"}</strong></article>)}</div></section>}
       <section className="block"><div className="title"><h2>{copy.matches}</h2><span>{matches.length} {copy.scheduled}</span></div><div className="team-match-list">{matches.map((match: any) => <LiveMatch key={match.id} match={match} teams={d.teams} referees={d.referees}/>)}{!matches.length && <p>{copy.noTeamMatches}</p>}</div></section>
     </>}
-  </main><PublicChat /></>;
+  </main><PublicFooter /><PublicChat /></>;
 }
 
 function Livestream() {
