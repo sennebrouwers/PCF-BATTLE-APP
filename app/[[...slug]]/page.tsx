@@ -33,6 +33,15 @@ const PortalApp = lazy(() => import("@/components/portal-app"));
 const Gallery = lazy(() => import("@/components/gallery"));
 const ScoreboardDisplay = lazy(() => import("@/components/scoreboard-display"));
 const LOGO = "/PFB_Logo_Pink.svg";
+function teamSlug(name: string, id?: string) {
+  const slug = String(name || "team")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug || id || "team";
+}
 async function api(path: string, options: RequestInit = {}) {
   const headers = new Headers(options.headers);
   if (options.body) headers.set("Content-Type", "application/json");
@@ -898,7 +907,7 @@ function DynamicLanding() {
               )}
               {d.teams.map((team: Team) => (
                 <article key={team.id} className={favouriteTeamId === team.id ? "favourite" : ""}>
-                  <Link className="team-home-link" href={`/teams/${team.id}`}>
+                  <Link className="team-home-link" href={`/teams/${teamSlug(team.name, team.id)}`}>
                     <LiveMark team={team} />
                     <div><b>{team.name}</b><small>{copy.groupLabel} {team.group_id}</small></div>
                   </Link>
@@ -1385,7 +1394,7 @@ function About() {
             </div>
             <div className="people-grid">
               {d.teams.map((team: any) => (
-                <Link href={`/teams/${team.id}`} className="team-overview-card" key={team.id}>
+                <Link href={`/teams/${teamSlug(team.name, team.id)}`} className="team-overview-card" key={team.id}>
                   {team.logo ? (
                     <img src={team.logo} alt={`${team.name} logo`} />
                   ) : (
@@ -1496,7 +1505,7 @@ function FAQ() {
 function TeamOverview({ id }: { id: string }) {
   const { language } = usePublicLanguage(), copy = publicCopy[language],
     d = usePublicData(), t = d.tournaments.find((x: any) => x.active) || d.tournaments[0] || {},
-    team = d.teams.find((x: any) => x.id === id), players = d.players.filter((x: any) => x.team_id === id),
+    team = d.teams.find((x: any) => x.id === id || teamSlug(x.name, x.id) === id), players = d.players.filter((x: any) => x.team_id === team?.id),
     matches = [...d.matches].filter((match: any) => match.home_team_id === id || match.away_team_id === id).sort((a: any,b: any) => `${a.match_date || "9999-12-31"}T${a.start_time || "23:59"}`.localeCompare(`${b.match_date || "9999-12-31"}T${b.start_time || "23:59"}`));
   return <><PublicHeader settings={t} currentPath="/about" loading={!d.ready}/><main className="public team-detail-page">
     {!d.ready ? <div className="route-loading"/> : !team ? <Panel title={copy.teamNotFound}><p>{copy.teamNotFound}</p></Panel> : <>
