@@ -169,17 +169,24 @@ async function buildTeamReview(teamId: string, prepareSchema = true) {
     await ensureScheduleSchema();
     await ensureFinanceSchema();
   }
-  const team: any = await db().prepare("SELECT * FROM teams WHERE id=?").bind(teamId).first();
-  if (!team) return null;
-  const [memberResult, roomResult, tournament, settings] = await Promise.all([
+  const teamPromise = db().prepare("SELECT * FROM teams WHERE id=?").bind(teamId).first();
+  const [team, memberResult, roomResult, tournament, settings] = await Promise.all([
+    teamPromise,
     db().prepare("SELECT * FROM delegation_members WHERE team_id=? ORDER BY member_type,name").bind(teamId).all(),
     db().prepare("SELECT r.id room_id,r.number,r.capacity,r.room_type,dm.id member_id,dm.name member_name FROM rooms r LEFT JOIN room_assignments ra ON ra.room_id=r.id LEFT JOIN delegation_members dm ON dm.id=ra.member_id AND dm.team_id=? WHERE r.team_id IS NULL OR r.team_id=? ORDER BY r.number,dm.name").bind(teamId, teamId).all(),
     db().prepare("SELECT single_room_supplement,fixed_tournament_costs FROM tournaments WHERE active=1 LIMIT 1").first(),
     db().prepare("SELECT * FROM finance_settings WHERE id='default'").first(),
-  ]);
+  ]) as [any, any, any, any, any];
+  if (!team) return null;
   const members = memberResult.results as any[];
   const roomRows = roomResult.results as any[];
-  const rooms = [...new Map(roomRows.map((row) => [row.room_id, { id: row.room_id, number: row.number, capacity: row.capacity, room_type: row.room_type, members: roomRows.filter((item) => item.room_id === row.room_id && item.member_id).map((item) => ({ id: item.member_id, name: item.member_name })) }])).values()];
+  const roomsById = new Map<string, any>();
+  for (const row of roomRows) {
+    const room = roomsById.get(row.room_id) || { id: row.room_id, number: row.number, capacity: row.capacity, room_type: row.room_type, members: [] };
+    if (row.member_id) room.members.push({ id: row.member_id, name: row.member_name });
+    roomsById.set(row.room_id, room);
+  }
+  const rooms = [...roomsById.values()];
   const assigned = new Set(rooms.flatMap((room: any) => room.members.map((member: any) => member.id)));
   const unassigned = members.filter((member) => !assigned.has(member.id));
   const unitPrice = Number(settings?.price_per_person || 325), singleSupplement = Number(tournament?.single_room_supplement || 0);
