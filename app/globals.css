@@ -520,7 +520,13 @@ header nav a:hover {
 }
 .route-loading {
   min-height: 100vh;
-  background: #fff;
+  background: var(--bg, #fff);
+  color: var(--text, #17131a);
+  transition: background-color 160ms ease;
+}
+.gallery-route-loading {
+  min-height: 100svh;
+  background: var(--bg, #fff);
 }
 .public [role="tab"]:hover {
   color: var(--pink);

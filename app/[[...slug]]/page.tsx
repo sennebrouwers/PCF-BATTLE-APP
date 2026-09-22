@@ -1641,7 +1641,7 @@ export default function App({ params }: { params: Promise<{ slug?: string[] }> }
   if (p === "/faq") return <FAQ />;
   if (p === "/livestream") return <Livestream />;
   if (p.startsWith("/teams/")) return <TeamOverview id={p.split("/").pop() || ""}/>;
-  if (p === "/gallery") return <Suspense fallback={<div className="route-loading" />}><Gallery /></Suspense>;
+  if (p === "/gallery") return <Suspense fallback={<div className="route-loading gallery-route-loading" aria-label="Loading media" />}><Gallery /></Suspense>;
   if (["/terms", "/privacy", "/cookies", "/accessibility"].includes(p)) return <LegalPage page={p.slice(1) as "terms" | "privacy" | "cookies" | "accessibility"} />;
   if (p.startsWith("/tournament/"))
     return <DynamicPublic view={p.split("/").pop() || "live"} />;
