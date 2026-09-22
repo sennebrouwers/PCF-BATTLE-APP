@@ -20,6 +20,14 @@
   --focus-ring: #ec489955;
   --shadow-card: 0 3px 12px #24141d0b;
 }
+
+/* Schedule editor popup: keep it above the overlay and readable in both themes. */
+.schedule-editor-dialog{position:fixed!important;z-index:70!important;width:min(620px,calc(100vw - 32px))!important;max-height:calc(100vh - 32px);overflow-y:auto;background:var(--surface-3,#fff)!important;color:var(--ink)!important;border-color:var(--line,#e5e7eb)!important}
+.schedule-editor-dialog [data-slot="dialog-title"]{color:var(--ink)!important}
+.schedule-editor-dialog .schedule-editor{position:static!important;bottom:auto!important;background:transparent!important;border:0!important;box-shadow:none!important;color:var(--ink)!important}
+.schedule-editor-dialog .schedule-editor input,.schedule-editor-dialog .schedule-editor select{background:var(--input-surface,#fff)!important;color:var(--ink)!important;border-color:var(--line,#e5e7eb)!important}
+.schedule-editor-dialog .schedule-editor .btn{color:var(--ink)}
+.schedule-editor-dialog .schedule-editor .btn.primary{color:#fff}
 * {
   box-sizing: border-box;
 }

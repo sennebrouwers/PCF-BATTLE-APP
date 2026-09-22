@@ -43,6 +43,7 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
     [drag, setDrag] = useState<string | null>(null),
     [over, setOver] = useState<string | null>(null),
     [day, setDay] = useState("all"),
+    [court, setCourt] = useState("all"),
     [status, setStatus] = useState(""),
     [selected, setSelected] = useState<Item | null>(null),
     [history, setHistory] = useState<Item[][]>([]),
@@ -104,8 +105,14 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
     () => [...new Set(items.map((i) => i.match_date).filter(Boolean))],
     [items],
   );
+  const courts = useMemo(
+    () => [...new Set(matches.map((m) => m.court).filter(Boolean))],
+    [matches],
+  );
   const visible = items.filter(
-    (i) => day === "all" || i.match_date === day,
+    (i) =>
+      (day === "all" || i.match_date === day) &&
+      (court === "all" || (i.court || by[i.match_id || ""]?.court) === court),
   );
   function recalculate(list: Item[]) {
     const cursor: Record<string, number> = {};
@@ -201,7 +208,7 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
           match_date: day === "all" ? days[0] || null : day,
           start_time: first,
           duration_minutes: 15,
-          court: "Court 1",
+          court: court === "all" ? null : court,
         }),
       });
       await load();
@@ -271,6 +278,12 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
           <option value="all">All days</option>
           {days.map((d) => (
             <option key={d}>{d}</option>
+          ))}
+        </select>
+        <select value={court} onChange={(e) => setCourt(e.target.value)}>
+          <option value="all">All courts</option>
+          {courts.map((c) => (
+            <option key={c}>{c}</option>
           ))}
         </select>
         <button className="btn" onClick={undo} disabled={!history.length}>
@@ -423,12 +436,13 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
       </div>
       {selected && (
         <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}>
-          <DialogContent className="schedule-editor-dialog">
+          <DialogContent className="schedule-editor-dialog" onInteractOutside={(event) => event.preventDefault()}>
             <DialogHeader>
               <DialogTitle>Edit scheduled item</DialogTitle>
             </DialogHeader>
             <div key={selected.id} className="schedule-editor">
-          {selected.item_type === "match" && <>
+          <h4>Edit item</h4>
+          {selected.item_type === "match" && by[selected.match_id || ""] && <>
             <p className="schedule-editor-match">{teamName(by[selected.match_id || ""]?.home_team_id, by[selected.match_id || ""], "home")} — {teamName(by[selected.match_id || ""]?.away_team_id, by[selected.match_id || ""], "away")}</p>
             <label>
               Referee 1
@@ -449,11 +463,7 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
             Date
             <input
               type="date"
-              value={selected.match_date || by[selected.match_id || ""]?.match_date || ""}
-              onClick={(e) => {
-                e.stopPropagation();
-                e.currentTarget.showPicker?.();
-              }}
+              value={selected.match_date || ""}
               onChange={(e) =>
                 setSelected({ ...selected, match_date: e.target.value })
               }
@@ -487,7 +497,7 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
               if (match) {
                 const assigned = (match.referee_ids || []).filter(Boolean);
                 try {
-              const changes: Record<string, unknown> = { match_date: selected.match_date || null, start_time: selected.start_time || null, court: selected.court || null };
+              const changes: Record<string, unknown> = { match_date: selected.match_date || null, start_time: selected.start_time || null };
                   if (assigned.length) changes.referee_ids = assigned;
                   if (match.version !== undefined) changes.version = match.version;
                   await api(`/matches/${match.id}`, { method: "PUT", body: JSON.stringify(changes) });
