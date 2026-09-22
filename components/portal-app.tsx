@@ -2095,8 +2095,7 @@ function Tournament({ refresh }: { refresh: number }) {
     [gameMinutes, setGameMinutes] = useState("40"),
     [pauseMinutes, setPauseMinutes] = useState("10"),
     [scheduleStart, setScheduleStart] = useState("09:00"),
-    [scheduleEnd, setScheduleEnd] = useState("18:00"),
-    [scheduleCourtCount, setScheduleCourtCount] = useState("1");
+    [scheduleEnd, setScheduleEnd] = useState("18:00");
   const autoBracketStarted = useRef(false);
   useEffect(() => {
     const groupMatches = matches.data.filter((match: Row) =>
@@ -2136,10 +2135,6 @@ function Tournament({ refresh }: { refresh: number }) {
   async function generateSchedule() {
     setScheduleBusy(true);
     try {
-      const courts = Array.from(
-        { length: Number(scheduleCourtCount) },
-        (_, index) => `Court ${index + 1}`,
-      );
       const result = await api("/groups/generate-schedule", {
         method: "POST",
         body: JSON.stringify({
@@ -2148,7 +2143,6 @@ function Tournament({ refresh }: { refresh: number }) {
           pause_minutes: Number(pauseMinutes),
           start_time: scheduleStart,
           end_time: scheduleEnd,
-          courts,
         }),
       });
       toast.success(`${result.created || 0} group matches generated`);
@@ -2266,16 +2260,6 @@ function Tournament({ refresh }: { refresh: number }) {
                 />
               </div>
               <small>Start and end time</small>
-            </label>
-            <label>
-              <span>Available courts</span>
-              <select
-                value={scheduleCourtCount}
-                onChange={(event) => setScheduleCourtCount(event.target.value)}
-              >
-                <option value="1">1 court</option>
-              </select>
-              <small>All matches use Court 1.</small>
             </label>
           </div>
         </section>

@@ -42,7 +42,6 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
     [drag, setDrag] = useState<string | null>(null),
     [over, setOver] = useState<string | null>(null),
     [day, setDay] = useState("all"),
-    [court, setCourt] = useState("all"),
     [status, setStatus] = useState(""),
     [selected, setSelected] = useState<Item | null>(null),
     [history, setHistory] = useState<Item[][]>([]),
@@ -104,14 +103,8 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
     () => [...new Set(items.map((i) => i.match_date).filter(Boolean))],
     [items],
   );
-  const courts = useMemo(
-    () => [...new Set(matches.map((m) => m.court).filter(Boolean))],
-    [matches],
-  );
   const visible = items.filter(
-    (i) =>
-      (day === "all" || i.match_date === day) &&
-      (court === "all" || (i.court || by[i.match_id || ""]?.court) === court),
+    (i) => day === "all" || i.match_date === day,
   );
   function recalculate(list: Item[]) {
     const cursor: Record<string, number> = {};
@@ -207,7 +200,7 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
           match_date: day === "all" ? days[0] || null : day,
           start_time: first,
           duration_minutes: 15,
-          court: court === "all" ? null : court,
+          court: "Court 1",
         }),
       });
       await load();
@@ -277,12 +270,6 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
           <option value="all">All days</option>
           {days.map((d) => (
             <option key={d}>{d}</option>
-          ))}
-        </select>
-        <select value={court} onChange={(e) => setCourt(e.target.value)}>
-          <option value="all">All courts</option>
-          {courts.map((c) => (
-            <option key={c}>{c}</option>
           ))}
         </select>
         <button className="btn" onClick={undo} disabled={!history.length}>
@@ -466,18 +453,6 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
                 setSelected({ ...selected, match_date: e.target.value })
               }
             />
-          </label>
-          <label>
-            Court
-            <select
-              value={selected.court || by[selected.match_id || ""]?.court || ""}
-              onChange={(e) => setSelected({ ...selected, court: e.target.value || null })}
-            >
-              <option value="">No court</option>
-              {[...new Set([...courts, selected.court, by[selected.match_id || ""]?.court].filter(Boolean) as string[])].map((value) => (
-                <option key={value} value={value}>{value}</option>
-              ))}
-            </select>
           </label>
           <label>
             Time
