@@ -7099,6 +7099,11 @@ input:disabled, select:disabled, textarea:disabled, button:disabled {
   color: #f9a8d4 !important;
   border: 1px solid #8f4d78 !important;
 }
+:root[data-theme="dark"] .member-avatar {
+  background: #512c48 !important;
+  color: #f9a8d4 !important;
+  border: 1px solid #8f4d78 !important;
+}
 :root[data-theme="dark"] .contact-icon svg,
 :root[data-theme="dark"] .message-avatar svg {
   color: inherit !important;
