@@ -1,14 +1,13 @@
-import { head, put } from "@vercel/blob";
+import { get, put } from "@vercel/blob";
 
 export async function readBlob(pathname: string) {
   try {
-    const metadata = await head(pathname);
-    const response = await fetch(metadata.url);
-    if (!response.ok || !response.body) return null;
+    const result = await get(pathname, { access: "private", useCache: true });
+    if (!result || result.statusCode !== 200 || !result.stream) return null;
     return {
-      body: response.body,
-      contentType: metadata.contentType,
-      contentDisposition: metadata.contentDisposition,
+      body: result.stream,
+      contentType: result.blob.contentType,
+      contentDisposition: result.blob.contentDisposition,
     };
   } catch {
     return null;
@@ -21,7 +20,7 @@ export async function writeBlob(
   contentType: string,
 ) {
   return put(pathname, body, {
-    access: "public",
+    access: "private",
     contentType,
     addRandomSuffix: false,
     multipart: true,
