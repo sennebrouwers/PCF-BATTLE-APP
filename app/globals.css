@@ -2478,6 +2478,39 @@ header nav a.active:after {
   border-top-color: #b044ce;
 }
 @media (max-width: 900px) {
+  .reference-hero {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  .reference-copy {
+    display: flex !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 42px 24px 34px !important;
+  }
+  .reference-copy h1 {
+    max-width: 100% !important;
+    overflow-wrap: anywhere !important;
+  }
+  .action-frame {
+    width: 100% !important;
+    min-height: 430px !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+  .action-frame img {
+    width: 100% !important;
+    max-width: 100% !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    transform: none !important;
+    padding: 0 !important;
+  }
+}
+
+@media (max-width: 900px) {
   header .brand img {
     width: 48px;
     height: 48px;
