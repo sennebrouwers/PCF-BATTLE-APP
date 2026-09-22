@@ -136,6 +136,7 @@ async function ensureScheduleSchema() {
     "ALTER TABLE tournaments ADD COLUMN pcf_battle_info text",
     "ALTER TABLE tournaments ADD COLUMN show_tournament integer DEFAULT 1",
     "ALTER TABLE tournaments ADD COLUMN show_referees integer DEFAULT 1",
+    "ALTER TABLE tournaments ADD COLUMN show_gallery integer DEFAULT 0",
     "ALTER TABLE tournaments ADD COLUMN emergency_enabled integer DEFAULT 0",
     "ALTER TABLE tournaments ADD COLUMN single_room_price real DEFAULT 0",
     "ALTER TABLE tournaments ADD COLUMN double_room_price real DEFAULT 0",
