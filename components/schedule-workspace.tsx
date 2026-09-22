@@ -458,6 +458,10 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
             <input
               type="date"
               value={selected.match_date || ""}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.currentTarget.showPicker?.();
+              }}
               onChange={(e) =>
                 setSelected({ ...selected, match_date: e.target.value })
               }
