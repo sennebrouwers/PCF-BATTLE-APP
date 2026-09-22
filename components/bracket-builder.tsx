@@ -1,17 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { errorMessage, type Match as AppMatch, type Team } from "@/types/app";
-
-async function api(path: string, options: RequestInit = {}) {
-  const response = await fetch(`/api${path}`, {
-    ...options,
-    credentials: "same-origin",
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || "Request failed");
-  return data;
-}
+import { clientApi as api } from "@/lib/api-client";
 
 type Match = AppMatch & {
   id: string;

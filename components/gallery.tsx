@@ -12,6 +12,7 @@ import { publicCopy, usePublicLanguage } from "@/components/public-language";
 import PublicFooter from "@/components/public-footer";
 import PublicChat from "@/components/public-chat";
 import type { Tournament } from "@/types/app";
+import { clientApi } from "@/lib/api-client";
 
 type GalleryPhoto = {
   id: string;
@@ -46,12 +47,8 @@ export default function Gallery() {
   useEffect(() => {
     let active = true;
     Promise.all([
-      fetch("/api/tournaments").then((r) => r.json()),
-      fetch("/api/gallery").then(async (r) => {
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.error || "Gallery unavailable");
-        return data;
-      }),
+      clientApi("/tournaments"),
+      clientApi("/gallery"),
     ])
       .then(([tournaments, gallery]) => {
         if (!active) return;

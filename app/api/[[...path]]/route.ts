@@ -1339,8 +1339,9 @@ export async function GET(
       if (cached && cached.expiresAt > Date.now()) {
         return NextResponse.json(cached.payload, { headers: { "Cache-Control": "public, max-age=5, s-maxage=15, stale-while-revalidate=60" } });
       }
-      const safe = async <T,>(request: Promise<T>, fallback: T): Promise<T> =>
-        request.catch(() => fallback);
+      const degraded: string[] = [];
+      const safe = async <T,>(name: string, request: Promise<T>, fallback: T): Promise<T> =>
+        request.catch(() => { degraded.push(name); return fallback; });
       const [
         tournaments,
         teams,
@@ -1353,26 +1354,26 @@ export async function GET(
         scorers,
         players,
       ] = await Promise.all([
-        safe(list("tournaments"), []),
-        safe(list("teams"), []),
-        safe(db().prepare("SELECT * FROM matches WHERE home_team_id<>away_team_id").all().then((r: any) => r.results.map((x: any) => { for (const k of ["referee_ids"]) if (typeof x[k] === "string") try { x[k] = JSON.parse(x[k]); } catch {} return x; })), []),
-        safe(standings(), []),
-        safe(list("links"), []),
-        safe(list("brackets"), []),
-        safe(db().prepare("SELECT * FROM schedule_items WHERE active=1 ORDER BY sort_order,id").all().then((r: any) => r.results), []),
-        safe(db()
+        safe("tournaments", list("tournaments"), []),
+        safe("teams", list("teams"), []),
+        safe("matches", db().prepare("SELECT * FROM matches WHERE home_team_id<>away_team_id").all().then((r: any) => r.results.map((x: any) => { for (const k of ["referee_ids"]) if (typeof x[k] === "string") try { x[k] = JSON.parse(x[k]); } catch {} return x; })), []),
+        safe("standings", standings(), []),
+        safe("links", list("links"), []),
+        safe("brackets", list("brackets"), []),
+        safe("schedule", db().prepare("SELECT * FROM schedule_items WHERE active=1 ORDER BY sort_order,id").all().then((r: any) => r.results), []),
+        safe("referees", db()
           .prepare(
             "SELECT id,name,country,photo,NULL team_id,'USER' source FROM users WHERE role='REFEREE' AND active=1 UNION ALL SELECT dm.id,dm.name,NULL country,dm.photo,dm.team_id,'DELEGATION' source FROM delegation_members dm WHERE dm.role='REFEREE' AND dm.id NOT IN (SELECT id FROM users) ORDER BY name",
           )
           .all()
           .then((r: any) => r.results), []),
-        safe(db()
+        safe("scorers", db()
           .prepare(
             "SELECT dm.id player_id,dm.name player_name,dm.number player_number,t.id team_id,t.name team_name,t.logo team_logo,COUNT(ge.id) goals FROM goal_events ge JOIN delegation_members dm ON dm.id=ge.player_id JOIN teams t ON t.id=ge.team_id JOIN matches m ON m.id=ge.match_id WHERE m.status IN ('live','finished') GROUP BY dm.id,dm.name,dm.number,t.id,t.name,t.logo ORDER BY goals DESC,dm.name ASC",
           )
           .all()
           .then((r: any) => r.results), []),
-        safe(db().prepare("SELECT id,team_id,name,number,photo FROM delegation_members WHERE role='PLAYER' ORDER BY team_id,number,name").all().then((r: any) => r.results), []),
+        safe("players", db().prepare("SELECT id,team_id,name,number,photo FROM delegation_members WHERE role='PLAYER' ORDER BY team_id,number,name").all().then((r: any) => r.results), []),
       ]);
       const payload = {
         tournaments,
@@ -1385,6 +1386,7 @@ export async function GET(
         referees,
         scorers,
         players,
+        degraded,
       };
       publicDataCache = { expiresAt: Date.now() + 5000, payload };
       return NextResponse.json(payload, { headers: { "Cache-Control": "public, max-age=5, s-maxage=15, stale-while-revalidate=60" } });

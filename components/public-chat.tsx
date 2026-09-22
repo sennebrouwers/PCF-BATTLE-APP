@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Bot, MessageCircle, X } from "lucide-react";
 import { publicCopy, usePublicLanguage } from "@/components/public-language";
+import { clientApi } from "@/lib/api-client";
 
 export default function PublicChat() {
   const { language } = usePublicLanguage();
@@ -13,10 +14,8 @@ export default function PublicChat() {
     if (!q) return;
     setMsgs((v) => [...v, q]); setText("");
     try {
-      const response = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: q, language }) });
-      const out = await response.json();
-      if (!response.ok) throw new Error();
-      setMsgs((v) => [...v, out.answer]);
+      const out = await clientApi<{ answer?: string }>("/chat", { method: "POST", body: JSON.stringify({ message: q, language }) });
+      setMsgs((v) => [...v, out.answer || ""]);
     } catch {
       setMsgs((v) => [...v, "I couldn’t reach the tournament data. Please contact the organisation at hello@pcfbattle.be for further assistance."]);
     }

@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { errorMessage, type Match, type Referee, type Team, type Tournament } from "@/types/app";
+import { clientApi } from "@/lib/api-client";
 type Item = {
   id: string;
   item_type: "match" | "break" | "ceremony";
@@ -12,19 +13,7 @@ type Item = {
   court?: string;
   [key: string]: unknown;
 };
-const api = async (path: string, o: RequestInit = {}) => {
-  const r = await fetch(`/api${path}`, {
-    ...o,
-    credentials: "same-origin",
-    headers: { "Content-Type": "application/json", ...(o.headers || {}) },
-  });
-  const d = await r.json().catch(() => ({}));
-  if (!r.ok) {
-    const details = Array.isArray(d.conflicts) ? `: ${d.conflicts.map((item: { message?: string }) => item.message).join("; ")}` : "";
-    throw Error(`${d.error || `Request failed (${r.status})`}${details}`);
-  }
-  return d;
-};
+const api = clientApi;
 const toMinutes = (v = "00:00") => {
   const [a, b] = v.split(":").map(Number);
   return (a || 0) * 60 + (b || 0);
