@@ -46,6 +46,7 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
     [court, setCourt] = useState("all"),
     [status, setStatus] = useState(""),
     [selected, setSelected] = useState<Item | null>(null),
+    [savingSelected, setSavingSelected] = useState(false),
     [history, setHistory] = useState<Item[][]>([]),
     [future, setFuture] = useState<Item[][]>([]),
     [first, setFirst] = useState("09:00"),
@@ -492,23 +493,30 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
           </label>
           <button
             className="btn primary"
+            disabled={savingSelected}
             onClick={async () => {
+              if (savingSelected) return;
+              setSavingSelected(true);
               const match = selected.item_type === "match" ? by[selected.match_id || ""] : null;
-              if (match) {
-                const assigned = (match.referee_ids || []).filter(Boolean);
-                try {
-              const changes: Record<string, unknown> = { match_date: selected.match_date || null, start_time: selected.start_time || null };
+              try {
+                if (match) {
+                  const assigned = (match.referee_ids || []).filter(Boolean);
+                  const changes: Record<string, unknown> = { match_date: selected.match_date || null, start_time: selected.start_time || null };
                   if (assigned.length) changes.referee_ids = assigned;
                   if (match.version !== undefined) changes.version = match.version;
                   await api(`/matches/${match.id}`, { method: "PUT", body: JSON.stringify(changes) });
-                } catch (e: unknown) { setStatus(errorMessage(e)); return; }
+                }
+                await save(items.map((i) => (i.id === selected.id ? selected : i)));
+                await load();
+                setSelected(null);
+              } catch (e: unknown) {
+                setStatus(errorMessage(e));
+              } finally {
+                setSavingSelected(false);
               }
-              await save(items.map((i) => (i.id === selected.id ? selected : i)));
-              await load();
-              setSelected(null);
             }}
           >
-            Save
+            {savingSelected ? "Saving…" : "Save"}
           </button>
           <button className="btn" onClick={() => setSelected(null)}>
             Close
