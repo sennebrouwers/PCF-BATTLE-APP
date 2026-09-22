@@ -872,12 +872,15 @@ function useData<T = Row[]>(path: string, refresh = 0, poll = false) {
   const [data, setData] = useState<T>([] as unknown as T),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
-  const requestId = useRef(0);
+  const requestId = useRef(0), abortRef = useRef<AbortController | null>(null);
   const load = useCallback(
     () => {
       const currentRequest = ++requestId.current;
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
       setLoading(true);
-      return api(path)
+      return api(path, { signal: controller.signal })
         .then((value) => {
           if (currentRequest !== requestId.current) return;
           setData(value);
@@ -900,7 +903,7 @@ function useData<T = Row[]>(path: string, refresh = 0, poll = false) {
     const t = setInterval(() => {
       if (!document.hidden) load();
     }, 10000);
-    return () => clearInterval(t);
+    return () => { clearInterval(t); abortRef.current?.abort(); };
   }, [load, refresh, poll]);
   return { data, loading, error, load };
 }
