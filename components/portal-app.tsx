@@ -128,22 +128,90 @@ const recentGetResponses = new Map<
   string,
   { expiresAt: number; data: unknown }
 >();
-const GET_CACHE_MS = 1500;
-function resetSubmittingControls() {
-  document
-    .querySelectorAll<HTMLButtonElement>('button[data-submitting="true"]')
-    .forEach((button) => {
-      button.dataset.submitting = "false";
-      button.disabled = false;
-      button.removeAttribute("aria-busy");
-      if (button.textContent === "Saving…") button.textContent = "Save";
-    });
-  document
-    .querySelectorAll<HTMLFormElement>('form[data-submitting="true"]')
-    .forEach((form) => delete form.dataset.submitting);
+const GET_CACHE_MS = 30_000;
+const MAX_CACHE_ENTRIES = 32;
+const CACHEABLE_GETS = new Set(["/tournaments", "/links"]);
+
+class ApiError extends Error {
+  status: number;
+  code?: string;
+  fields?: Record<string, string>;
+  requestId?: string;
+
+  constructor(message: string, response: Response, details: Record<string, unknown> = {}) {
+    super(message);
+    this.name = "ApiError";
+    this.status = response.status;
+    this.code = typeof details.code === "string" ? details.code : undefined;
+    this.fields = details.fields && typeof details.fields === "object" ? details.fields as Record<string, string> : undefined;
+    this.requestId = response.headers.get("x-request-id") || undefined;
+  }
 }
+
+function invalidateGetCache(paths?: string[]) {
+  if (!paths?.length) {
+    recentGetResponses.clear();
+    return;
+  }
+  for (const key of recentGetResponses.keys()) {
+    if (paths.some((path) => key === path || key.startsWith(`${path}?`))) recentGetResponses.delete(key);
+  }
+}
+
+function cacheDependencies(path: string) {
+  if (path.startsWith("/teams") || path.startsWith("/tournaments") || path.startsWith("/links")) return ["/tournaments", "/links"];
+  return undefined;
+}
+
+function rememberGet(path: string, data: unknown) {
+  if (recentGetResponses.size >= MAX_CACHE_ENTRIES) {
+    const oldest = recentGetResponses.keys().next().value;
+    if (oldest) recentGetResponses.delete(oldest);
+  }
+  recentGetResponses.set(path, { expiresAt: Date.now() + GET_CACHE_MS, data });
+}
+
+function combineSignals(signal: AbortSignal | null | undefined, timeoutMs: number) {
+  const timeoutController = new AbortController();
+  const timer = window.setTimeout(() => timeoutController.abort(), timeoutMs);
+  if (!signal) return { signal: timeoutController.signal, cancel: () => window.clearTimeout(timer) };
+  if (typeof AbortSignal.any === "function") {
+    return { signal: AbortSignal.any([signal, timeoutController.signal]), cancel: () => window.clearTimeout(timer) };
+  }
+  const controller = new AbortController();
+  const abort = () => controller.abort(signal.reason);
+  if (signal.aborted || timeoutController.signal.aborted) abort();
+  signal.addEventListener("abort", abort, { once: true });
+  timeoutController.signal.addEventListener("abort", () => controller.abort(), { once: true });
+  return { signal: controller.signal, cancel: () => window.clearTimeout(timer) };
+}
+
+async function parseApiResponse(response: Response) {
+  const contentType = response.headers.get("content-type") || "";
+  if (response.status === 204) return null;
+  if (contentType.includes("application/json")) return response.json().catch(() => ({}));
+  return response.text();
+}
+
+async function fetchWithRetry(url: string, init: RequestInit, retries: number) {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      const response = await fetch(url, init);
+      if (response.status >= 500 && response.status < 600 && attempt < retries) {
+        await new Promise((resolve) => window.setTimeout(resolve, 150 * 2 ** attempt + Math.random() * 100));
+        continue;
+      }
+      return response;
+    } catch (error) {
+      if (init.signal?.aborted || attempt >= retries) throw error;
+      await new Promise((resolve) => window.setTimeout(resolve, 150 * 2 ** attempt + Math.random() * 100));
+    }
+  }
+}
+
 async function api(path: string, options: RequestInit = {}) {
   const method = String(options.method || "GET").toUpperCase();
+  const cacheable = method === "GET" && CACHEABLE_GETS.has(path);
   if (method === "GET") {
     const cached = recentGetResponses.get(path);
     if (cached && cached.expiresAt > Date.now()) return cached.data;
@@ -154,35 +222,34 @@ async function api(path: string, options: RequestInit = {}) {
   const request = (async () => {
     const headers = new Headers(options.headers);
     if (options.body) headers.set("Content-Type", "application/json");
-    const controller = new AbortController();
     const timeout = method === "GET" ? 15000 : 10000;
-    const timer = window.setTimeout(() => controller.abort(), timeout);
+    const combined = combineSignals(options.signal, timeout);
     let res: Response;
     try {
-      res = await fetch(`/api${path}`, {
+      res = await fetchWithRetry(`/api${path}`, {
         ...options,
         headers,
         credentials: "same-origin",
-        signal: options.signal || controller.signal,
-      });
+        signal: combined.signal,
+      }, method === "GET" ? 2 : 0);
     } finally {
-      window.clearTimeout(timer);
+      combined.cancel();
     }
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || "Something went wrong");
+    const data = await parseApiResponse(res);
+    if (!res.ok) {
+      const details = typeof data === "object" && data !== null ? data as Record<string, unknown> : {};
+      throw new ApiError(typeof details.error === "string" ? details.error : `Request failed (${res.status})`, res, details);
+    }
     return data;
   })();
   if (method !== "GET") {
-    recentGetResponses.clear();
-    return request.finally(resetSubmittingControls);
+    invalidateGetCache(cacheDependencies(path));
+    return request;
   }
   pendingGetRequests.set(path, request);
   try {
     const data = await request;
-    recentGetResponses.set(path, {
-      expiresAt: Date.now() + GET_CACHE_MS,
-      data,
-    });
+    if (cacheable) rememberGet(path, data);
     return data;
   } finally {
     if (pendingGetRequests.get(path) === request)
@@ -805,18 +872,26 @@ function useData<T = Row[]>(path: string, refresh = 0, poll = false) {
   const [data, setData] = useState<T>([] as unknown as T),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
+  const requestId = useRef(0);
   const load = useCallback(
-    () =>
-      api(path)
+    () => {
+      const currentRequest = ++requestId.current;
+      setLoading(true);
+      return api(path)
         .then((value) => {
+          if (currentRequest !== requestId.current) return;
           setData(value);
           setError("");
         })
         .catch((e: Error) => {
+          if (currentRequest !== requestId.current) return;
           setError(e.message);
           toast.error(e.message);
         })
-        .finally(() => setLoading(false)),
+        .finally(() => {
+          if (currentRequest === requestId.current) setLoading(false);
+        });
+    },
     [path],
   );
   useEffect(() => {
