@@ -1466,6 +1466,23 @@ export async function GET(
           .then((r: any) => r.results), []),
         safe("players", db().prepare("SELECT id,team_id,name,number,photo,role,staff_role FROM delegation_members WHERE role IN ('PLAYER','COACH') OR staff_role IN ('COACH','ASSISTANT_COACH') ORDER BY team_id,number,name").all().then((r: any) => r.results), []),
       ]);
+      const groupRows = (group: string) => (table as any[]).filter((row) => String(row.group_id || "").replace(/^group-/i, "").toUpperCase() === group);
+      const groupA = groupRows("A"), groupB = groupRows("B");
+      const expectedKnockout: Record<string, [string | undefined, string | undefined]> = {
+        "KO:5a": [groupA[2]?.id, groupB[3]?.id],
+        "KO:5b": [groupB[2]?.id, groupA[3]?.id],
+        "KO:sf1": [groupA[0]?.id, groupB[1]?.id],
+        "KO:sf2": [groupB[0]?.id, groupA[1]?.id],
+      };
+      for (const match of matches as any[]) {
+        const expected = expectedKnockout[String(match.group_id || "")];
+        if (!expected || match.status !== "scheduled" || match.confirmed || !expected[0] || !expected[1]) continue;
+        if (match.home_team_id !== expected[0] || match.away_team_id !== expected[1]) {
+          match.home_team_id = expected[0];
+          match.away_team_id = expected[1];
+          await db().prepare("UPDATE matches SET home_team_id=?,away_team_id=?,updated_at=? WHERE id=? AND status='scheduled' AND confirmed=0").bind(expected[0], expected[1], now(), match.id).run();
+        }
+      }
       const payload = {
         tournaments,
         teams,
