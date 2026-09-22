@@ -4391,6 +4391,7 @@ input:not([type="checkbox"]):not([type="radio"]), select { min-height:var(--cont
 .scheduled-bracket-match .meta span:nth-child(2) { flex:1; }
 .scheduled-bracket-match .meta .bracket-stage-sticker { flex:0 0 auto; margin:0; font-size:11px; }
 .scheduled-bracket-match .versus { padding:24px 0 10px; }
+.bracket-public-match .versus .mark { display:grid; width:34px; height:34px; padding:0; flex:0 0 34px; }
 .scheduled-bracket-match .versus > div { display:flex; align-items:center; gap:9px; font-size:14px; }
 .scheduled-bracket-match .versus > div:last-child { justify-content:flex-end; text-align:right; }
 .scheduled-bracket-match .versus > strong { display:flex; gap:8px; font-size:24px; }

@@ -1060,7 +1060,7 @@ function BracketSchedule({ data }: { data: PublicBracketData }) {
           )[pos - 1]
         : null,
     name = (team: BracketParticipant | null | undefined, fallback: string) => team?.name || fallback,
-    logo = (team: BracketParticipant | null | undefined) => (team && "logo" in team && typeof team.logo === "string" && team.logo ? <img src={team.logo} alt="" /> : null),
+    logo = (team: BracketParticipant | null | undefined) => (team && "logo" in team && typeof team.logo === "string" && team.logo ? <span className="mark team-logo-mark"><img src={team.logo} alt="" /></span> : null),
     matchAt = (time: string) =>
       data.matches.find(
         (m: Match) =>
