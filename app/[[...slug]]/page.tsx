@@ -1159,21 +1159,18 @@ function BracketSchedule({ data }: { data: PublicBracketData }) {
   ];
   return (
     <div className="scheduled-bracket">
-      {games.map((g) => {
-        const sticker = g.title.toLowerCase().includes("semi") ? "Semi-final" : g.title.toLowerCase().includes("grand") ? "Final" : g.title.toLowerCase().includes("7th") ? "7th/8th place" : g.title.toLowerCase().includes("5th") ? "5th/6th place" : g.title.toLowerCase().includes("3rd") ? "3rd/4th place" : "Intermediate";
-        const matchDate = g.m?.match_date;
-        return <article className={`match bracket-public-match ${g.m?.status || "scheduled"}`} key={g.time}>
-          <div className="meta">
-            <Status s={g.m?.status || "scheduled"} />
-            <span>{matchDate ? `${new Date(`${matchDate}T12:00:00`).toLocaleDateString("en-BE")} · ` : ""}{g.m?.start_time || g.time} · {g.m?.court || "Court 1"}</span>
-            <small className={`bracket-stage-sticker ${sticker === "Semi-final" ? "semi" : sticker.includes("place") ? "place" : sticker === "Final" ? "final" : "intermediate"}`}>{sticker}</small>
-          </div>
-          <div className="versus">
-            <div>{g.a ? <LiveMark team={g.a as Team} /> : null}<b>{name(g.a, g.aText)}</b></div>
-            <strong>{g.m ? g.m.home_score || 0 : "–"}<i>—</i>{g.m ? g.m.away_score || 0 : "–"}</strong>
-            <div><b>{name(g.b, g.bText)}</b>{g.b ? <LiveMark team={g.b as Team} /> : null}</div>
-          </div>
-        </article>;
+      {games.map((g, index) => {
+        const groupId = ["KO:5a", "KO:5b", "KO:sf1", "KO:sf2", "KO:7th", "KO:5th", "KO:3rd", "KO:final"][index];
+        const match = g.m || {
+          id: `public-${groupId}`,
+          status: "scheduled",
+          group_id: groupId,
+          start_time: g.time,
+          court: "Court 1",
+          home_team_id: `placeholder:${groupId}:home`,
+          away_team_id: `placeholder:${groupId}:away`,
+        };
+        return <LiveMatch key={match.id} match={match as Match} teams={data.teams} referees={data.referees} />;
       })}
     </div>
   );

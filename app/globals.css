@@ -4352,54 +4352,6 @@ input:not([type="checkbox"]):not([type="radio"]), select { min-height:var(--cont
 .admin-bracket-list footer button { padding:8px 16px; border:1px solid #efacd0; border-radius:999px; color:#b21d69; background:#fff4f9; }
 @media (max-width:600px) { .schedule-field article { grid-template-columns:64px 1fr; padding:14px; } .schedule-field footer { gap:25px; } }
 @media (max-width:600px) { .admin-bracket-list article.bracket-break { grid-template-columns:60px 1fr; } .admin-bracket-list article.bracket-break > div { align-items:flex-start; flex-direction:column; gap:8px; } .admin-bracket-list article.bracket-break .break-edit { grid-column:2; justify-self:start; } .break-fields { flex-wrap:wrap; } }
-.scheduled-bracket article {
-  display: block;
-}
-.scheduled-bracket article > time {
-  display: grid;
-  place-items: start center;
-  padding-top: 16px;
-  color: var(--ink);
-  font-size: 1.05rem;
-  font-weight: 900;
-}
-.scheduled-bracket article > div {
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 14px;
-  background: var(--card);
-}
-.scheduled-bracket h3 {
-  margin: 0 0 10px;
-  font-size: 16px;
-}
-.bracket-stage-sticker { display:inline-block; margin:0 0 8px; padding:7px 14px; border-radius:999px; color:#b65b00; background:#fff1d8; font-size:.82rem; font-weight:700; }
-.bracket-stage-sticker.semi { color:#08766d; background:#e1f3f1; }
-.bracket-stage-sticker.place { color:#5270b4; background:#e9edfa; }
-.bracket-stage-sticker.final { color:#68422f; background:#f2ece9; }
-.scheduled-bracket-match { display:block !important; padding:18px; margin:0 0 13px; border:1px solid var(--line); border-radius:var(--radius); background:var(--card); }
-.bracket-public-match { padding:18px; }
-.scheduled-bracket .bracket-public-match > div { width:auto; min-width:0; border:0; border-radius:0; padding:0; background:transparent; }
-.bracket-public-match .meta { flex-wrap:wrap; }
-.bracket-public-match .meta > span:nth-child(2) { flex:1 1 auto; min-width:180px; }
-.bracket-public-match .meta .bracket-stage-sticker { margin:0; }
-.scheduled-bracket-match .meta { display:flex; align-items:center; gap:14px; }
-.scheduled-bracket-match .meta span { display:inline; width:auto; padding:0; font-size:12px; }
-.scheduled-bracket-match .meta span:nth-child(2) { flex:1; }
-.scheduled-bracket-match .meta .bracket-stage-sticker { flex:0 0 auto; margin:0; font-size:11px; }
-.scheduled-bracket-match .versus { padding:24px 0 10px; }
-.bracket-public-match .versus .mark { display:grid; width:34px; height:34px; padding:0; flex:0 0 34px; }
-.scheduled-bracket-match .versus > div { display:flex; align-items:center; gap:9px; font-size:14px; }
-.scheduled-bracket-match .versus > div:last-child { justify-content:flex-end; text-align:right; }
-.scheduled-bracket-match .versus > strong { display:flex; gap:8px; font-size:24px; }
-.scheduled-bracket span {
-  display: inline;
-  padding: 0;
-}
-.scheduled-bracket .meta .status { display:inline-flex; align-items:center; padding:5px 9px; }
 .public-group-sticker { display:inline-block; padding:5px 10px; border-radius:999px; color:#b65b00; background:#fff1d8; font-weight:800; }
 .public-group-sticker:not(:is(:empty)) { font-size:12px; }
 .public-group-sticker.group-b { color:#3c5b6b; background:#e9eef1; }
@@ -4416,11 +4368,6 @@ input:not([type="checkbox"]):not([type="radio"]), select { min-height:var(--cont
   color: var(--muted);
   font-size: 12px;
   font-style: normal;
-}
-.scheduled-bracket small {
-  text-transform: uppercase;
-  color: var(--pink);
-  font-weight: 800;
 }
 .team-photo-preview {
   width: min(100%, 420px);
@@ -4459,9 +4406,6 @@ input:not([type="checkbox"]):not([type="radio"]), select { min-height:var(--cont
   .people-grid {
     grid-template-columns: 1fr 1fr;
   }
-  .scheduled-bracket article {
-    display:block;
-  }
   .reference-copy {
     padding-top: 34px;
   }
@@ -4482,9 +4426,6 @@ input:not([type="checkbox"]):not([type="radio"]), select { min-height:var(--cont
 @media (max-width: 480px) {
   .people-grid {
     grid-template-columns: 1fr;
-  }
-  .scheduled-bracket article {
-    display:block;
   }
   .about-page .block {
     padding-left: 0;
