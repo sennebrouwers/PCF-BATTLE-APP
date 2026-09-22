@@ -2806,7 +2806,12 @@ export async function POST(
       for (let minute = startMinutes; minute + gameMinutes <= endMinutes; minute += gameMinutes + pauseMinutes) times.push(`${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`);
       if (!times.length) return out({ error: "The playing window is shorter than one game" }, 422);
       const courts = Array.isArray(body.courts) && body.courts.length ? body.courts : ["Court 1", "Court 2"];
-      const slots = dates.flatMap((date: string) => times.map((time: string) => ({ date, time })));
+      const slots = times.map((time: string) => ({ date: dates[0], time }));
+      const firstDay = dates[0];
+      await db().batch([
+        db().prepare("UPDATE matches SET match_date=?,updated_at=? WHERE tournament_id=? AND status='scheduled' AND confirmed=0 AND upper(replace(group_id,'group-','')) IN ('A','B')").bind(firstDay, now(), tournament.id),
+        db().prepare("UPDATE schedule_items SET match_date=?,updated_at=? WHERE tournament_id=? AND active=1 AND match_id IN (SELECT id FROM matches WHERE tournament_id=? AND status='scheduled' AND confirmed=0 AND upper(replace(group_id,'group-','')) IN ('A','B'))").bind(firstDay, now(), tournament.id, tournament.id),
+      ]);
       const existing: any[] = (await db().prepare("SELECT * FROM matches WHERE tournament_id=?").bind(tournament.id).all()).results as any[];
       for (const match of existing) if (match.home_team_id && match.home_team_id === match.away_team_id && match.status === "scheduled" && !match.confirmed) {
         await db().prepare("DELETE FROM schedule_items WHERE match_id=?").bind(match.id).run();
@@ -2850,7 +2855,7 @@ export async function POST(
               candidate++;
             }
             if (!slots[candidate]) return out({ error: "Not enough playing slots and courts for all group matches", created: created.length }, 422);
-            const slot = slots[candidate], court = courts[courtIndex], id = uuid();
+              const slot = slots[candidate], court = courts[courtIndex], id = uuid();
             occupied.add(`${slot.date}|${slot.time}|${court}`);
             const readyAt = timeToMinutes(slot.time) + gameMinutes + minimumRest;
             teamReady.set(`${slot.date}|${game.home}`, readyAt);
