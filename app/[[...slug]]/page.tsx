@@ -361,6 +361,19 @@ function LiveMark({ team }: { team?: Team }) {
     </span>
   );
 }
+function knockoutLabel(groupId?: string | null) {
+  const labels: Record<string, string> = {
+    "ko:5a": "Intermediate 1",
+    "ko:5b": "Intermediate 2",
+    "ko:sf1": "Semi-final 1",
+    "ko:sf2": "Semi-final 2",
+    "ko:7th": "7th/8th place match",
+    "ko:5th": "5th/6th place match",
+    "ko:3rd": "3rd/4th place match",
+    "ko:final": "Final",
+  };
+  return labels[String(groupId || "").toLowerCase()] || "Knockout match";
+}
 function LiveMatch({ match, teams: all, referees = [] }: { match: Match; teams: Team[]; referees?: Referee[] }) {
   const { language } = usePublicLanguage();
   const copy = publicCopy[language];
@@ -375,7 +388,7 @@ function LiveMatch({ match, teams: all, referees = [] }: { match: Match; teams: 
         <span>
           {match.match_date ? `${new Date(`${match.match_date}T12:00:00`).toLocaleDateString("en-BE")} · ` : ""}{match.start_time || "TBD"} · {match.court || "Court TBD"}
         </span>
-        <span className={`public-group-sticker ${String(match.group_id || "").replace(/^group-/i, "").toLowerCase() === "b" ? "group-b" : ""}`}>{String(match.group_id || "").toLowerCase().startsWith("ko:") ? (["ko:5a","ko:5b","ko:sf1","ko:sf2"].includes(String(match.group_id).toLowerCase()) ? copy.playoffs : copy.finals) : `${copy.groupLabel} ${String(match.group_id || "—").replace(/^group-/i, "")}`}</span>
+        <span className={`public-group-sticker ${String(match.group_id || "").replace(/^group-/i, "").toLowerCase() === "b" ? "group-b" : ""}`}>{String(match.group_id || "").toLowerCase().startsWith("ko:") ? knockoutLabel(match.group_id) : `${copy.groupLabel} ${String(match.group_id || "—").replace(/^group-/i, "")}`}</span>
       </div>
       <div className="versus">
         <div>
