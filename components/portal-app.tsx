@@ -5116,6 +5116,7 @@ function Finance({
         invoices.find((invoice: Row) => invoice.id === editing?.invoice_id)
           ?.invoice_number ||
         "";
+      body.idempotency_key = crypto.randomUUID();
       setEditing(null);
       await api("/finance/record-payment", {
         method: "POST",
@@ -5616,6 +5617,7 @@ function AdminFinanceSimple({ refresh }: { refresh: number }) {
         invoices.find((invoice: Row) => invoice.id === editing?.invoice_id)
           ?.invoice_number ||
         "";
+      body.idempotency_key = crypto.randomUUID();
       setEditing(null);
       await api("/finance/record-payment", {
         method: "POST",
@@ -6766,7 +6768,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                   type="url"
                   defaultValue={editing?.website}
                 />
-                <AddressFields team={editing} />
+                <AddressFields team={editing || undefined} />
                 <Field label="Team logo file" name="logo_file" type="file" />
                 <Field
                   label="Team photo file"

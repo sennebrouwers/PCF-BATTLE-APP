@@ -539,7 +539,6 @@ function TournamentHeroDetails({ tournament }: { tournament?: Tournament }) {
   );
 }
 function SponsorBanner({ sponsors }: { sponsors: PublicLink[] }) {
-  if (!sponsors.length) return null;
   const looping = sponsors.length > 1;
   const items = looping ? [...sponsors, ...sponsors] : sponsors;
   const trackRef = useRef<HTMLDivElement>(null);
@@ -563,6 +562,7 @@ function SponsorBanner({ sponsors }: { sponsors: PublicLink[] }) {
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
   }, [looping, sponsors.length]);
+  if (!sponsors.length) return null;
   return (
     <section
       className="sponsor-banner sponsor-carousel-v3"

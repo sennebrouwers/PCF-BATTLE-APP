@@ -25,7 +25,6 @@ Scripts that need writable project-scoped home, npm, XDG, and temporary paths us
 - `vite.config.ts` simulates declared bindings for local development
 - `db/index.ts` reads the D1 binding from the Cloudflare Worker environment
 - `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
 - `drizzle.config.ts` supports local migration generation when needed
 
 ## Workspace Auth Headers

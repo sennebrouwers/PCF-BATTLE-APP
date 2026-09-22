@@ -89,7 +89,9 @@ async function ensureFinanceSchema() {
   financeSchemaReady = (async () => {
     await db().prepare("CREATE TABLE IF NOT EXISTS finance_settings (id text PRIMARY KEY NOT NULL,price_per_person real DEFAULT 325,deposit_percentage real DEFAULT 30,deposit_due_days integer DEFAULT 30,final_due_days integer DEFAULT 30,legal_name text,address text,vat_number text,email text,iban text,bic text,bank_name text,updated_at text NOT NULL)").run();
     await db().prepare("CREATE TABLE IF NOT EXISTS invoices (id text PRIMARY KEY NOT NULL,team_id text NOT NULL,invoice_number text NOT NULL UNIQUE,invoice_type text NOT NULL,participant_count integer NOT NULL,unit_price real NOT NULL,subtotal real NOT NULL,deposit_percentage real NOT NULL,total_amount real NOT NULL,issued_at text NOT NULL,due_at text,status text NOT NULL DEFAULT 'issued',snapshot text NOT NULL,created_at text NOT NULL,updated_at text NOT NULL)").run();
-    await db().prepare("CREATE TABLE IF NOT EXISTS finance_payments (id text PRIMARY KEY NOT NULL,invoice_id text NOT NULL,team_id text NOT NULL,amount real NOT NULL,method text NOT NULL,reference text,received_at text NOT NULL,note text,provider_payment_id text UNIQUE,created_at text NOT NULL,updated_at text NOT NULL)").run();
+    await db().prepare("CREATE TABLE IF NOT EXISTS finance_payments (id text PRIMARY KEY NOT NULL,invoice_id text NOT NULL,team_id text NOT NULL,amount real NOT NULL,method text NOT NULL,reference text,received_at text NOT NULL,note text,provider_payment_id text UNIQUE,idempotency_key text,created_at text NOT NULL,updated_at text NOT NULL)").run();
+    try { await db().prepare("ALTER TABLE finance_payments ADD COLUMN idempotency_key text").run(); } catch { /* already migrated */ }
+    try { await db().prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_finance_payments_idempotency ON finance_payments(idempotency_key) WHERE idempotency_key IS NOT NULL").run(); } catch { /* older SQLite compatibility */ }
     await db().prepare("INSERT OR IGNORE INTO finance_settings (id,updated_at) VALUES ('default',?)").bind(now()).run();
     await db().prepare("UPDATE finance_settings SET final_due_days=30 WHERE id='default' AND (final_due_days IS NULL OR final_due_days=90)").run();
   })();
@@ -1938,11 +1940,20 @@ export async function POST(
       if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
       const invoiceId = String(body.invoice_id || ""), amount = roundMoney(Number(body.amount));
       if (!invoiceId || !Number.isFinite(amount) || amount <= 0) return out({ error: "Invoice and a positive amount are required" }, 422);
+      await ensureFinanceSchema();
+      const idempotencyKey = String(body.idempotency_key || req.headers.get("Idempotency-Key") || "").trim();
+      if (!idempotencyKey || idempotencyKey.length > 128) return out({ error: "A valid payment request key is required" }, 422);
+      const existingPayment: any = await db().prepare("SELECT id,invoice_id FROM finance_payments WHERE idempotency_key=? LIMIT 1").bind(idempotencyKey).first();
+      if (existingPayment) {
+        const existingPaid: any = await db().prepare("SELECT COALESCE(SUM(amount),0) total FROM finance_payments WHERE invoice_id=?").bind(existingPayment.invoice_id).first();
+        const existingInvoice: any = await db().prepare("SELECT total_amount FROM invoices WHERE id=?").bind(existingPayment.invoice_id).first();
+        return out({ ok: true, duplicate: true, payment_id: existingPayment.id, paid: roundMoney(Number(existingPaid?.total || 0)), outstanding: roundMoney(Math.max(0, Number(existingInvoice?.total_amount || 0) - Number(existingPaid?.total || 0))) });
+      }
       const invoice: any = await db().prepare("SELECT * FROM invoices WHERE id=?").bind(invoiceId).first();
       if (!invoice) return out({ error: "Invoice not found" }, 404);
       const paymentId = uuid();
       const timestamp = now();
-      const payment = db().prepare("INSERT INTO finance_payments (id,invoice_id,team_id,amount,method,reference,received_at,note,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)").bind(paymentId, invoiceId, invoice.team_id, amount, "BANK_TRANSFER", String(body.reference || "").trim() || null, body.received_at || timestamp, String(body.note || "").trim() || null, timestamp, timestamp);
+      const payment = db().prepare("INSERT INTO finance_payments (id,invoice_id,team_id,amount,method,reference,received_at,note,idempotency_key,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)").bind(paymentId, invoiceId, invoice.team_id, amount, "BANK_TRANSFER", String(body.reference || "").trim() || null, body.received_at || timestamp, String(body.note || "").trim() || null, idempotencyKey, timestamp, timestamp);
       const paid: any = await db().prepare("SELECT COALESCE(SUM(amount),0) total FROM finance_payments WHERE invoice_id=?").bind(invoiceId).first();
       const paidTotal = roundMoney(Number(paid?.total || 0) + amount), status = paidTotal >= roundMoney(Number(invoice.total_amount)) ? "paid" : "partially_paid";
       await db().batch([payment, db().prepare("UPDATE invoices SET status=?,updated_at=? WHERE id=?").bind(status, timestamp, invoiceId)]);
@@ -1953,6 +1964,7 @@ export async function POST(
           try { snapshot = JSON.parse(String(invoice.snapshot || "{}")); } catch { snapshot = {}; }
           const approved = snapshot.approved_snapshot || {}, pricing = approved.pricing || {}, balanceAmount = roundMoney(Number(pricing.balance || 0));
           if (balanceAmount > 0) {
+            const settings: any = await db().prepare("SELECT final_due_days FROM finance_settings WHERE id='default'").first();
             const balanceId = uuid(), balanceNumber = `${invoice.invoice_number}-BAL`, due = new Date(Date.now() + Number(settings?.final_due_days || 30) * 86400000).toISOString().slice(0, 10);
             await db().prepare("INSERT INTO invoices (id,team_id,invoice_number,invoice_type,participant_count,unit_price,subtotal,deposit_percentage,total_amount,issued_at,due_at,status,snapshot,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(balanceId, invoice.team_id, balanceNumber, "BALANCE", invoice.participant_count, invoice.unit_price, balanceAmount, invoice.deposit_percentage, balanceAmount, timestamp, due, "issued", invoice.snapshot, timestamp, timestamp).run();
           }
