@@ -8254,13 +8254,13 @@ function Documents({ refresh }: { refresh: number }) {
         {links.data
           .filter((l) => l.category !== "Sponsor")
           .map((l) => (
-            <a href={l.url} target="_blank" key={l.id}>
+            <a href={l.url} download key={l.id}>
               <FileText />
               <span>
                 <b>{l.title}</b>
                 <small>{l.description || l.category}</small>
               </span>
-              <ChevronRight />
+              <Download aria-hidden="true" />
             </a>
           ))}
       </div>

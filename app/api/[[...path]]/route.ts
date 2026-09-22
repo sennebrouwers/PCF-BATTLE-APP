@@ -1337,8 +1337,11 @@ export async function GET(
       if (!/^[A-Za-z0-9._-]{1,180}$/.test(objectKey)) return out({ error: "Invalid file reference" }, 400);
       const object = await readBlob(objectKey);
       if (!object) return new NextResponse("Not found", { status: 404 });
-      if (object.contentType === "application/pdf" && (!u || (u.role !== "ADMIN" && !objectKey.startsWith(`${u.id}-`))))
-        return out({ error: u ? "Forbidden" : "Unauthorized" }, u ? 403 : 401);
+      if (object.contentType === "application/pdf") {
+        const sharedResource = (await db().prepare("SELECT id FROM links WHERE url=? AND active=1 LIMIT 1").bind(`/api/files/${objectKey}`).first()) as any;
+        if (!u || (!sharedResource && u.role !== "ADMIN" && !objectKey.startsWith(`${u.id}-`)))
+          return out({ error: u ? "Forbidden" : "Unauthorized" }, u ? 403 : 401);
+      }
       return new NextResponse(object.body, {
         headers: {
           "Content-Type": object.contentType || "application/octet-stream",
