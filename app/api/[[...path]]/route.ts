@@ -852,7 +852,6 @@ async function seed(force = false) {
       "matches",
       "groups",
       "delegation_members",
-      "users",
       "teams",
       "tournaments",
     ])
@@ -2416,10 +2415,14 @@ export async function POST(
       await log(u, "CHANGE_PASSWORD", "user", u.id);
       return out({ ok: true });
     }
-    if (path === "seed")
-      return permit(u, ["ADMIN"])
-        ? out(await seed(Boolean(body.force)))
-        : out({ error: "Forbidden" }, 403);
+    if (path === "seed") {
+      if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
+      if (body.force) {
+        const password = String(body.password || ""), admin: any = await db().prepare("SELECT password FROM users WHERE id=? AND role='ADMIN' AND active=1").bind(u.id).first();
+        if (!password || !admin || !(await verifyPassword(password, String(admin.password || "")))) return out({ error: "Admin password is incorrect" }, 403);
+      }
+      return out(await seed(Boolean(body.force)));
+    }
     if (path === "scoreboard-settings") {
       if (!permit(u, ["ADMIN", "SCOREBOARD"])) return out({ error: "Forbidden" }, 403);
       const tournament: any = await db().prepare("SELECT id FROM tournaments WHERE active=1 LIMIT 1").first();

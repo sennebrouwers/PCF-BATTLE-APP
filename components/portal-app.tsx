@@ -634,38 +634,43 @@ function Confirm({
   title,
   text,
   onConfirm,
+  passwordInput = false,
   children,
 }: {
   title: string;
   text: string;
-  onConfirm: () => Promise<void> | void;
+  onConfirm: (password?: string) => Promise<void> | void;
+  passwordInput?: boolean;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [password, setPassword] = useState("");
   return (
     <>
       <span onClick={() => setOpen(true)}>{children}</span>
       <Modal title={title} open={open} onOpenChange={setOpen}>
         <p>{text}</p>
+        {passwordInput && <Field label="Admin password" name="reset-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" />}
         <div className="form-actions">
           <button className="btn" onClick={() => setOpen(false)}>
             Cancel
           </button>
           <button
             className="btn danger"
-            disabled={busy}
+            disabled={busy || (passwordInput && !password)}
             onClick={async () => {
               setBusy(true);
               try {
-                await onConfirm();
+                await onConfirm(passwordInput ? password : undefined);
+                setPassword("");
                 setOpen(false);
               } finally {
                 setBusy(false);
               }
             }}
           >
-            {busy ? "Working…" : "Confirm"}
+            {busy ? "Working…" : passwordInput ? "Reset securely" : "Confirm"}
           </button>
         </div>
       </Modal>
@@ -7361,11 +7366,12 @@ function SettingsPanel({ reload }: { reload: () => void }) {
           </p>
           <Confirm
             title="Reset all tournament data?"
-            text="This permanently replaces the current tournament data with the original seed."
-            onConfirm={async () => {
+            text="This permanently replaces the current tournament data with the original seed. Your admin login values will be preserved."
+            passwordInput
+            onConfirm={async (password) => {
               await api("/seed", {
                 method: "POST",
-                body: JSON.stringify({ force: true }),
+                body: JSON.stringify({ force: true, password }),
               });
               toast.success("Tournament reset and re-seeded");
               reload();
