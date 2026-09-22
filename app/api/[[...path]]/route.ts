@@ -1052,7 +1052,7 @@ async function seed(force = false) {
           g[2],
           g[3],
           g[4],
-          i % 2 ? "Court 2" : "Court 1",
+          "Court 1",
           g[5],
           JSON.stringify(["ref-1", "ref-2"]),
           g[6],
@@ -1362,6 +1362,10 @@ export async function GET(
       await ensureMvpSchema();
       const tournament: any = await db().prepare("SELECT id FROM tournaments WHERE active=1 LIMIT 1").first();
       if (!tournament) return out({ items: [] });
+      await db().batch([
+        db().prepare("UPDATE matches SET court='Court 1',updated_at=? WHERE tournament_id=? AND (court IS NULL OR court='' OR court!='Court 1')").bind(now(), tournament.id),
+        db().prepare("UPDATE schedule_items SET court='Court 1',updated_at=? WHERE tournament_id=? AND active=1 AND (court IS NULL OR court='' OR court!='Court 1')").bind(now(), tournament.id),
+      ]);
       // Repair legacy corrupt rows at the schedule boundary. These were created by
       // the old group generator before self-match validation existed.
       const corrupt = (await db().prepare("SELECT id FROM matches WHERE tournament_id=? AND home_team_id=away_team_id AND confirmed=0").bind(tournament.id).all()).results as any[];
@@ -2985,6 +2989,7 @@ export async function POST(
           409,
         );
     }
+    if (table === "matches") body.court = "Court 1";
     if (table === "invites") {
       body.code = body.code || secureToken(10);
       body.expires_at =
@@ -3089,8 +3094,8 @@ export async function PUT(
     if (conflicts.length) return out({ error: "Schedule conflicts must be resolved before saving", conflicts }, 409);
     const stamp = now(), statements = body.items.flatMap((item: any, index: number) => {
       if (!item?.id) return [];
-      const result = [db().prepare("UPDATE schedule_items SET sort_order=?,match_date=?,start_time=?,duration_minutes=?,court=?,updated_at=? WHERE id=? AND tournament_id=?").bind(index,item.match_date || null,item.start_time || null,Number(item.duration_minutes || 15),item.court || null,stamp,item.id,tournament.id)];
-      if (item.match_id) result.push(db().prepare("UPDATE matches SET match_date=?,start_time=?,court=?,updated_at=? WHERE id=? AND tournament_id=?").bind(item.match_date || null,item.start_time || null,item.court || null,stamp,item.match_id,tournament.id));
+      const result = [db().prepare("UPDATE schedule_items SET sort_order=?,match_date=?,start_time=?,duration_minutes=?,court=?,updated_at=? WHERE id=? AND tournament_id=?").bind(index,item.match_date || null,item.start_time || null,Number(item.duration_minutes || 15),"Court 1",stamp,item.id,tournament.id)];
+      if (item.match_id) result.push(db().prepare("UPDATE matches SET match_date=?,start_time=?,court=?,updated_at=? WHERE id=? AND tournament_id=?").bind(item.match_date || null,item.start_time || null,"Court 1",stamp,item.match_id,tournament.id));
       return result;
     });
     if (statements.length) await db().batch(statements);
@@ -3260,6 +3265,7 @@ export async function PUT(
     const parts = [body.address_street, body.address_number, body.address_postal_code, body.address_city, body.address_country].filter((value) => String(value || "").trim());
     if (parts.length) body.address = parts.join(" ");
   }
+  if (table === "matches") body.court = "Court 1";
   const cols = resources[table].filter(
     (k) => body[k] !== undefined && k !== "version",
   );

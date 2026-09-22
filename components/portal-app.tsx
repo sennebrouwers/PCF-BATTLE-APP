@@ -2204,6 +2204,9 @@ function Tournament({ refresh }: { refresh: number }) {
               <input
                 type="date"
                 value={scheduleDateInput}
+                onClick={(event) => {
+                  event.currentTarget.showPicker?.();
+                }}
                 onChange={(event) => {
                   const value = event.target.value;
                   setScheduleDateInput(value);
