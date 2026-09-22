@@ -2393,7 +2393,7 @@ header nav a.active:after {
 .action-frame img {
   padding: 0;
   object-fit: cover;
-  object-position: center center;
+  object-position: center 35%;
   transform: none;
   z-index: 1;
 }
