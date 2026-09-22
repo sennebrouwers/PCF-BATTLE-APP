@@ -45,23 +45,18 @@ export default function Gallery() {
     [fullImageLoaded, setFullImageLoaded] = useState(false);
   useEffect(() => {
     let active = true;
-    fetch("/api/tournaments")
-      .then((r) => r.json())
-      .then((tournaments) => {
-        if (!active) return;
-        if (Array.isArray(tournaments))
-          setT((tournaments.find((v: Tournament) => v.active) || tournaments[0] || { id: "" }) as Tournament);
-      })
-      .catch(() => {})
-      .finally(() => active && setSettingsLoading(false));
-    fetch("/api/gallery")
-      .then(async (r) => {
+    Promise.all([
+      fetch("/api/tournaments").then((r) => r.json()),
+      fetch("/api/gallery").then(async (r) => {
         const data = await r.json();
         if (!r.ok) throw new Error(data.error || "Gallery unavailable");
         return data;
-      })
-      .then((gallery) => {
+      }),
+    ])
+      .then(([tournaments, gallery]) => {
         if (!active) return;
+        if (Array.isArray(tournaments))
+          setT((tournaments.find((v: Tournament) => v.active) || tournaments[0] || { id: "" }) as Tournament);
           const items = Array.isArray(gallery)
               ? gallery
               : Array.isArray(gallery.photos)
@@ -80,7 +75,11 @@ export default function Gallery() {
             "The media gallery could not be loaded. Please try again shortly.",
         ),
       )
-      .finally(() => active && setLoading(false));
+      .finally(() => {
+        if (!active) return;
+        setSettingsLoading(false);
+        setLoading(false);
+      });
     return () => {
       active = false;
     };

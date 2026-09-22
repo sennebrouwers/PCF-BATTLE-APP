@@ -1777,8 +1777,7 @@ export async function GET(
     if (path === "team-onboardings") {
       if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
       const teams = (await db().prepare("SELECT id FROM teams ORDER BY name").all()).results as { id: string }[];
-      const statuses = [];
-      for (const team of teams) { const status = await buildOnboardingStatus(team.id); if (status) statuses.push(status); }
+      const statuses = (await Promise.all(teams.map((team) => buildOnboardingStatus(team.id)))).filter(Boolean);
       return out(statuses);
     }
     if (path === "team-reviews") {
