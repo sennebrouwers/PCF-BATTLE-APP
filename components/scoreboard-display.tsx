@@ -44,7 +44,10 @@ export default function ScoreboardDisplay() {
   useEffect(() => {
     const matchId = new URLSearchParams(location.search).get("match") || "";
     let stopped = false;
+    let refreshBusy = false;
     const load = async () => {
+      if (document.hidden || refreshBusy) return;
+      refreshBusy = true;
       try {
         const response = await fetch(`/api/scoreboard-state${matchId ? `?matchId=${encodeURIComponent(matchId)}` : ""}`, { cache: "no-store", credentials: "same-origin" });
         if (response.status === 401 || response.status === 403)
@@ -53,10 +56,13 @@ export default function ScoreboardDisplay() {
         const next = await response.json();
         if (!stopped) { setState(next); setOffline(false); }
       } catch { if (!stopped) setOffline(true); }
+      finally { refreshBusy = false; }
     };
     load();
-    const sync = setInterval(load, 750), second = setInterval(() => setTick((value) => value + 1), 250);
-    return () => { stopped = true; clearInterval(sync); clearInterval(second); };
+    const sync = setInterval(load, 2000), second = setInterval(() => setTick((value) => value + 1), 250);
+    const onVisibility = () => { if (!document.hidden) void load(); };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => { stopped = true; clearInterval(sync); clearInterval(second); document.removeEventListener("visibilitychange", onVisibility); };
   }, []);
   const match = state?.match || null,
     home = state?.teams.find((team) => team.id === match?.home_team_id),

@@ -444,7 +444,8 @@ function usePublicData(): PublicData {
     }, interval);
     const liveTimer = location.pathname === "/" || location.pathname.startsWith("/tournament/")
       ? setInterval(async () => {
-          if (document.hidden) return;
+          if (document.hidden || refreshBusy) return;
+          refreshBusy = true;
           try {
             const { match } = await api("/live-state");
             if (match) setData((current) => ({
@@ -455,12 +456,23 @@ function usePublicData(): PublicData {
               updatedAt: new Date().toISOString(),
             }));
           } catch {}
-        }, 1000)
+          finally { refreshBusy = false; }
+        }, 2000)
       : undefined;
+    const onVisibility = () => {
+      if (!document.hidden) {
+        void api("/live-state").then(({ match }) => {
+          if (!match || !mounted) return;
+          setData((current) => ({ ...current, matches: current.matches.some((item) => item.id === match.id) ? current.matches.map((item) => item.id === match.id ? match : item) : [match, ...current.matches], updatedAt: new Date().toISOString() }));
+        }).catch(() => undefined);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       mounted = false;
       clearInterval(refreshTimer);
       if (liveTimer) clearInterval(liveTimer);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
   return data;

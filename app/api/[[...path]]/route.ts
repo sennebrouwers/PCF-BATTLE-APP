@@ -117,7 +117,6 @@ async function ensureScheduleSchema() {
   for (const statement of [
     "ALTER TABLE schedule_items ADD COLUMN court text",
     "ALTER TABLE tournaments ADD COLUMN schedule_start_time text DEFAULT '09:00'",
-    "ALTER TABLE tournaments ADD COLUMN schedule_changeover_minutes integer DEFAULT 5",
     "ALTER TABLE tournaments ADD COLUMN schedule_half_duration_minutes integer DEFAULT 15",
     "ALTER TABLE tournaments ADD COLUMN schedule_min_rest_minutes integer DEFAULT 10",
     "ALTER TABLE tournaments ADD COLUMN format_rules text",
@@ -1192,6 +1191,11 @@ async function resolveBracketProgression(tournamentId: string) {
     const winner = Number(sourceMatch.home_score) >= Number(sourceMatch.away_score) ? sourceMatch.home_team_id : sourceMatch.away_team_id;
     return source.type === "MATCH_LOSER" ? (winner === sourceMatch.home_team_id ? sourceMatch.away_team_id : sourceMatch.home_team_id) : winner;
   };
+  const resolvedTeamIds = [...new Set(matches.flatMap((match: any) => [match.home_team_id, match.away_team_id]).filter((id: unknown): id is string => typeof id === "string" && !id.startsWith("source:") && !id.startsWith("dependency:")))] as string[];
+  const teamNameRows = resolvedTeamIds.length
+    ? (await db().prepare(`SELECT id,name FROM teams WHERE id IN (${resolvedTeamIds.map(() => "?").join(",")})`).bind(...resolvedTeamIds).all()).results as any[]
+    : [];
+  const teamNames = new Map(teamNameRows.map((row: any) => [row.id, row.name]));
   for (const game of games) {
     const pair = sources[game.key];
     if (!pair || !matchByKey[game.key]) continue;
@@ -1201,7 +1205,7 @@ async function resolveBracketProgression(tournamentId: string) {
     const stored = resolved.map((id, index) => id || match[index === 0 ? "home_team_id" : "away_team_id"] || `dependency:${game.key}:${index === 0 ? "home" : "away"}`);
     await db().prepare("UPDATE matches SET home_team_id=?,away_team_id=?,updated_at=? WHERE id=?").bind(stored[0], stored[1], now(), match.id).run();
     const display = (id: string | null, source: any) => id ? (matches.find((item) => item.home_team_id === id || item.away_team_id === id)?.home_team_id === id ? null : null) : source.type === "GROUP_POSITION" ? `${source.position}th Group ${source.group}` : `${source.type === "MATCH_WINNER" ? "Winner" : "Loser"} ${source.match.replace("KO:", "")}`;
-    const names = await Promise.all(resolved.map(async (id, index) => id ? ((await db().prepare("SELECT name FROM teams WHERE id=?").bind(id).first<any>())?.name || id) : display(null, pair[index])));
+    const names = resolved.map((id, index) => id ? (teamNames.get(id) || id) : display(null, pair[index]));
     const updateData = (list: any[]) => list.map((item) => item.key === game.key ? { ...item, a: names[0], b: names[1], dependencies: pair } : item);
     data.consolation = updateData(data.consolation || []); data.championship = updateData(data.championship || []); data.finals = updateData(data.finals || []);
   }

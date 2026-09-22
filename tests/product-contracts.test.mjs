@@ -142,7 +142,8 @@ test("provides a protected synchronized scoreboard control and TV display", () =
   assert.match(portal, /Scoreboard control/);
   assert.match(portal, /Open TV view/);
   assert.match(page, /p === "\/scoreboard\/display"/);
-  assert.match(scoreboard, /setInterval\(load, 750\)/);
+  assert.match(scoreboard, /setInterval\(load, 2000\)/);
+  assert.match(scoreboard, /visibilitychange/);
   assert.match(scoreboard, /scoreboard-main/);
   assert.match(scoreboard, /Start scoreboard/);
   assert.match(scoreboard, /requestFullscreen/);
