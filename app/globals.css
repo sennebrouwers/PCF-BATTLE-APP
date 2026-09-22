@@ -4382,7 +4382,7 @@ input:not([type="checkbox"]):not([type="radio"]), select { min-height:var(--cont
 .bracket-stage-sticker.final { color:#68422f; background:#f2ece9; }
 .scheduled-bracket-match { display:block !important; padding:18px; margin:0 0 13px; border:1px solid var(--line); border-radius:var(--radius); background:var(--card); }
 .bracket-public-match { padding:18px; }
-.bracket-public-match > div { width:auto; min-width:0; border:0; border-radius:0; padding:0; background:transparent; }
+.scheduled-bracket .bracket-public-match > div { width:auto; min-width:0; border:0; border-radius:0; padding:0; background:transparent; }
 .bracket-public-match .meta { flex-wrap:wrap; }
 .bracket-public-match .meta > span:nth-child(2) { flex:1 1 auto; min-width:180px; }
 .bracket-public-match .meta .bracket-stage-sticker { margin:0; }

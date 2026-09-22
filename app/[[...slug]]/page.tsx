@@ -1169,9 +1169,9 @@ function BracketSchedule({ data }: { data: PublicBracketData }) {
             <small className={`bracket-stage-sticker ${sticker === "Semi-final" ? "semi" : sticker.includes("place") ? "place" : sticker === "Final" ? "final" : "intermediate"}`}>{sticker}</small>
           </div>
           <div className="versus">
-            <div>{logo(g.a)}<b>{name(g.a, g.aText)}</b></div>
+            <div>{g.a ? <LiveMark team={g.a as Team} /> : null}<b>{name(g.a, g.aText)}</b></div>
             <strong>{g.m ? g.m.home_score || 0 : "–"}<i>—</i>{g.m ? g.m.away_score || 0 : "–"}</strong>
-            <div><b>{name(g.b, g.bText)}</b>{logo(g.b)}</div>
+            <div><b>{name(g.b, g.bText)}</b>{g.b ? <LiveMark team={g.b as Team} /> : null}</div>
           </div>
         </article>;
       })}
