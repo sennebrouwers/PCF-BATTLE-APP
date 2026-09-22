@@ -92,6 +92,11 @@ async function ensureFinanceSchema() {
     await db().prepare("CREATE TABLE IF NOT EXISTS finance_payments (id text PRIMARY KEY NOT NULL,invoice_id text NOT NULL,team_id text NOT NULL,amount real NOT NULL,method text NOT NULL,reference text,received_at text NOT NULL,note text,provider_payment_id text UNIQUE,idempotency_key text,created_at text NOT NULL,updated_at text NOT NULL)").run();
     try { await db().prepare("ALTER TABLE finance_payments ADD COLUMN idempotency_key text").run(); } catch { /* already migrated */ }
     try { await db().prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_finance_payments_idempotency ON finance_payments(idempotency_key) WHERE idempotency_key IS NOT NULL").run(); } catch { /* older SQLite compatibility */ }
+    await db().batch([
+      db().prepare("CREATE INDEX IF NOT EXISTS idx_invoices_team_type_status ON invoices(team_id,invoice_type,status)"),
+      db().prepare("CREATE INDEX IF NOT EXISTS idx_finance_payments_invoice ON finance_payments(invoice_id)"),
+      db().prepare("CREATE INDEX IF NOT EXISTS idx_finance_payments_team ON finance_payments(team_id)"),
+    ]);
     await db().prepare("INSERT OR IGNORE INTO finance_settings (id,updated_at) VALUES ('default',?)").bind(now()).run();
     await db().prepare("UPDATE finance_settings SET final_due_days=30 WHERE id='default' AND (final_due_days IS NULL OR final_due_days=90)").run();
   })();
@@ -112,6 +117,11 @@ async function ensureScheduleSchema() {
   // endpoint self-healing for databases that missed a later migration instead
   // of allowing a missing table/column to surface as an opaque 500.
   await db().prepare("CREATE TABLE IF NOT EXISTS schedule_items (id text PRIMARY KEY NOT NULL,tournament_id text NOT NULL,item_type text NOT NULL,match_id text,label text,match_date text,start_time text,duration_minutes integer,court text,sort_order integer DEFAULT 0 NOT NULL,active integer DEFAULT 1 NOT NULL,created_at text NOT NULL,updated_at text NOT NULL)").run();
+  await db().batch([
+    db().prepare("CREATE INDEX IF NOT EXISTS idx_schedule_tournament_order ON schedule_items(tournament_id,active,sort_order,id)"),
+    db().prepare("CREATE INDEX IF NOT EXISTS idx_schedule_match ON schedule_items(match_id)"),
+    db().prepare("CREATE INDEX IF NOT EXISTS idx_room_assignments_room_member ON room_assignments(room_id,member_id)"),
+  ]);
   await db().prepare("CREATE TABLE IF NOT EXISTS mvp_votes (id text PRIMARY KEY NOT NULL,tournament_id text NOT NULL,referee_id text NOT NULL,category text NOT NULL,candidate_id text NOT NULL,created_at text NOT NULL,UNIQUE(tournament_id,referee_id,category))").run();
   await db().prepare("CREATE TABLE IF NOT EXISTS mvp_settings (tournament_id text PRIMARY KEY NOT NULL,enabled integer DEFAULT 0 NOT NULL,assistant_coach_eligible integer DEFAULT 1 NOT NULL)").run();
   for (const statement of [
