@@ -1,0 +1,8 @@
+{
+  "framework": null,
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build:vercel",
+  "outputDirectory": ".output/public",
+  "cleanUrls": true,
+  "trailingSlash": false
+}

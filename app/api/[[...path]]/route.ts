@@ -1,7 +1,7 @@
-import { env } from "cloudflare:workers";
 import { NextRequest, NextResponse } from "next/server";
+import { getDatabase } from "@/lib/turso-db";
 
-const db = () => env.DB as D1Database;
+const db = getDatabase;
 const now = () => new Date().toISOString();
 const uuid = () => crypto.randomUUID();
 const roundMoney = (value: number) => Math.round((Number(value) + Number.EPSILON) * 100) / 100;
@@ -47,7 +47,7 @@ type RuntimeEnv = {
     put: (key: string, value: ReadableStream, options?: Record<string, unknown>) => Promise<unknown>;
   };
 };
-const runtimeEnv = env as unknown as RuntimeEnv;
+const runtimeEnv = process.env as unknown as RuntimeEnv;
 type SessionUser = { id: string; role: string; name?: string; exp: number; sv: string; [key: string]: unknown };
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
