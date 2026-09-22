@@ -1421,6 +1421,11 @@ export async function GET(
       return NextResponse.json({ match, teams, goals, incidents, settings, sponsors }, { headers: { "Cache-Control": "private, no-store" } });
     }
     if (path === "public-data") {
+      const activeTournament: any = await db().prepare("SELECT id FROM tournaments WHERE active=1 LIMIT 1").first();
+      if (activeTournament) {
+        await resolveBracketProgression(activeTournament.id);
+        publicDataCache = null;
+      }
       const cached = publicDataCache;
       if (cached && cached.expiresAt > Date.now()) {
         return NextResponse.json(cached.payload, { headers: { "Cache-Control": "public, max-age=5, s-maxage=15, stale-while-revalidate=60" } });
