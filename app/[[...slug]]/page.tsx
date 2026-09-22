@@ -563,21 +563,40 @@ function SponsorBanner({ sponsors }: { sponsors: PublicLink[] }) {
   useEffect(() => {
     if (!looping) return;
     let frame = 0;
+    let cancelled = false;
     let offset = 0;
     let last = performance.now();
-    const tick = (now: number) => {
+    const start = async () => {
       const track = trackRef.current;
       if (!track) return;
-      const half = track.scrollWidth / 2;
-      const elapsed = Math.min(80, now - last);
-      last = now;
-      if (!pausedRef.current) offset += elapsed * 0.028;
-      if (half > 0 && offset >= half) offset -= half;
-      track.style.transform = `translate3d(${-offset}px,0,0)`;
+      const images = [...track.querySelectorAll("img")];
+      await Promise.all(images.map((image) =>
+        image.complete
+          ? image.decode().catch(() => undefined)
+          : new Promise<void>((resolve) => {
+              image.addEventListener("load", () => resolve(), { once: true });
+              image.addEventListener("error", () => resolve(), { once: true });
+            }),
+      ));
+      if (cancelled) return;
+      const tick = (now: number) => {
+        const currentTrack = trackRef.current;
+        if (!currentTrack) return;
+        const half = currentTrack.scrollWidth / 2;
+        const elapsed = Math.min(80, now - last);
+        last = now;
+        if (!pausedRef.current) offset += elapsed * 0.028;
+        if (half > 0 && offset >= half) offset -= half;
+        currentTrack.style.transform = `translate3d(${-offset}px,0,0)`;
+        frame = requestAnimationFrame(tick);
+      };
       frame = requestAnimationFrame(tick);
     };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
+    void start();
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+    };
   }, [looping, sponsors.length]);
   if (!sponsors.length) return null;
   return (
@@ -591,8 +610,8 @@ function SponsorBanner({ sponsors }: { sponsors: PublicLink[] }) {
           {items.map((s: PublicLink, i: number) => {
             const logo = (
               <span className={`sponsor-v3-frame${s.dark_url ? " has-dark-logo" : ""}`}>
-                <img className="sponsor-v3-logo sponsor-v3-light" src={s.url} alt={i < sponsors.length ? s.title || "Tournament sponsor" : ""} />
-                {s.dark_url ? <img className="sponsor-v3-logo sponsor-v3-dark" src={s.dark_url} alt="" aria-hidden="true" /> : null}
+                <img className="sponsor-v3-logo sponsor-v3-light" src={s.url} alt={i < sponsors.length ? s.title || "Tournament sponsor" : ""} loading="eager" fetchPriority="high" />
+                {s.dark_url ? <img className="sponsor-v3-logo sponsor-v3-dark" src={s.dark_url} alt="" aria-hidden="true" loading="eager" fetchPriority="high" /> : null}
               </span>
             );
             return s.target_url ? <a className="sponsor-v3-item" href={s.target_url} target="_blank" rel="noreferrer" key={`${s.id}-${i}`} aria-hidden={i >= sponsors.length}>{logo}</a> : <span className="sponsor-v3-item" key={`${s.id}-${i}`} aria-hidden={i >= sponsors.length}>{logo}</span>;
