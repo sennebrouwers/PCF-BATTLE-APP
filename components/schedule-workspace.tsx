@@ -436,7 +436,7 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
       {selected && (
         <aside key={selected.id} className="schedule-editor">
           <h4>Edit item</h4>
-          {selected.item_type === "match" && by[selected.match_id || ""] && <>
+          {selected.item_type === "match" && <>
             <p className="schedule-editor-match">{teamName(by[selected.match_id || ""]?.home_team_id, by[selected.match_id || ""], "home")} — {teamName(by[selected.match_id || ""]?.away_team_id, by[selected.match_id || ""], "away")}</p>
             <label>
               Referee 1
