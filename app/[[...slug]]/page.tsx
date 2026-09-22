@@ -1159,7 +1159,22 @@ function BracketSchedule({ data }: { data: PublicBracketData }) {
   ];
   return (
     <div className="scheduled-bracket">
-      {games.map((g) => { const sticker = g.title.toLowerCase().includes("semi") ? "Semifinal" : g.title.toLowerCase().includes("grand") ? "1st & 2nd place" : g.title.toLowerCase().includes("7th") ? "7th & 8th place" : g.title.toLowerCase().includes("5th") ? "5th & 6th place" : g.title.toLowerCase().includes("3rd") ? "3rd & 4th place" : "Intermediate Round"; return <article className="match scheduled-bracket-match" key={g.time}><div className="meta"><span>{g.time}</span><span>{g.title}</span><small className={`bracket-stage-sticker ${sticker === "Semifinal" ? "semi" : sticker.includes("place") ? "place" : "final"}`}>{sticker}</small></div><div className="versus"><div>{logo(g.a)}<b>{name(g.a, g.aText)}</b></div><strong>{g.m ? g.m.home_score : "–"}<i>—</i>{g.m ? g.m.away_score : "–"}</strong><div><b>{name(g.b, g.bText)}</b>{logo(g.b)}</div></div></article>; })}
+      {games.map((g) => {
+        const sticker = g.title.toLowerCase().includes("semi") ? "Semi-final" : g.title.toLowerCase().includes("grand") ? "Final" : g.title.toLowerCase().includes("7th") ? "7th/8th place" : g.title.toLowerCase().includes("5th") ? "5th/6th place" : g.title.toLowerCase().includes("3rd") ? "3rd/4th place" : "Intermediate";
+        const matchDate = g.m?.match_date;
+        return <article className={`match bracket-public-match ${g.m?.status || "scheduled"}`} key={g.time}>
+          <div className="meta">
+            <Status s={g.m?.status || "scheduled"} />
+            <span>{matchDate ? `${new Date(`${matchDate}T12:00:00`).toLocaleDateString("en-BE")} · ` : ""}{g.m?.start_time || g.time} · {g.m?.court || "Court 1"}</span>
+            <small className={`bracket-stage-sticker ${sticker === "Semi-final" ? "semi" : sticker.includes("place") ? "place" : sticker === "Final" ? "final" : "intermediate"}`}>{sticker}</small>
+          </div>
+          <div className="versus">
+            <div>{logo(g.a)}<b>{name(g.a, g.aText)}</b></div>
+            <strong>{g.m ? g.m.home_score || 0 : "–"}<i>—</i>{g.m ? g.m.away_score || 0 : "–"}</strong>
+            <div><b>{name(g.b, g.bText)}</b>{logo(g.b)}</div>
+          </div>
+        </article>;
+      })}
     </div>
   );
 }
