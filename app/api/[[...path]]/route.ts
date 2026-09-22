@@ -223,7 +223,7 @@ async function buildTeamReview(teamId: string, prepareSchema = true) {
   const rooms = groupTeamRooms(roomRows);
   const assigned = new Set(rooms.flatMap((room: any) => room.members.map((member: any) => member.id)));
   const unassigned = members.filter((member) => !assigned.has(member.id));
-  const unitPrice = Number(settings?.price_per_person || 325), singleSupplement = Number(tournament?.single_room_supplement || 0);
+  const unitPrice = Number(tournament?.fixed_tournament_costs || settings?.price_per_person || 325), singleSupplement = Number(tournament?.single_room_supplement || 0);
   const singleRooms = rooms.filter((room: any) => room.members.length === 1);
   const issues: string[] = [];
   for (const member of members) {
@@ -299,7 +299,7 @@ async function buildOnboardingStatuses(teamIds: string[]) {
   for (const assignment of assignmentRows.results as any[]) (assignedByTeam.get(assignment.team_id) || (assignedByTeam.set(assignment.team_id, new Set()), assignedByTeam.get(assignment.team_id)!)).add(assignment.member_id);
   for (const invoice of invoiceRows.results as any[]) (invoicesByTeam.get(invoice.team_id) || (invoicesByTeam.set(invoice.team_id, []), invoicesByTeam.get(invoice.team_id)!)).push(invoice);
   for (const payment of paymentRows.results as any[]) paymentsByInvoice.set(payment.invoice_id, roundMoney((paymentsByInvoice.get(payment.invoice_id) || 0) + Number(payment.amount || 0)));
-  const unitPrice = Number(settings?.price_per_person || 325), depositPercentage = Number(settings?.deposit_percentage || 30), singleSupplement = Number(tournament?.single_room_supplement || 0);
+  const unitPrice = Number(tournament?.fixed_tournament_costs || settings?.price_per_person || 325), depositPercentage = Number(settings?.deposit_percentage || 30), singleSupplement = Number(tournament?.single_room_supplement || 0);
   return (teamRows.results as any[]).map((team) => {
     const members = membersByTeam.get(team.id) || [], assigned = assignedByTeam.get(team.id) || new Set<string>(), unassigned = members.filter((member) => !assigned.has(member.id));
     const memberIssues = members.filter((member) => member.member_type === "PLAYER" && (!member.player_role || member.classification_points === null || !Number.isFinite(Number(member.classification_points))));
