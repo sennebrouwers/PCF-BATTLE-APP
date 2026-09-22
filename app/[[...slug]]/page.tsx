@@ -412,7 +412,7 @@ const emptyPublicData: PublicData = {
   };
 let publicDataCache: PublicData | null = null;
 const publicDataStorageKey = "pcf-public-data-cache";
-const publicDataCacheVersion = 2;
+const publicDataCacheVersion = 3;
 function readPublicDataCache(): PublicData | null {
   if (publicDataCache) return publicDataCache;
   try {
@@ -928,8 +928,7 @@ function DynamicLanding() {
           </section>
         )}
         <SponsorBanner sponsors={sponsors} />
-        {!registration && (
-          <section className="quick-grid">
+        <section className="quick-grid">
             {quick.map(({ name, detail, href, icon: Icon, tone }) => (
               <Link href={href} key={name}>
                 <span className={`quick-icon ${tone}`}>
@@ -941,8 +940,7 @@ function DynamicLanding() {
                 </small>
               </Link>
             ))}
-          </section>
-        )}
+        </section>
         <PublicFooter />
       </main>
       {!registration && <Chat />}
@@ -1215,6 +1213,14 @@ function DynamicPublic({ view }: { view: string }) {
       .sort((a: PublicScorer, b: PublicScorer) => (b.goals ?? 0) - (a.goals ?? 0));
   if (!allowed) return <PublicUnavailable title={title} settings={t} />;
   const tabs = Object.keys(visibility).filter((v) => visibility[v]);
+  const scheduledMatches = [...d.matches]
+    .map((match: any) => {
+      const item = d.schedule_items?.find((candidate: any) => candidate.match_id === match.id);
+      return item
+        ? { ...match, match_date: item.match_date ?? match.match_date, start_time: item.start_time ?? match.start_time, court: item.court ?? match.court, schedule_order: item.sort_order }
+        : { ...match, schedule_order: Number.MAX_SAFE_INTEGER };
+    })
+    .sort((a: any, b: any) => Number(a.schedule_order) - Number(b.schedule_order) || `${a.match_date || "9999-12-31"}T${a.start_time || "23:59"}`.localeCompare(`${b.match_date || "9999-12-31"}T${b.start_time || "23:59"}`));
   return (
     <>
       <PublicHeader settings={t} currentPath={`/tournament/${view}`} loading={!d.ready} />
@@ -1259,8 +1265,8 @@ function DynamicPublic({ view }: { view: string }) {
             </div>
           )}
           {!d.error && view === "schedule" && <div>
-            {d.matches.length === 0 && <p className="empty-state">{copy.scheduleEmpty}</p>}
-            {(d.schedule_items?.length ? [...d.schedule_items.map((item: any) => { const match = d.matches.find((m: any) => m.id === item.match_id); return match ? {...match, match_date:item.match_date ?? match.match_date, start_time:item.start_time ?? match.start_time, court:item.court ?? match.court} : null; }).filter(Boolean), ...d.matches.filter((m: any) => !d.schedule_items.some((item: any) => item.match_id === m.id))] : [...d.matches].sort((a: any, b: any) => `${a.match_date || "9999-12-31"}T${a.start_time || "23:59"}`.localeCompare(`${b.match_date || "9999-12-31"}T${b.start_time || "23:59"}`))).map((m: any) => <LiveMatch key={m.id} match={m} teams={d.teams} referees={d.referees} />)}
+            {scheduledMatches.length === 0 && <p className="empty-state">{copy.scheduleEmpty}</p>}
+            {scheduledMatches.map((m: any) => <LiveMatch key={m.id} match={m} teams={d.teams} referees={d.referees} />)}
           </div>}
           {!d.error && view === "standings" && (
             <DynamicStandings rows={d.standings} />
