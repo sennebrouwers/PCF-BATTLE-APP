@@ -321,16 +321,18 @@ function Modal({
   title,
   open,
   onOpenChange,
+  className = "",
   children,
 }: {
   title: string;
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  className?: string;
   children: ReactNode;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="portal-dialog">
+      <DialogContent className={`portal-dialog ${className}`}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
@@ -6815,6 +6817,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
               title={editing?.id ? "Edit team" : "Add team"}
               open={editing !== undefined}
               onOpenChange={(v) => !v && setEditing(undefined)}
+              className="team-editor-dialog"
             >
               <form className="portal-form" onSubmit={save}>
                 <Field

@@ -7516,6 +7516,15 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .portal-dialog p,
 [data-slot="dialog-description"] { color: var(--muted) !important; }
 .portal-dialog .form-actions { margin-top: 4px !important; }
+.team-editor-dialog {
+  width: min(760px, calc(100vw - 32px)) !important;
+  max-height: calc(100vh - 32px) !important;
+  overflow-y: auto !important;
+}
+.team-editor-dialog .portal-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 700px) {
+  .team-editor-dialog .portal-form { grid-template-columns: 1fr; }
+}
 .portal-dialog .btn:not(.primary):not(.danger),
 [data-slot="dialog-content"] .btn:not(.primary):not(.danger) {
   background: var(--surface-hover) !important;

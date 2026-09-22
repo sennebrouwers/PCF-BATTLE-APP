@@ -2991,6 +2991,12 @@ export async function POST(
       else body.password = await hashPassword(String(body.password));
     if (table === "teams" && (!body.login_password || String(body.login_password).length < 8))
       return out({ error: "Choose a temporary password of at least 8 characters" }, 422);
+    if (table === "teams") {
+      const loginEmail = String(body.login_email || `team-${uuid().slice(0, 8)}@phb.app`).toLowerCase().trim();
+      const existingUser: any = await db().prepare("SELECT id FROM users WHERE lower(email)=lower(?) LIMIT 1").bind(loginEmail).first();
+      if (existingUser) return out({ error: "A user with this login email already exists" }, 409);
+      body.login_email = loginEmail;
+    }
     if (table === "matches" && !body.tournament_id) {
       const active: any = await db().prepare("SELECT id FROM tournaments WHERE active=1 LIMIT 1").first();
       if (!active?.id) return out({ error: "Create or activate a tournament first" }, 409);
