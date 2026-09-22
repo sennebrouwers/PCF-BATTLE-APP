@@ -719,7 +719,7 @@ function PublicHomeLoading() {
           <div className="action-frame">
             <div className="orange-glow" />
             <Image
-              src="/pcf-battle-hero.svg"
+              src="/pcf-battle-hero.webp"
               alt="Powerchair floorball player competing during a match"
               fill
               priority
@@ -840,7 +840,7 @@ function DynamicLanding() {
           <div className="action-frame">
             <div className="orange-glow" />
             <Image
-              src="/pcf-battle-hero.svg"
+              src="/pcf-battle-hero.webp"
               alt="Powerchair floorball player competing during a match"
               fill
               priority
