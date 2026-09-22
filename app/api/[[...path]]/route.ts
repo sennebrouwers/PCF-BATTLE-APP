@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/turso-db";
+import { readBlob, writeBlob } from "@/lib/blob-storage";
 
 const db = getDatabase;
 const now = () => new Date().toISOString();
@@ -1319,14 +1320,13 @@ export async function GET(
     if (parts[0] === "files" && parts[1]) {
       const objectKey = parts.slice(1).join("/");
       if (!/^[A-Za-z0-9._-]{1,180}$/.test(objectKey)) return out({ error: "Invalid file reference" }, 400);
-      const object = await runtimeEnv.BUCKET.get(objectKey);
+      const object = await readBlob(objectKey);
       if (!object) return new NextResponse("Not found", { status: 404 });
-      if (object.httpMetadata?.contentType === "application/pdf" && (!u || (u.role !== "ADMIN" && object.customMetadata?.owner !== u.id)))
+      if (object.contentType === "application/pdf" && (!u || (u.role !== "ADMIN" && !objectKey.startsWith(`${u.id}-`))))
         return out({ error: u ? "Forbidden" : "Unauthorized" }, u ? 403 : 401);
       return new NextResponse(object.body, {
         headers: {
-          "Content-Type":
-            object.httpMetadata?.contentType || "application/octet-stream",
+          "Content-Type": object.contentType || "application/octet-stream",
           "Cache-Control": "public, max-age=31536000, immutable",
           ...securityHeaders,
         },
@@ -2313,12 +2313,9 @@ export async function POST(
       if (!(file.type.startsWith("image/") || file.type === "application/pdf") || !(await hasAllowedFileSignature(file)))
         return out({ error: "Only valid images and PDF files are supported" }, 415);
       const clean = file.name.replace(/[^a-zA-Z0-9._-]/g, "-").slice(-80),
-        key = `${uuid()}-${clean}`;
-      if (!runtimeEnv.BUCKET?.put) return out({ error: "File storage is not available" }, 503);
-      await runtimeEnv.BUCKET.put(key, file.stream(), {
-        httpMetadata: { contentType: file.type },
-        customMetadata: { owner: u.id, name: file.name },
-      });
+        key = `${u.id}-${uuid()}-${clean}`;
+      if (!process.env.BLOB_READ_WRITE_TOKEN) return out({ error: "File storage is not available" }, 503);
+      await writeBlob(key, file.stream(), file.type);
       return out(
         {
           url: `/api/files/${key}`,
