@@ -1386,8 +1386,8 @@ function About() {
             <div className="people-grid">
               {d.teams.map((team: any) => (
                 <Link href={`/teams/${team.id}`} className="team-overview-card" key={team.id}>
-                  {team.team_photo || team.logo ? (
-                    <img src={team.team_photo || team.logo} alt={`${team.name} team`} />
+                  {team.logo ? (
+                    <img src={team.logo} alt={`${team.name} logo`} />
                   ) : (
                     <LiveMark team={team} />
                   )}
