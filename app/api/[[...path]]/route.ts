@@ -2805,7 +2805,7 @@ export async function POST(
       const times: string[] = [];
       for (let minute = startMinutes; minute + gameMinutes <= endMinutes; minute += gameMinutes + pauseMinutes) times.push(`${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`);
       if (!times.length) return out({ error: "The playing window is shorter than one game" }, 422);
-      const courts = Array.isArray(body.courts) && body.courts.length ? body.courts : ["Court 1", "Court 2"];
+      const courts = Array.isArray(body.courts) && body.courts.length ? body.courts : ["Court 1"];
       const slots = times.map((time: string) => ({ date: dates[0], time }));
       const firstDay = dates[0];
       await db().batch([
