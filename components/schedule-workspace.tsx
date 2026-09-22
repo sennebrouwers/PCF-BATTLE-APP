@@ -457,7 +457,7 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
             Date
             <input
               type="date"
-              value={selected.match_date || ""}
+              value={selected.match_date || by[selected.match_id || ""]?.match_date || ""}
               onClick={(e) => {
                 e.stopPropagation();
                 e.currentTarget.showPicker?.();
@@ -466,6 +466,18 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
                 setSelected({ ...selected, match_date: e.target.value })
               }
             />
+          </label>
+          <label>
+            Court
+            <select
+              value={selected.court || by[selected.match_id || ""]?.court || ""}
+              onChange={(e) => setSelected({ ...selected, court: e.target.value || null })}
+            >
+              <option value="">No court</option>
+              {[...new Set([...courts, selected.court, by[selected.match_id || ""]?.court].filter(Boolean) as string[])].map((value) => (
+                <option key={value} value={value}>{value}</option>
+              ))}
+            </select>
           </label>
           <label>
             Time
@@ -495,7 +507,7 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
               if (match) {
                 const assigned = (match.referee_ids || []).filter(Boolean);
                 try {
-              const changes: Record<string, unknown> = { match_date: selected.match_date || null, start_time: selected.start_time || null };
+              const changes: Record<string, unknown> = { match_date: selected.match_date || null, start_time: selected.start_time || null, court: selected.court || null };
                   if (assigned.length) changes.referee_ids = assigned;
                   if (match.version !== undefined) changes.version = match.version;
                   await api(`/matches/${match.id}`, { method: "PUT", body: JSON.stringify(changes) });
