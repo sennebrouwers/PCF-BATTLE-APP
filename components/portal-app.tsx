@@ -6943,6 +6943,9 @@ function ResourcePanel({ refresh }: { refresh: number }) {
             <a href={l.url} target="_blank">
               Open
             </a>
+            <a href={l.url} download>
+              Download
+            </a>
             <button onClick={() => setEditing(l)}>Edit</button>
             <Confirm
               title="Delete resource"

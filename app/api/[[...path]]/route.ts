@@ -1342,6 +1342,11 @@ export async function GET(
       return new NextResponse(object.body, {
         headers: {
           "Content-Type": object.contentType || "application/octet-stream",
+          ...(object.contentType === "application/pdf"
+            ? { "Content-Disposition": object.contentDisposition || "attachment; filename=pcf-battle-document.pdf" }
+            : object.contentDisposition
+              ? { "Content-Disposition": object.contentDisposition }
+              : {}),
           "Cache-Control": "private, no-store",
           ...securityHeaders,
         },
