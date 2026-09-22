@@ -24,7 +24,7 @@ const englishCopy = {
     referees: "Tournament referees", group: "Group", team: "Team", noLive: "No match is live right now.", comingUp: "Coming up",
     scheduleEmpty: "The match schedule has not been published yet.", openMaps: "Open in Google Maps", notPublished: "This section is not published yet.",
     tournamentSections: "Tournament sections", totalGoals: "Total goals", finishedMatches: "finished matches", matchesPlayed: "Matches played",
-    playersWithGoals: "Players with goals", recordedGoalscorers: "recorded goalscorers", liveNow: "Live now", matches: "matches",
+    playersWithGoals: "Players with goals", recordedGoalscorers: "recorded goalscorers", liveNow: "Live now", matches: "Matches",
     noGoals: "No player goals have been recorded yet.", livestreamIntro: "Watch the tournament live.", livestreamNotStarted: "The livestream has not started yet.",
     tournamentAssistant: "Tournament assistant", liveData: "LIVE DATA", liveMatches: "Live matches", send: "Send", question: "Question for tournament assistant",
     mediaIntro: "Photos and media from the tournament.", tournamentMedia: "Tournament media", closePhoto: "Close photo", previousPhoto: "Previous photo", nextPhoto: "Next photo",
