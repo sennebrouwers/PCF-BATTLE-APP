@@ -1279,14 +1279,15 @@ function DynamicPublic({ view }: { view: string }) {
                   <p>{copy.noLive}</p>
                 </Panel>
               )}
-              <h3>{copy.comingUp}</h3>
-              {[...d.matches]
-                .filter((m: any) => m.status === "scheduled")
-                .sort((a: any, b: any) => `${a.match_date || "9999-12-31"}T${a.start_time || "23:59"}`.localeCompare(`${b.match_date || "9999-12-31"}T${b.start_time || "23:59"}`))
-                .slice(0, 4)
-                .map((m: any) => (
-                  <LiveMatch key={m.id} match={m} teams={d.teams} referees={d.referees} />
-                ))}
+              <Panel title={copy.comingUp}>
+                {[...d.matches]
+                  .filter((m: any) => m.status === "scheduled")
+                  .sort((a: any, b: any) => `${a.match_date || "9999-12-31"}T${a.start_time || "23:59"}`.localeCompare(`${b.match_date || "9999-12-31"}T${b.start_time || "23:59"}`))
+                  .slice(0, 4)
+                  .map((m: any) => (
+                    <LiveMatch key={m.id} match={m} teams={d.teams} referees={d.referees} />
+                  ))}
+              </Panel>
             </div>
           )}
           {!d.error && view === "schedule" && <div>
