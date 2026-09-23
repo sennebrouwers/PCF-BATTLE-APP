@@ -592,15 +592,6 @@ function SponsorBanner({ sponsors }: { sponsors: PublicLink[] }) {
     const start = async () => {
       const track = trackRef.current;
       if (!track) return;
-      const images = [...track.querySelectorAll("img")];
-      await Promise.all(images.map((image) =>
-        image.complete
-          ? image.decode().catch(() => undefined)
-          : new Promise<void>((resolve) => {
-              image.addEventListener("load", () => resolve(), { once: true });
-              image.addEventListener("error", () => resolve(), { once: true });
-            }),
-      ));
       if (cancelled) return;
       const tick = (now: number) => {
         const currentTrack = trackRef.current;
