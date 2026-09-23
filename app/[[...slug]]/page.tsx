@@ -787,6 +787,7 @@ function PublicHomeLoading() {
           </div>
         </section>
       </main>
+      <PublicFooter />
     </>
   );
 }
@@ -1593,7 +1594,7 @@ function Livestream() {
   const { language } = usePublicLanguage(), copy = publicCopy[language], d = usePublicData(), t = d.tournaments.find((x: any) => x.active) || d.tournaments[0] || {};
   const raw = String(t.livestream_url || ""), match = raw.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|live\/))([^?&/]+)/), embed = match ? `https://www.youtube-nocookie.com/embed/${match[1]}` : "";
   if (d.ready && t.show_livestream !== 1) return <PublicUnavailable title="Livestream" settings={t}/>;
-  return <><PublicHeader settings={t} currentPath="/livestream" loading={!d.ready}/><main className="public livestream-page"><div className="pagehero"><span>PCF BATTLE</span><h1>{copy.livestream}</h1><p>{copy.livestreamIntro}</p></div>{embed ? <div className="video-frame"><iframe src={embed} title="PCF Battle livestream" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen/></div> : <Panel title={copy.livestream}><p>{copy.livestreamNotStarted}</p></Panel>}</main><DeferredPublicChat /></>;
+  return <><PublicHeader settings={t} currentPath="/livestream" loading={!d.ready}/><main className="public livestream-page"><div className="pagehero"><span>PCF BATTLE</span><h1>{copy.livestream}</h1><p>{copy.livestreamIntro}</p></div>{embed ? <div className="video-frame"><iframe src={embed} title="PCF Battle livestream" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen/></div> : <Panel title={copy.livestream}><p>{copy.livestreamNotStarted}</p></Panel>}</main><PublicFooter /><DeferredPublicChat /></>;
 }
 
 function LegalPage({ page }: { page: "terms" | "privacy" | "cookies" | "accessibility" }) {
