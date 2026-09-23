@@ -143,12 +143,16 @@ function Chat() {
               <button onClick={() => send("Standings")}>{copy.standings}</button>
           </nav>
           <form
+            toolname="ask_tournament_assistant"
+            tooldescription="Ask the PCF BATTLE tournament assistant for public information about matches, standings, and schedules."
             onSubmit={(e) => {
               e.preventDefault();
               send();
             }}
           >
             <input
+              name="question"
+              toolparamdescription="The visitor's question about the tournament."
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder={`${copy.question}…`}
@@ -201,7 +205,7 @@ function Login() {
         <span className="pink">WELCOME BACK</span>
         <h1>Sign in to your portal</h1>
         <p>Manage your tournament, team, or referee assignments.</p>
-        <form onSubmit={go}>
+        <form onSubmit={go} toolname="sign_in_to_portal" tooldescription="Sign in to the PCF BATTLE team, referee, or administrator portal.">
           <label>
             Email address
             <input id="login-email" name="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -295,14 +299,16 @@ function Signup() {
             <Link className="btn" href="/login">Go to sign in</Link>
           </>
         ) : (
-          <form onSubmit={redeem}>
+          <form onSubmit={redeem} toolname="create_team_portal_account" tooldescription="Create a team portal account using a valid PCF BATTLE invitation.">
             <label>
               Team name
-              <input value={teamName} readOnly aria-readonly="true" />
+              <input name="team_name" value={teamName} readOnly aria-readonly="true" toolparamdescription="The invited team name." />
             </label>
             <label>
               Your name
               <input
+                name="name"
+                toolparamdescription="The account holder's full name."
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -311,6 +317,8 @@ function Signup() {
             <label>
               Email address
               <input
+                name="email"
+                toolparamdescription="The account holder's email address."
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -320,6 +328,8 @@ function Signup() {
             <label>
               Password
               <input
+                name="password"
+                toolparamdescription="A password for the new team portal account."
                 type="password"
                 value={pass}
                 onChange={(e) => setPass(e.target.value)}
@@ -706,10 +716,10 @@ function PreRegistrationDialog() {
             </button>
           </div>
         ) : (
-          <form className="portal-form" onSubmit={submit}>
+          <form className="portal-form" onSubmit={submit} toolname="pre_register_team" tooldescription="Submit a club name and contact email to pre-register a team for PCF BATTLE.">
             <label className="portal-field">
               <span>Club name</span>
-              <input name="club_name" required placeholder="Your club" />
+              <input name="club_name" required placeholder="Your club" toolparamdescription="The name of the club or team." />
             </label>
             <label className="portal-field">
               <span>Email address</span>
@@ -718,6 +728,7 @@ function PreRegistrationDialog() {
                 type="email"
                 required
                 placeholder="you@example.com"
+                toolparamdescription="The club contact email address."
               />
             </label>
             <label className="registration-consent">
