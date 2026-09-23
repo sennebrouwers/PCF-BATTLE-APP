@@ -886,9 +886,9 @@ async function seed(force = false) {
       )
       .bind(
         "tournament-1",
-        "PCF Battle 2026",
-        "2026-06-12",
-        "2026-06-14",
+        "PCF Battle 2027",
+        "2027-05-01",
+        "2027-05-02",
         "Leuven",
         "Belgium",
         1,
@@ -1100,7 +1100,7 @@ async function seed(force = false) {
           800,
           "Tournament registration",
           i < 5 ? "paid" : i === 7 ? "overdue" : "pending",
-          "2026-05-15",
+          "2027-04-01",
           null,
           null,
           ts,
