@@ -4,5 +4,13 @@
   "buildCommand": "npm run build:vercel",
   "outputDirectory": ".output/public",
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Vary", "value": "User-Agent" }
+      ]
+    }
+  ]
 }

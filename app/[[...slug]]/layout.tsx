@@ -67,7 +67,14 @@ export async function generateMetadata({
   return {
     title: metadata.title,
     description: metadata.description,
-    alternates: { canonical: `${baseUrl}${path === "/" ? "/" : path}` },
+    alternates: {
+      canonical: `${baseUrl}${path === "/" ? "/" : path}`,
+      languages: {
+        en: `${baseUrl}${path === "/" ? "/" : path}`,
+        nl: `${baseUrl}${path === "/" ? "/" : path}`,
+        "x-default": `${baseUrl}${path === "/" ? "/" : path}`,
+      },
+    },
     openGraph: {
       title: metadata.title,
       description: metadata.description,
