@@ -3020,10 +3020,26 @@ export async function POST(
       body.expires_at =
         body.expires_at || new Date(Date.now() + 604800000).toISOString();
     }
-    if (table === "users")
+    if (table === "users") {
+      const email = String(body.email || "").trim().toLowerCase();
+      const name = String(body.name || "").trim();
+      const role = String(body.role || "TEAM").toUpperCase();
+      if (!email || !email.includes("@") || !name)
+        return out({ error: "Name and a valid email are required" }, 422);
+      if (!["ADMIN", "TEAM", "REFEREE", "SCOREBOARD"].includes(role))
+        return out({ error: "Invalid user role" }, 422);
+      const existing: any = await db()
+        .prepare("SELECT id FROM users WHERE lower(email)=? LIMIT 1")
+        .bind(email)
+        .first();
+      if (existing) return out({ error: "An account already exists with this email address" }, 409);
       if (!body.password || String(body.password).length < 8)
         return out({ error: "Choose a password of at least 8 characters" }, 422);
-      else body.password = await hashPassword(String(body.password));
+      body.email = email;
+      body.name = name;
+      body.role = role;
+      body.password = await hashPassword(String(body.password));
+    }
     if (table === "teams" && (!body.login_password || String(body.login_password).length < 8))
       return out({ error: "Choose a temporary password of at least 8 characters" }, 422);
     if (table === "teams") {
@@ -3089,7 +3105,8 @@ export async function POST(
       );
       if (emailSent) await db().prepare("UPDATE preregistrations SET portal_invitation_sent_at=? WHERE lower(email)=lower(?) AND selection_email_sent_at IS NOT NULL").bind(now(), body.recipient_email).run();
     }
-    await log(u, "CREATE", table, rid, body);
+    const auditBody = table === "users" ? { ...body, password: undefined } : body;
+    await log(u, "CREATE", table, rid, auditBody);
     return out({ id: rid, ...body, emailSent }, 201);
   } catch (error: unknown) {
     logServerError(req, error);

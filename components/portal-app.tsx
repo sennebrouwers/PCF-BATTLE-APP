@@ -6990,6 +6990,11 @@ function UsersPanel({ refresh }: { refresh: number }) {
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const b: any = Object.fromEntries(new FormData(e.currentTarget));
+    if (!editing?.id && b.password !== b.confirm_password) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    delete b.confirm_password;
     b.active = Number(b.active);
     const photoFile = b.photo_file;
     delete b.photo_file;
@@ -7015,9 +7020,14 @@ function UsersPanel({ refresh }: { refresh: number }) {
     <section className="panel">
       <div className="panelhead">
         <h3>User management</h3>
-        <button className="btn primary" onClick={() => setEditing(null)}>
-          <Plus /> Add user
-        </button>
+        <div className="row-actions">
+          <button className="btn" onClick={() => setEditing(null)}>
+            <Plus /> Add user
+          </button>
+          <button className="btn primary" onClick={() => setEditing({ role: "ADMIN" } as Row)}>
+            <Plus /> Add admin
+          </button>
+        </div>
       </div>
       {users.data.map((u) => (
         <div className="portal-row user-row" key={u.id}>
@@ -7050,7 +7060,7 @@ function UsersPanel({ refresh }: { refresh: number }) {
         </div>
       ))}
       <Modal
-        title={editing?.id ? "Edit user" : "Add user"}
+        title={editing?.id ? "Edit user" : editing?.role === "ADMIN" ? "Add admin account" : "Add user"}
         open={editing !== undefined}
         onOpenChange={(v) => !v && setEditing(undefined)}
       >
@@ -7075,6 +7085,15 @@ function UsersPanel({ refresh }: { refresh: number }) {
             minLength={8}
             required={!editing?.id}
           />
+          {!editing?.id && (
+            <Field
+              label="Confirm password"
+              name="confirm_password"
+              type="password"
+              minLength={8}
+              required
+            />
+          )}
           <Field
             label="Role"
             name="role"
