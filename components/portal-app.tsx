@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-import type { ReactNode } from "react";
+import type { ChangeEvent, ReactNode } from "react";
 import Link from "next/link";
 import {
   CalendarDays,
@@ -352,6 +352,9 @@ function Field({
   max,
   step,
   placeholder,
+  value,
+  onChange,
+  autoComplete,
   children,
 }: {
   label: string;
@@ -364,6 +367,9 @@ function Field({
   max?: number;
   step?: number;
   placeholder?: string;
+  value?: string;
+  onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
+  autoComplete?: string;
   children?: ReactNode;
 }) {
   const fieldChildren =
@@ -396,6 +402,9 @@ function Field({
           max={max}
           step={step}
           placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          autoComplete={autoComplete}
         />
       )}
     </label>
@@ -635,12 +644,14 @@ function Confirm({
   text,
   onConfirm,
   passwordInput = false,
+  confirmLabel,
   children,
 }: {
   title: string;
   text: string;
   onConfirm: (password?: string) => Promise<void> | void;
   passwordInput?: boolean;
+  confirmLabel?: string;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false),
@@ -670,7 +681,7 @@ function Confirm({
               }
             }}
           >
-            {busy ? "Working…" : passwordInput ? "Reset securely" : "Confirm"}
+            {busy ? "Working…" : confirmLabel || (passwordInput ? "Reset securely" : "Confirm")}
           </button>
         </div>
       </Modal>
@@ -2420,6 +2431,7 @@ function TournamentManager({ refresh }: { refresh: number }) {
                     title="Delete tournament edition?"
                     text={`This permanently deletes ${edition.name}'s matches, schedule, groups and registrations. Admin accounts are preserved.`}
                     passwordInput
+                    confirmLabel="Delete edition"
                     onConfirm={(password) => deleteEdition(edition.id, password)}
                   >
                     <button type="button" className="danger-link">
