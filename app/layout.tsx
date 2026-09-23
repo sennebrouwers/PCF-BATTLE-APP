@@ -5,17 +5,17 @@ import CookieConsent from "@/components/cookie-consent";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://pcfbattle.be"),
-  title: "PCF BATTLE",
+  title: "Powerchair Floorball Battle — The Ultimate Test of Your Skills",
   description: "Powerchair floorball tournament management and live results.",
   openGraph: {
     type: "website",
     url: "https://pcfbattle.be/",
     siteName: "PCF BATTLE",
-    images: [{ url: "/pcf-battle-hero.webp", width: 1200, height: 630, alt: "PCF BATTLE" }],
+    images: [{ url: "/pcf-social-graph.jpg", width: 2048, height: 1075, alt: "Powerchair Floorball Battle" }],
   },
   twitter: {
     card: "summary_large_image",
-    images: ["/pcf-battle-hero.webp"],
+    images: ["/pcf-social-graph.jpg"],
   },
   icons: {
     icon: [
