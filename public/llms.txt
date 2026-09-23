@@ -2,23 +2,25 @@
 
 > Powerchair Floorball Battle is an international powerchair floorball tournament in Leuven, Belgium.
 
-## Website
-
-- Homepage: https://pcfbattle.be/
-- Tournament schedule: https://pcfbattle.be/tournament/schedule
-- Live matches: https://pcfbattle.be/tournament/live
-- Standings: https://pcfbattle.be/tournament/standings
-- Brackets: https://pcfbattle.be/tournament/brackets
-- About the tournament: https://pcfbattle.be/about
-- Frequently asked questions: https://pcfbattle.be/faq
-- Accessibility: https://pcfbattle.be/accessibility
-- Privacy policy: https://pcfbattle.be/privacy
-- Terms and conditions: https://pcfbattle.be/terms
-
-## Description
-
 Powerchair Floorball Battle brings teams together for high-level international powerchair floorball competition in an exciting arena atmosphere.
 
-## Contact
+## Tournament
 
-- Email: hello@pcfbattle.be
+- [Homepage](https://pcfbattle.be/): Official PCF BATTLE website and tournament overview.
+- [About the tournament](https://pcfbattle.be/about): Tournament format, venue, dates and practical information.
+- [Tournament schedule](https://pcfbattle.be/tournament/schedule): Scheduled matches and court times.
+- [Live matches](https://pcfbattle.be/tournament/live): Live and upcoming tournament matches.
+- [Standings](https://pcfbattle.be/tournament/standings): Current group and tournament standings.
+- [Brackets](https://pcfbattle.be/tournament/brackets): Knockout-stage bracket and match progression.
+- [Participating teams](https://pcfbattle.be/about#teams): Teams taking part in the tournament.
+
+## Information
+
+- [Frequently asked questions](https://pcfbattle.be/faq): Answers about the tournament and participation.
+- [Accessibility statement](https://pcfbattle.be/accessibility): Accessibility information for visitors.
+- [Privacy policy](https://pcfbattle.be/privacy): How personal data is handled.
+- [Terms and conditions](https://pcfbattle.be/terms): Registration and participation terms.
+
+## Optional
+
+- [Contact](mailto:hello@pcfbattle.be): Contact the PCF BATTLE organisers by email.
