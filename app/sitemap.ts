@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const baseUrl = "https://pcfbattle.be";
+const baseUrl = "https://www.pcfbattle.be";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [
@@ -13,16 +13,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/privacy",
     "/cookies",
     "/accessibility",
-    "/teams",
-    "/matches",
-    "/standings",
-    "/brackets",
-    "/statistics",
+    "/tournament/live",
+    "/tournament/schedule",
+    "/tournament/standings",
+    "/tournament/brackets",
+    "/tournament/statistics",
   ];
   return routes.map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
-    changeFrequency: route === "/" || route === "/matches" ? "daily" : "weekly",
+    changeFrequency: route === "/" || route === "/tournament/live" || route === "/tournament/schedule" ? "daily" : "weekly",
     priority: route === "/" ? 1 : 0.7,
   }));
 }
