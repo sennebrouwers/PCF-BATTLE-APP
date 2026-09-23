@@ -6,7 +6,7 @@ import CookieConsent from "@/components/cookie-consent";
 export const metadata: Metadata = {
   metadataBase: new URL("https://pcfbattle.be"),
   title: "Powerchair Floorball Battle — The Ultimate Test of Your Skills",
-  description: "Powerchair floorball tournament management and live results.",
+  description: "Powerchair Floorball Battle brings teams together for high-level international powerchair floorball competition in an exciting arena atmosphere.",
   openGraph: {
     type: "website",
     url: "https://pcfbattle.be/",
