@@ -1686,6 +1686,7 @@ export default function App({ params }: { params: Promise<{ slug?: string[] }> }
     const names: Record<string, [string, string]> = { "/": ["PCF BATTLE | Powerchair Floorball Tournament", "PCF BATTLE | Powerchair floorballtoernooi"], "/about": ["Practical Information | PCF BATTLE", "Praktische informatie | PCF BATTLE"], "/faq": ["FAQ | Powerchair Floorball Battle", "FAQ | Powerchair Floorball Battle"], "/livestream": ["Watch PCF BATTLE Live", "Bekijk PCF BATTLE live"], "/tournament/schedule": ["Match Schedule | PCF BATTLE", "Wedstrijdschema | PCF BATTLE"], "/tournament/standings": ["Standings | PCF BATTLE", "Stand | PCF BATTLE"] };
     document.title = names[p]?.[nl ? 1 : 0] || "PCF BATTLE | Powerchair Floorball";
   }, [p]);
+  if (p === "/") return <DynamicLanding />;
   if (p === "/login") return <Login />;
   if (p.startsWith("/signup")) return <Signup />;
   if (p === "/admin") return <Suspense fallback={<div className="route-loading" />}><PortalApp role="admin" /></Suspense>;

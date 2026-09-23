@@ -26,12 +26,9 @@ export default function NotFound() {
         </div>
         <section className="block not-found-content">
           <h2>Find your way back</h2>
-          <p>Use one of these links to continue exploring the Powerchair Floorball Battle.</p>
+          <p>Use the button below to return to the Powerchair Floorball Battle homepage.</p>
           <nav className="not-found-links" aria-label="Helpful links">
             <Link className="btn primary" href="/">Go to homepage</Link>
-            <Link className="btn" href="/tournament/schedule">View schedule</Link>
-            <Link className="btn" href="/about">Practical information</Link>
-            <a className="btn" href="mailto:hello@pcfbattle.be?subject=Broken%20page%20report">Report a problem</a>
           </nav>
         </section>
       </main>
