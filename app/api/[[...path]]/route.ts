@@ -3363,7 +3363,31 @@ export async function DELETE(
   const parts = (await params).path || [],
     table = mapName(parts[0]),
     rid = parts[1],
-    u = (await session(req)) as SessionUser;
+    u = (await session(req)) as SessionUser,
+    body: any = await req.json().catch(() => ({}));
+  if (parts[0] === "tournaments" && rid) {
+    if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
+    const tournament: any = await db().prepare("SELECT id,name,active FROM tournaments WHERE id=?").bind(rid).first();
+    if (!tournament) return out({ error: "Tournament edition not found" }, 404);
+    if (tournament.active) return out({ error: "Activate another tournament edition before deleting this one" }, 409);
+    const admins: any[] = (await db().prepare("SELECT password FROM users WHERE role='ADMIN' AND active=1").all()).results as any[];
+    const valid = await Promise.all(admins.map((admin) => verifyPassword(String(body.password || ""), String(admin.password || ""))));
+    if (!valid.some(Boolean)) return out({ error: "Admin password is incorrect" }, 403);
+    const matches = (await db().prepare("SELECT id FROM matches WHERE tournament_id=?").bind(rid).all()).results as any[];
+    await db().batch([
+      db().prepare("DELETE FROM schedule_items WHERE tournament_id=?").bind(rid),
+      ...matches.flatMap((match) => [
+        db().prepare("DELETE FROM goal_events WHERE match_id=?").bind(match.id),
+        db().prepare("DELETE FROM match_events WHERE match_id=?").bind(match.id),
+      ]),
+      db().prepare("DELETE FROM matches WHERE tournament_id=?").bind(rid),
+      db().prepare("DELETE FROM groups WHERE tournament_id=?").bind(rid),
+      db().prepare("DELETE FROM preregistrations WHERE tournament_id=?").bind(rid),
+      db().prepare("DELETE FROM tournaments WHERE id=? AND active=0").bind(rid),
+    ]);
+    await log(u, "DELETE_TOURNAMENT", "tournament", rid, { name: tournament.name, matches: matches.length });
+    return out({ ok: true, deletedMatches: matches.length });
+  }
   if (parts[0] === "finance" && parts[1] === "invoices" && parts[2]) {
     if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
     await ensureFinanceSchema();

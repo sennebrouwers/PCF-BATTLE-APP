@@ -2307,6 +2307,14 @@ function TournamentManager({ refresh }: { refresh: number }) {
       toast.error(errorMessage(error));
     }
   }
+  async function deleteEdition(id: string, password?: string) {
+    await api(`/tournaments/${id}`, {
+      method: "DELETE",
+      body: JSON.stringify({ password }),
+    });
+    toast.success("Tournament edition deleted");
+    tournaments.load();
+  }
   async function createEdition(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const body = Object.fromEntries(new FormData(event.currentTarget));
@@ -2395,13 +2403,25 @@ function TournamentManager({ refresh }: { refresh: number }) {
               {edition.active ? (
                 <Badge>Public</Badge>
               ) : (
-                <button
-                  type="button"
-                  className="edition-row-action"
-                  onClick={() => activateEdition(edition.id)}
-                >
-                  Make public
-                </button>
+                <div className="row-actions">
+                  <button
+                    type="button"
+                    className="edition-row-action"
+                    onClick={() => activateEdition(edition.id)}
+                  >
+                    Make public
+                  </button>
+                  <Confirm
+                    title="Delete tournament edition?"
+                    text={`This permanently deletes ${edition.name}'s matches, schedule, groups and registrations. Admin accounts are preserved.`}
+                    passwordInput
+                    onConfirm={(password) => deleteEdition(edition.id, password)}
+                  >
+                    <button type="button" className="danger-link">
+                      Delete
+                    </button>
+                  </Confirm>
+                </div>
               )}
             </div>
           ))}
