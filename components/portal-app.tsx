@@ -2308,12 +2308,17 @@ function TournamentManager({ refresh }: { refresh: number }) {
     }
   }
   async function deleteEdition(id: string, password?: string) {
-    await api(`/tournaments/${id}`, {
-      method: "DELETE",
-      body: JSON.stringify({ password }),
-    });
-    toast.success("Tournament edition deleted");
-    tournaments.load();
+    try {
+      await api(`/tournaments/${id}`, {
+        method: "DELETE",
+        body: JSON.stringify({ password }),
+      });
+      toast.success("Tournament edition deleted");
+      tournaments.load();
+    } catch (error: unknown) {
+      toast.error(errorMessage(error));
+      throw error;
+    }
   }
   async function createEdition(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
