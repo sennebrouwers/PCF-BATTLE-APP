@@ -2814,7 +2814,6 @@ function PreRegistrations({ refresh }: { refresh: number }) {
             return (
             <div
               className={`registration-card-v2${decision === "selected" ? " selection-approved" : decision === "rejected" ? " selection-rejected" : ""}`}
-              style={decision === "selected" ? { background: "#183b29", color: "#8be0ae", borderColor: "#2f9b68" } : decision === "rejected" ? { background: "#4a1f26", color: "#ffb4b4", borderColor: "#d85c6a" } : undefined}
               key={r.id}
             >
               <TeamMark team={r} />

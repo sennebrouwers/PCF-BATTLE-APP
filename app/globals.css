@@ -6645,6 +6645,8 @@ input:disabled, select:disabled, textarea:disabled, button:disabled {
   border-top:1px solid var(--line) !important;
   border-radius:0 !important;
 }
+.teams-registrations-panel .registration-card-v2.selection-approved { background:#183b29; color:#8be0ae; border-color:#2f9b68; }
+.teams-registrations-panel .registration-card-v2.selection-rejected { background:#4a1f26; color:#ffb4b4; border-color:#d85c6a; }
 .teams-registrations-panel .registration-card-v2 > * {
   min-width:0 !important;
   max-width:100% !important;
