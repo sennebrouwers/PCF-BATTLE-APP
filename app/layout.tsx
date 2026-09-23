@@ -5,16 +5,18 @@ import CookieConsent from "@/components/cookie-consent";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://pcfbattle.be"),
-  title: "Powerchair Floorball Battle — The Ultimate Test of Your Skills",
+  title: "PCF BATTLE | Powerchair Floorball Battle",
   description: "Powerchair Floorball Battle brings teams together for high-level international powerchair floorball competition in an exciting arena atmosphere.",
   openGraph: {
     type: "website",
     url: "https://pcfbattle.be/",
     siteName: "PCF BATTLE",
+    title: "Powerchair Floorball Battle — The Ultimate Test of Your Skills",
     images: [{ url: "/pcf-social-graph.jpg", width: 2048, height: 1075, alt: "Powerchair Floorball Battle" }],
   },
   twitter: {
     card: "summary_large_image",
+    title: "Powerchair Floorball Battle — The Ultimate Test of Your Skills",
     images: ["/pcf-social-graph.jpg"],
   },
   icons: {
