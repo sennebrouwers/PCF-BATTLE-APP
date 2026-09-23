@@ -4,12 +4,12 @@ import PwaRegister from "@/components/pwa-register";
 import CookieConsent from "@/components/cookie-consent";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://pcfbattle.be"),
+  metadataBase: new URL("https://www.pcfbattle.be"),
   title: "PCF BATTLE | Powerchair Floorball Battle",
   description: "Powerchair Floorball Battle brings teams together for high-level international powerchair floorball competition in an exciting arena atmosphere.",
   openGraph: {
     type: "website",
-    url: "https://pcfbattle.be/",
+    url: "https://www.pcfbattle.be/",
     siteName: "PCF BATTLE",
     title: "Powerchair Floorball Battle — The Ultimate Test of Your Skills",
     images: [{ url: "/pcf-social-graph.jpg", width: 2048, height: 1075, alt: "Powerchair Floorball Battle" }],

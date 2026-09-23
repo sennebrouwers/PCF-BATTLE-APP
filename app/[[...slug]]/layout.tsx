@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-const baseUrl = "https://pcfbattle.be";
+const baseUrl = "https://www.pcfbattle.be";
 const defaultDescription =
   "Powerchair Floorball Battle brings teams together for high-level international powerchair floorball competition in an exciting arena atmosphere.";
 const pageMetadata: Record<string, { title: string; description: string }> = {
@@ -90,25 +90,19 @@ const structuredData = {
   "@graph": [
     {
       "@type": "Organization",
+      "@id": `${baseUrl}/#organization`,
       name: "PCF BATTLE",
       url: baseUrl,
       logo: `${baseUrl}/PFB_Logo_Pink.svg`,
       email: "hello@pcfbattle.be",
     },
     {
-      "@type": "SportsEvent",
-      name: "Powerchair Floorball Battle",
-      description: defaultDescription,
+      "@type": "WebSite",
+      "@id": `${baseUrl}/#website`,
       url: baseUrl,
-      startDate: "2027-05-01",
-      endDate: "2027-05-02",
-      location: {
-        "@type": "Place",
-        name: "Leuven, Belgium",
-        address: { "@type": "PostalAddress", addressLocality: "Leuven", addressCountry: "BE" },
-      },
-      sport: "Powerchair Floorball",
-      organizer: { "@type": "Organization", name: "PCF BATTLE", url: baseUrl },
+      name: "PCF BATTLE | Powerchair Floorball Battle",
+      description: defaultDescription,
+      publisher: { "@id": `${baseUrl}/#organization` },
     },
   ],
 };

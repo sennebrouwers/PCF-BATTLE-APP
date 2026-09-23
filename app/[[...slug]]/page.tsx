@@ -26,14 +26,28 @@ import {
 } from "@/components/ui/dialog";
 import PublicHeader from "@/components/public-header";
 import PublicFooter from "@/components/public-footer";
-import PublicChat from "@/components/public-chat";
 import { publicCopy, usePublicLanguage } from "@/components/public-language";
 import type { Match, PublicBracketData, PublicData, PublicLink, PublicScorer, Referee, StandingRow, Team, Tournament } from "@/types/app";
 import { errorMessage } from "@/types/app";
 const PortalApp = lazy(() => import("@/components/portal-app"));
 const Gallery = lazy(() => import("@/components/gallery"));
 const ScoreboardDisplay = lazy(() => import("@/components/scoreboard-display"));
+const PublicChat = lazy(() => import("@/components/public-chat"));
 const LOGO = "/PFB_Logo_Pink.svg";
+
+function DeferredPublicChat() {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const run = () => setReady(true);
+    if ("requestIdleCallback" in window) {
+      const id = window.requestIdleCallback(run, { timeout: 2500 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = window.setTimeout(run, 1200);
+    return () => window.clearTimeout(id);
+  }, []);
+  return ready ? <Suspense fallback={null}><PublicChat /></Suspense> : null;
+}
 function teamSlug(name: string, id?: string) {
   const slug = String(name || "team")
     .normalize("NFKD")
@@ -820,6 +834,26 @@ function DynamicLanding() {
     <>
       <PublicHeader settings={tournament} currentPath="/" />
       <main className="reference-home">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SportsEvent",
+          "@id": "https://www.pcfbattle.be/#event-2027",
+          name: "Powerchair Floorball Battle 2027",
+          description: "International powerchair floorball tournament in Leuven, Belgium, on 1 and 2 May 2027.",
+          url: "https://www.pcfbattle.be/",
+          image: "https://www.pcfbattle.be/pcf-social-graph.jpg",
+          startDate: "2027-05-01T09:00:00+02:00",
+          endDate: "2027-05-02T18:00:00+02:00",
+          eventStatus: "https://schema.org/EventScheduled",
+          eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+          location: {
+            "@type": "Place",
+            name: "Leuven, Belgium",
+            address: { "@type": "PostalAddress", addressLocality: "Leuven", addressCountry: "BE" },
+          },
+          sport: "Powerchair Floorball",
+          organizer: { "@id": "https://www.pcfbattle.be/#organization" },
+        }) }} />
         <section className="reference-hero">
           <div className="reference-copy">
             <span className="live-pill">
@@ -1186,7 +1220,7 @@ function PublicUnavailable({
         </div>
       </main>
       <PublicFooter />
-      <PublicChat />
+      <DeferredPublicChat />
     </>
   );
 }
@@ -1459,7 +1493,7 @@ function About() {
         </section>
       </main>
       <PublicFooter />
-      <PublicChat />
+      <DeferredPublicChat />
       <ConnectionStatus updatedAt={d.updatedAt} />
     </>
   );
@@ -1523,7 +1557,7 @@ function FAQ() {
       </section>)}
     </main>
     <PublicFooter />
-    <PublicChat />
+    <DeferredPublicChat />
   </>;
 }
 
@@ -1541,14 +1575,14 @@ function TeamOverview({ id }: { id: string }) {
       {coaches.length > 0 && <section className="block"><div className="title"><h2>Coaches</h2></div><div className="player-list">{coaches.map((coach: any) => <article key={coach.id}>{coach.photo ? <img src={coach.photo} alt={coach.name || "Coach"}/> : <span aria-hidden="true">{coach.name?.[0]}</span>}<b>{coach.name}</b><strong>{coach.staff_role === "ASSISTANT_COACH" ? "Assistant coach" : "Coach"}</strong></article>)}</div></section>}
       <section className="block"><div className="title"><h2>{copy.matches}</h2><span>{matches.length} {copy.scheduled}</span></div><div className="team-match-list">{matches.map((match: any) => <LiveMatch key={match.id} match={match} teams={d.teams} referees={d.referees}/>)}{!matches.length && <p>{copy.noTeamMatches}</p>}</div></section>
     </>}
-  </main><PublicFooter /><PublicChat /></>;
+  </main><PublicFooter /><DeferredPublicChat /></>;
 }
 
 function Livestream() {
   const { language } = usePublicLanguage(), copy = publicCopy[language], d = usePublicData(), t = d.tournaments.find((x: any) => x.active) || d.tournaments[0] || {};
   const raw = String(t.livestream_url || ""), match = raw.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|live\/))([^?&/]+)/), embed = match ? `https://www.youtube-nocookie.com/embed/${match[1]}` : "";
   if (d.ready && t.show_livestream !== 1) return <PublicUnavailable title="Livestream" settings={t}/>;
-  return <><PublicHeader settings={t} currentPath="/livestream" loading={!d.ready}/><main className="public livestream-page"><div className="pagehero"><span>PCF BATTLE</span><h1>{copy.livestream}</h1><p>{copy.livestreamIntro}</p></div>{embed ? <div className="video-frame"><iframe src={embed} title="PCF Battle livestream" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen/></div> : <Panel title={copy.livestream}><p>{copy.livestreamNotStarted}</p></Panel>}</main><PublicChat /></>;
+  return <><PublicHeader settings={t} currentPath="/livestream" loading={!d.ready}/><main className="public livestream-page"><div className="pagehero"><span>PCF BATTLE</span><h1>{copy.livestream}</h1><p>{copy.livestreamIntro}</p></div>{embed ? <div className="video-frame"><iframe src={embed} title="PCF Battle livestream" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen/></div> : <Panel title={copy.livestream}><p>{copy.livestreamNotStarted}</p></Panel>}</main><DeferredPublicChat /></>;
 }
 
 function LegalPage({ page }: { page: "terms" | "privacy" | "cookies" | "accessibility" }) {
@@ -1675,7 +1709,7 @@ function LegalPage({ page }: { page: "terms" | "privacy" | "cookies" | "accessib
       sections: accessibilitySections,
     },
   }[page];
-  return <><PublicHeader settings={tournament} currentPath={`/${page}`} loading={!d.ready} /><main className="public legal-page"><div className="pagehero"><span>PCF BATTLE</span><h1>{content.title}</h1><p>{content.intro}</p></div><section className="block legal-content">{content.sections.map(([title, text]) => <article key={title}><h2>{title}</h2><p>{text}</p></article>)}</section></main><PublicFooter /><PublicChat /></>;
+  return <><PublicHeader settings={tournament} currentPath={`/${page}`} loading={!d.ready} /><main className="public legal-page"><div className="pagehero"><span>PCF BATTLE</span><h1>{content.title}</h1><p>{content.intro}</p></div><section className="block legal-content">{content.sections.map(([title, text]) => <article key={title}><h2>{title}</h2><p>{text}</p></article>)}</section></main><PublicFooter /><DeferredPublicChat /></>;
 }
 
 export default function App({ params }: { params: Promise<{ slug?: string[] }> }) {
