@@ -777,13 +777,16 @@ function PublicHomeLoading() {
           </div>
           <div className="action-frame">
             <div className="orange-glow" />
-            <Image
-              src="/pcf-battle-hero-high.svg"
-              alt="Powerchair floorball player competing during a match"
-              fill
-              priority
-              sizes="(max-width: 800px) 100vw, 56vw"
-            />
+            <picture className="hero-image-picture">
+              <source media="(max-width: 800px)" srcSet="/pcf-battle-hero-mobile.svg" />
+              <Image
+                src="/pcf-battle-hero-high.svg"
+                alt="Powerchair floorball player competing during a match"
+                fill
+                priority
+                sizes="(max-width: 800px) 100vw, 56vw"
+              />
+            </picture>
           </div>
         </section>
       </main>
@@ -919,13 +922,16 @@ function DynamicLanding() {
           </div>
           <div className="action-frame">
             <div className="orange-glow" />
-            <Image
-              src="/pcf-battle-hero-high.svg"
-              alt="Powerchair floorball player competing during a match"
-              fill
-              priority
-              sizes="(max-width: 800px) 100vw, 56vw"
-            />
+            <picture className="hero-image-picture">
+              <source media="(max-width: 800px)" srcSet="/pcf-battle-hero-mobile.svg" />
+              <Image
+                src="/pcf-battle-hero-high.svg"
+                alt="Powerchair floorball player competing during a match"
+                fill
+                priority
+                sizes="(max-width: 800px) 100vw, 56vw"
+              />
+            </picture>
             {!registration && live && (
               <Link className="live-score" href="/tournament/live">
                 <span>
