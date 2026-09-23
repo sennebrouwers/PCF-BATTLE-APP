@@ -2,6 +2,7 @@
 import { lazy, Suspense, use, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import {
   Bot,
   CalendarDays,
@@ -1709,5 +1710,5 @@ export default function App({ params }: { params: Promise<{ slug?: string[] }> }
   if (["/terms", "/privacy", "/cookies", "/accessibility"].includes(p)) return <LegalPage page={p.slice(1) as "terms" | "privacy" | "cookies" | "accessibility"} />;
   if (p.startsWith("/tournament/"))
     return <DynamicPublic view={p.split("/").pop() || "live"} />;
-  return <DynamicLanding />;
+  notFound();
 }

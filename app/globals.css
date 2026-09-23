@@ -1859,6 +1859,8 @@ body {
   object-fit: cover;
   object-position: 52% center;
 }
+.not-found-content { text-align: center; }
+.not-found-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 24px; }
 .frame-accent {
   position: absolute;
   left: 0;
