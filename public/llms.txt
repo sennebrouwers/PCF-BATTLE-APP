@@ -1,0 +1,24 @@
+# PCF BATTLE
+
+> Powerchair Floorball Battle is an international powerchair floorball tournament in Leuven, Belgium.
+
+## Website
+
+- Homepage: https://pcfbattle.be/
+- Tournament schedule: https://pcfbattle.be/tournament/schedule
+- Live matches: https://pcfbattle.be/tournament/live
+- Standings: https://pcfbattle.be/tournament/standings
+- Brackets: https://pcfbattle.be/tournament/brackets
+- About the tournament: https://pcfbattle.be/about
+- Frequently asked questions: https://pcfbattle.be/faq
+- Accessibility: https://pcfbattle.be/accessibility
+- Privacy policy: https://pcfbattle.be/privacy
+- Terms and conditions: https://pcfbattle.be/terms
+
+## Description
+
+Powerchair Floorball Battle brings teams together for high-level international powerchair floorball competition in an exciting arena atmosphere.
+
+## Contact
+
+- Email: hello@pcfbattle.be

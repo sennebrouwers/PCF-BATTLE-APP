@@ -43,6 +43,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon-192.png" type="image/png" sizes="192x192" />
         <link rel="shortcut icon" href="/favicon-32.png" type="image/png" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+        <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/ai-catalog+json" />
         <script
           dangerouslySetInnerHTML={{
             __html: `(() => {

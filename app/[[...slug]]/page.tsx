@@ -632,11 +632,12 @@ function SponsorBanner({ sponsors }: { sponsors: PublicLink[] }) {
           {items.map((s: PublicLink, i: number) => {
             const logo = (
               <span className={`sponsor-v3-frame${s.dark_url ? " has-dark-logo" : ""}`}>
-                <img className="sponsor-v3-logo sponsor-v3-light" src={s.url} alt={i < sponsors.length ? s.title || "Tournament sponsor" : ""} loading="eager" fetchPriority="high" />
-                {s.dark_url ? <img className="sponsor-v3-logo sponsor-v3-dark" src={s.dark_url} alt="" aria-hidden="true" loading="eager" fetchPriority="high" /> : null}
+                <img className="sponsor-v3-logo sponsor-v3-light" src={s.url} alt={i < sponsors.length ? s.title || "Tournament sponsor" : ""} loading="lazy" />
+                {s.dark_url ? <img className="sponsor-v3-logo sponsor-v3-dark" src={s.dark_url} alt="" aria-hidden="true" loading="lazy" /> : null}
               </span>
             );
-            return s.target_url ? <a className="sponsor-v3-item" href={s.target_url} target="_blank" rel="noreferrer" key={`${s.id}-${i}`} aria-hidden={i >= sponsors.length}>{logo}</a> : <span className="sponsor-v3-item" key={`${s.id}-${i}`} aria-hidden={i >= sponsors.length}>{logo}</span>;
+            if (i >= sponsors.length) return <span className="sponsor-v3-item" aria-hidden="true" key={`${s.id}-${i}`}>{logo}</span>;
+            return s.target_url ? <a className="sponsor-v3-item" href={s.target_url} target="_blank" rel="noreferrer" key={`${s.id}-${i}`}>{logo}</a> : <span className="sponsor-v3-item" key={`${s.id}-${i}`}>{logo}</span>;
           })}
         </div>
       </div>
@@ -760,7 +761,7 @@ function PublicHomeLoading() {
           <div className="action-frame">
             <div className="orange-glow" />
             <Image
-              src="/pcf-battle-hero-high.svg"
+              src="/pcf-battle-hero.webp"
               alt="Powerchair floorball player competing during a match"
               fill
               priority
@@ -881,7 +882,7 @@ function DynamicLanding() {
           <div className="action-frame">
             <div className="orange-glow" />
             <Image
-              src="/pcf-battle-hero-high.svg"
+              src="/pcf-battle-hero.webp"
               alt="Powerchair floorball player competing during a match"
               fill
               priority

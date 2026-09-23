@@ -1,0 +1,18 @@
+{
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "Powerchair Floorball Battle",
+    "identifier": "https://pcfbattle.be/",
+    "documentationUrl": "https://pcfbattle.be/about"
+  },
+  "entries": [
+    {
+      "identifier": "urn:air:pcfbattle.be:website",
+      "displayName": "PCF BATTLE website",
+      "type": "text/html",
+      "url": "https://pcfbattle.be/",
+      "description": "Public tournament information, schedules, standings and brackets for the Powerchair Floorball Battle.",
+      "tags": ["powerchair floorball", "powerchair hockey", "tournament"]
+    }
+  ]
+}
