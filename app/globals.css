@@ -6214,7 +6214,7 @@ header nav {
 }
 .standings-table tr {
   display: grid;
-  grid-template-columns: 44px minmax(260px, 1fr) repeat(6, 52px);
+  grid-template-columns: 44px minmax(0, 1fr) repeat(3, 52px);
   align-items: center;
 }
 .standings-table th,
@@ -6258,7 +6258,7 @@ header nav {
 @media (max-width: 800px) {
   .standings-table { min-width: 0; }
   .standings-table tr {
-    grid-template-columns: 30px minmax(0, 1fr) repeat(6, 29px);
+    grid-template-columns: 30px minmax(0, 1fr) repeat(3, 29px);
   }
   .standings-table th,
   .standings-table td {
