@@ -1075,7 +1075,6 @@ function PublicStandingsGroupTable({ rows, group }: { rows: StandingRow[]; group
   );
 }
 function BracketSchedule({ data }: { data: PublicBracketData }) {
-  type BracketParticipant = Team | StandingRow;
   const normalizedGroup = (value: unknown) => String(value || "").replace(/^group-/i, "").toUpperCase();
   const groupMatches = data.matches.filter((m: Match) =>
       ["A", "B"].includes(normalizedGroup(m.group_id)),
@@ -1098,8 +1097,6 @@ function BracketSchedule({ data }: { data: PublicBracketData }) {
               String(t.group_id).replace("group-", "").toUpperCase() === group,
           )[pos - 1]
         : null,
-    name = (team: BracketParticipant | null | undefined, fallback: string) => team?.name || fallback,
-    logo = (team: BracketParticipant | null | undefined) => (team && "logo" in team && typeof team.logo === "string" && team.logo ? <span className="mark team-logo-mark"><img src={team.logo} alt="" /></span> : null),
     matchAt = (time: string) =>
       data.matches.find(
         (m: Match) =>
