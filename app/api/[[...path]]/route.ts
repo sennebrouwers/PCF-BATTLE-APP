@@ -836,7 +836,7 @@ async function list(table: string, where = "", values: any[] = [], columns = "*"
     return x;
   });
 }
-async function seed(force = false) {
+async function seed(force = false, preserveAdminId?: string) {
   if (force)
     for (const t of [
       "audit_log",
@@ -856,6 +856,8 @@ async function seed(force = false) {
       "tournaments",
     ])
       await db().prepare(`DELETE FROM ${t}`).run();
+  if (force && preserveAdminId)
+    await db().prepare("UPDATE users SET active=1 WHERE id=? AND role='ADMIN'").bind(preserveAdminId).run();
   if ((await db().prepare("SELECT COUNT(*) c FROM teams").first<any>())?.c)
     return { seeded: false };
   const ts = now(),
@@ -897,7 +899,7 @@ async function seed(force = false) {
       ),
     db()
       .prepare(
-        "INSERT INTO users (id,email,password,role,name,team_id,country,photo,active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT OR IGNORE INTO users (id,email,password,role,name,team_id,country,photo,active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
       )
       .bind(
         "admin-1",
@@ -914,7 +916,7 @@ async function seed(force = false) {
       ),
     db()
       .prepare(
-        "INSERT INTO users (id,email,password,role,name,team_id,country,photo,active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT OR IGNORE INTO users (id,email,password,role,name,team_id,country,photo,active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
       )
       .bind(
         "ref-1",
@@ -931,7 +933,7 @@ async function seed(force = false) {
       ),
     db()
       .prepare(
-        "INSERT INTO users (id,email,password,role,name,team_id,country,photo,active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT OR IGNORE INTO users (id,email,password,role,name,team_id,country,photo,active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
       )
       .bind(
         "ref-2",
@@ -971,7 +973,7 @@ async function seed(force = false) {
     q.push(
       db()
         .prepare(
-          "INSERT INTO users (id,email,password,role,name,team_id,country,photo,active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+          "INSERT OR IGNORE INTO users (id,email,password,role,name,team_id,country,photo,active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
         )
         .bind(
           `team-user-${i + 1}`,
@@ -2420,7 +2422,7 @@ export async function POST(
         const password = String(body.password || ""), admin: any = await db().prepare("SELECT password FROM users WHERE id=? AND role='ADMIN' AND active=1").bind(u.id).first();
         if (!password || !admin || !(await verifyPassword(password, String(admin.password || "")))) return out({ error: "Admin password is incorrect" }, 403);
       }
-      return out(await seed(Boolean(body.force)));
+      return out(await seed(Boolean(body.force), u.id));
     }
     if (path === "scoreboard-settings") {
       if (!permit(u, ["ADMIN", "SCOREBOARD"])) return out({ error: "Forbidden" }, 403);
