@@ -3216,20 +3216,14 @@ function StandingsTable({ rows }: { rows: Row[] }) {
           <col className="standings-col-stat" />
           <col className="standings-col-stat" />
           <col className="standings-col-stat" />
-          <col className="standings-col-stat" />
-          <col className="standings-col-stat" />
-          <col className="standings-col-stat" />
         </colgroup>
         <thead>
           <tr>
             <th>#</th>
             <th>Team</th>
-            <th>P</th>
-            <th>W</th>
-            <th>D</th>
-            <th>L</th>
-            <th>GD</th>
-            <th>Pts</th>
+            <th>PLD</th>
+            <th>PTS</th>
+            <th>+/-</th>
           </tr>
         </thead>
         <tbody>
@@ -3252,15 +3246,12 @@ function StandingsTable({ rows }: { rows: Row[] }) {
                   </span>
                 </td>
                 <td>{t.played}</td>
-                <td>{t.won}</td>
-                <td>{t.drawn}</td>
-                <td>{t.lost}</td>
+                <td>
+                  <b className="points">{t.points}</b>
+                </td>
                 <td>
                   {t.goalDifference > 0 ? "+" : ""}
                   {t.goalDifference}
-                </td>
-                <td>
-                  <b className="points">{t.points}</b>
                 </td>
               </tr>
             ))}
