@@ -6381,6 +6381,14 @@ header nav {
   background: var(--pink);
   box-shadow: 0 0 0 4px rgba(236, 72, 153, .22);
 }
+:root[data-theme="dark"] .reference-copy > .live-pill.registration-closed {
+  background: #2a252d;
+  color: var(--muted);
+}
+:root[data-theme="dark"] .reference-copy > .live-pill.registration-closed i {
+  background: #8f8792;
+  box-shadow: 0 0 0 4px #514957;
+}
 :root[data-theme="dark"] .reference-copy > .tournament-hero-details {
   background: var(--surface-2);
   border-color: var(--line);
