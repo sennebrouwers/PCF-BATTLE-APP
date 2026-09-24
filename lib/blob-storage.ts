@@ -8,7 +8,7 @@ export async function readBlob(pathname: string) {
       body: result.stream,
       contentType: result.blob.contentType,
       contentDisposition: result.blob.contentDisposition,
-      customMetadata: result.blob.customMetadata,
+      customMetadata: (result.blob as typeof result.blob & { customMetadata?: Record<string, string> }).customMetadata,
     };
   } catch {
     return null;
@@ -27,5 +27,5 @@ export async function writeBlob(
     addRandomSuffix: false,
     multipart: true,
     customMetadata: { owner },
-  });
+  } as Parameters<typeof put>[2] & { customMetadata: Record<string, string> });
 }

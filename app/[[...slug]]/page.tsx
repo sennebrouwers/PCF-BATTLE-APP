@@ -43,8 +43,8 @@ function DeferredPublicChat() {
       const id = window.requestIdleCallback(run, { timeout: 2500 });
       return () => window.cancelIdleCallback(id);
     }
-    const id = window.setTimeout(run, 1200);
-    return () => window.clearTimeout(id);
+    const id = setTimeout(run, 1200);
+    return () => clearTimeout(id);
   }, []);
   return ready ? <Suspense fallback={null}><PublicChat /></Suspense> : null;
 }

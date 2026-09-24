@@ -1,15 +1,17 @@
 import { createClient, type Client, type InStatement, type ResultSet } from "@libsql/client";
 
+type PreparedStatement = { sql: string; args: unknown[] };
+
 type D1Result<T = Record<string, unknown>> = {
   results: T[];
   meta: { changes: number; last_row_id: number };
 };
 
 class TursoStatement {
-  private readonly statement: InStatement;
+  private readonly statement: PreparedStatement;
 
   constructor(private readonly client: Client, sql: string, args: unknown[] = []) {
-    this.statement = { sql, args: args as InStatement["args"] };
+    this.statement = { sql, args };
   }
 
   bind(...args: unknown[]) {
@@ -17,7 +19,7 @@ class TursoStatement {
   }
 
   private async execute(): Promise<ResultSet> {
-    return this.client.execute(this.statement);
+    return this.client.execute(this.statement as InStatement);
   }
 
   async all<T = Record<string, unknown>>(): Promise<D1Result<T>> {

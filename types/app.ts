@@ -75,6 +75,7 @@ export type PublicBracketData = {
   teams: Team[];
   matches: Match[];
   standings: StandingRow[];
+  referees?: Referee[];
 };
 
 export type Referee = { id: string; name: string; country?: string };
@@ -100,6 +101,7 @@ export type PublicScheduleItem = {
   start_time?: string;
   court?: string;
   active?: number;
+  sort_order?: number;
 };
 
 export type PublicPlayer = {
