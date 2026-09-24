@@ -804,6 +804,7 @@ function DynamicLanding() {
   const tournament =
     d.tournaments.find((t) => t.active) || d.tournaments[0] || {},
     registration = Boolean(tournament.registration_mode),
+    registrationsOpen = registration && tournament.registration_enabled !== 0,
     liveEnabled = tournament.live_enabled !== 0,
     live = liveEnabled ? d.matches.find((m) => m.status === "live") : null,
     home = d.teams.find((t: Team) => t.id === live?.home_team_id),
@@ -871,10 +872,12 @@ function DynamicLanding() {
         }) }} />
         <section className="reference-hero">
           <div className="reference-copy">
-            <span className="live-pill">
+            <span className={`live-pill${registration && !registrationsOpen ? " registration-closed" : ""}`}>
               <i />{" "}
               {registration
-                ? copy.registrationOpen
+                ? registrationsOpen
+                  ? copy.registrationOpen
+                  : copy.registrationClosed
                 : live
                   ? copy.liveTournament
                   : copy.tournamentTag}
@@ -890,7 +893,7 @@ function DynamicLanding() {
             </h1>
             <TournamentHeroDetails tournament={tournament} />
             <p>
-              {registration
+              {registrationsOpen
                 ? localized(tournament.public_message, language) ||
                   "Team registration is currently open. Tournament details will be published soon."
                 : copy.followTournament}

@@ -1806,6 +1806,8 @@ body {
   background: var(--pink);
   box-shadow: 0 0 0 4px #fbcfe8;
 }
+.live-pill.registration-closed { background: #2a252d; color: var(--muted); }
+.live-pill.registration-closed i { background: #8f8792; box-shadow: 0 0 0 4px #514957; }
 .reference-copy h1 {
   font-size: clamp(58px, 5.6vw, 92px);
   line-height: 0.91;
