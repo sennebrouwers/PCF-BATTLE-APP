@@ -803,8 +803,8 @@ function DynamicLanding() {
   if (!d.ready) return <PublicHomeLoading />;
   const tournament =
     d.tournaments.find((t) => t.active) || d.tournaments[0] || {},
-    registration = Boolean(tournament.registration_mode),
-    registrationsOpen = registration && tournament.registration_enabled !== 0,
+    registration = Number(tournament.registration_mode) !== 0,
+    registrationsOpen = registration && Number(tournament.registration_enabled ?? 1) !== 0,
     liveEnabled = tournament.live_enabled !== 0,
     live = liveEnabled ? d.matches.find((m) => m.status === "live") : null,
     home = d.teams.find((t: Team) => t.id === live?.home_team_id),
