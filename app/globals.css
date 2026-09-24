@@ -1675,6 +1675,22 @@ button.mvp-choice:not(:disabled):hover, .mvp-choice.selected { border-color: var
 .operations-summary small { color: #76636d; }
 .operations-summary b { font-size: clamp(1.25rem, 2vw, 1.8rem); line-height: 1.15; }
 .operations-control { border-top: 4px solid var(--pink); }
+.operations-control .empty-state {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 28px 30px;
+}
+.operations-control .empty-state p { margin: 0; }
+.operations-control .empty-state .btn { flex: 0 0 auto; }
+@media (max-width: 600px) {
+  .operations-control .empty-state {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+    padding: 22px 18px;
+  }
+}
 .operations-columns { display: grid; grid-template-columns: 1.15fr .85fr; gap: 20px; }
 .court-timeline { display: grid; gap: 4px; }
 .court-timeline article { display: grid; grid-template-columns: 64px 1fr; gap: 14px; align-items: center; padding: 13px 10px; border-bottom: 1px solid #eee7eb; }
