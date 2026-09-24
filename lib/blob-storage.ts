@@ -8,6 +8,7 @@ export async function readBlob(pathname: string) {
       body: result.stream,
       contentType: result.blob.contentType,
       contentDisposition: result.blob.contentDisposition,
+      customMetadata: result.blob.customMetadata,
     };
   } catch {
     return null;
@@ -18,11 +19,13 @@ export async function writeBlob(
   pathname: string,
   body: ReadableStream,
   contentType: string,
+  owner: string,
 ) {
   return put(pathname, body, {
     access: "private",
     contentType,
     addRandomSuffix: false,
     multipart: true,
+    customMetadata: { owner },
   });
 }

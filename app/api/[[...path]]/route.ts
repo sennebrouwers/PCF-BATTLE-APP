@@ -1338,7 +1338,7 @@ export async function GET(
       if (!object) return new NextResponse("Not found", { status: 404 });
       if (object.contentType === "application/pdf") {
         const sharedResource = (await db().prepare("SELECT id FROM links WHERE url=? AND active=1 LIMIT 1").bind(`/api/files/${objectKey}`).first()) as any;
-        if (!u || (!sharedResource && u.role !== "ADMIN" && !objectKey.startsWith(`${u.id}-`)))
+        if (!u || (!sharedResource && u.role !== "ADMIN" && object.customMetadata?.owner !== u.id && !objectKey.startsWith(`${u.id}-`)))
           return out({ error: u ? "Forbidden" : "Unauthorized" }, u ? 403 : 401);
       }
       return new NextResponse(object.body, {
@@ -2368,7 +2368,7 @@ export async function POST(
           process.env.VERCEL_OIDC_TOKEN,
       );
       if (!blobConfigured) return out({ error: "File storage is not available" }, 503);
-      await writeBlob(key, file.stream(), file.type);
+      await writeBlob(key, file.stream(), file.type, u.id);
       return out(
         {
           url: `/api/files/${key}`,
