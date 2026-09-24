@@ -63,10 +63,19 @@ export async function generateMetadata({
         : {
             title: "PCF BATTLE | Powerchair Floorball Battle",
             description: defaultDescription,
-          });
+        });
+  const privatePage = [
+    "/terms",
+    "/privacy",
+    "/cookies",
+    "/accessibility",
+    "/login",
+    "/admin",
+  ].includes(path);
   return {
     title: metadata.title,
     description: metadata.description,
+    robots: privatePage ? { index: false, follow: false } : undefined,
     alternates: {
       canonical: `${baseUrl}${path === "/" ? "/" : path}`,
       languages: {
