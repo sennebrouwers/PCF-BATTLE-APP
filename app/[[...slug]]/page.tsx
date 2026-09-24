@@ -1,5 +1,5 @@
 "use client";
-import { lazy, Suspense, use, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { lazy, Suspense, use, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -605,46 +605,13 @@ function TournamentHeroDetails({ tournament }: { tournament?: Tournament }) {
 function SponsorBanner({ sponsors }: { sponsors: PublicLink[] }) {
   const looping = sponsors.length > 1;
   const items = looping ? [...sponsors, ...sponsors] : sponsors;
-  const trackRef = useRef<HTMLDivElement>(null);
-  const pausedRef = useRef(false);
-  useEffect(() => {
-    if (!looping) return;
-    let frame = 0;
-    let cancelled = false;
-    let offset = 0;
-    let last = performance.now();
-    const start = async () => {
-      const track = trackRef.current;
-      if (!track) return;
-      if (cancelled) return;
-      const tick = (now: number) => {
-        const currentTrack = trackRef.current;
-        if (!currentTrack) return;
-        const half = currentTrack.scrollWidth / 2;
-        const elapsed = Math.min(80, now - last);
-        last = now;
-        if (!pausedRef.current) offset += elapsed * 0.028;
-        if (half > 0 && offset >= half) offset -= half;
-        currentTrack.style.transform = `translate3d(${-offset}px,0,0)`;
-        frame = requestAnimationFrame(tick);
-      };
-      frame = requestAnimationFrame(tick);
-    };
-    void start();
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(frame);
-    };
-  }, [looping, sponsors.length]);
   if (!sponsors.length) return null;
   return (
     <section
-      className="sponsor-banner sponsor-carousel-v3"
-      onMouseEnter={() => { pausedRef.current = true; }}
-      onMouseLeave={() => { pausedRef.current = false; }}
+      className={`sponsor-banner sponsor-carousel-v3${looping ? " is-looping" : ""}`}
     >
       <div className="sponsor-carousel-v3-viewport">
-        <div ref={trackRef} className="sponsor-carousel-v3-track">
+        <div className="sponsor-carousel-v3-track">
           {items.map((s: PublicLink, i: number) => {
             const logo = (
               <span className={`sponsor-v3-frame${s.dark_url ? " has-dark-logo" : ""}`}>
