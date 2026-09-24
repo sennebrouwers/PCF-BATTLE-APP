@@ -20,6 +20,9 @@ export default function CookieConsent() {
   }
   return <>
     {choice === "accepted" && <>
+      <Script id="google-tag-manager-init" strategy="afterInteractive">{`window.dataLayer = window.dataLayer || [];
+window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});`}</Script>
+      <Script src="https://www.googletagmanager.com/gtm.js?id=GTM-TFZK4DQQ" strategy="afterInteractive" />
       <Script src="https://www.googletagmanager.com/gtag/js?id=G-599N5QGLSG" strategy="afterInteractive" />
       <Script id="google-analytics" strategy="afterInteractive">{`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
