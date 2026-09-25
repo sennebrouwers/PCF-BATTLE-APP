@@ -7192,7 +7192,6 @@ function UsersPanel({ refresh }: { refresh: number }) {
           <p><strong>Name</strong><span>{details.name}</span></p>
           <p><strong>Email</strong><span><a href={`mailto:${details.email}`}>{details.email}</a></span></p>
           <p><strong>Role</strong><span>{details.role}</span></p>
-          <p><strong>Connected team</strong><span>{details.team_name || "No team"}</span></p>
           <p><strong>Country</strong><span>{details.country || "—"}</span></p>
           <p><strong>Status</strong><span>{details.active ? "Active" : "Inactive"}</span></p>
         </div>
@@ -7696,14 +7695,11 @@ function ChatPanel({ refresh }: { refresh: number }) {
 function ContactsPanel({
   refresh,
   admin = false,
-  onOpenTeam,
 }: {
   refresh: number;
   admin?: boolean;
-  onOpenTeam?: () => void;
 }) {
   const contacts = useData("/contacts", refresh),
-    teams = useData(admin ? "/teams" : "/contacts", refresh),
     [editing, setEditing] = useState<Row | null | undefined>(undefined),
     [busy, setBusy] = useState(false),
     [sameAsPhone, setSameAsPhone] = useState(true),
@@ -7782,7 +7778,7 @@ function ContactsPanel({
       </div>
       <div className="contact-grid">
         {contacts.data.map((c: Row) => (
-          <article key={c.id} className={`${c.emergency ? "emergency" : ""}${c.whatsapp && !c.phone && !c.email ? " whatsapp-only" : ""}`}>
+          <article key={c.id} className={`${c.emergency ? "emergency" : ""}${c.whatsapp && !c.phone && !c.email ? " whatsapp-only" : ""}`} onClick={() => setDetails(c)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setDetails(c); }}>
             <span className="contact-icon">
               {c.whatsapp && !c.phone && !c.email ? <WhatsAppIcon /> : <Phone />}
             </span>
@@ -7830,7 +7826,7 @@ function ContactsPanel({
               name="role"
               defaultValue={editing?.role}
             />
-            {admin && <Field label="Connected team (optional)" name="team_id" children={<select name="team_id" defaultValue={editing?.team_id || ""}><option value="">Organization-wide contact</option>{teams.data.map((team: Row) => <option key={team.id} value={team.id}>{team.name}</option>)}</select>} />}
+            
             <fieldset className="contact-method-picker">
               <legend>Contact methods</legend>
               <small>Select only the ways people should contact this person.</small>
