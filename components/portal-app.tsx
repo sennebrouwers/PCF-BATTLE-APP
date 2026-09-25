@@ -6728,7 +6728,26 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
     [busy, setBusy] = useState(false),
     [teamStep, setTeamStep] = useState(1),
     [invoiceRequested, setInvoiceRequested] = useState(false),
-    [delegationSize, setDelegationSize] = useState(0);
+    [delegationSize, setDelegationSize] = useState(0),
+    [wizardRevision, setWizardRevision] = useState(0),
+    [stepValid, setStepValid] = useState(false);
+  const wizardFormRef = useRef<HTMLFormElement>(null);
+  function readStepValidity() {
+    const form = wizardFormRef.current;
+    if (!form) return;
+    const value = (name: string) => String(new FormData(form).get(name) || "").trim();
+    let valid = false;
+    if (teamStep === 1) {
+      const logo = form.elements.namedItem("logo_file") as HTMLInputElement | null;
+      valid = Boolean(value("name") && value("address_country") && /^#[0-9a-fA-F]{6}$/.test(value("color_hex")) && (editing?.logo || logo?.files?.length));
+    }
+    if (teamStep === 2) valid = Boolean(value("contact_person") && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value("contact_email")) && value("phone"));
+    if (teamStep === 3) valid = /^\d+$/.test(value("expected_delegation_size")) && Number(value("expected_delegation_size")) <= 16;
+    if (teamStep === 4) valid = !invoiceRequested || Boolean(value("billing_name") && value("billing_address") && value("billing_postal_code") && value("billing_city") && value("billing_country"));
+    if (teamStep === 5) valid = true;
+    setStepValid(valid);
+  }
+  useEffect(() => { readStepValidity(); }, [teamStep, editing, invoiceRequested, wizardRevision]);
   const [teamTab, setTeamTab] = useState("directory");
   useEffect(() => {
     const readTab = () => {
@@ -6868,7 +6887,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
               onOpenChange={(v) => !v && setEditing(undefined)}
               className="team-editor-dialog"
             >
-              <form className="portal-form team-wizard" onSubmit={save}>
+              <form ref={wizardFormRef} className="portal-form team-wizard" onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
                 <div className="wizard-progress" aria-label="Team creation steps">
                   {["Team identity", "Contact person", "Delegation", "Invoice & billing", "Review & create"].map((label, index) => <button type="button" className={teamStep === index + 1 ? "active" : ""} key={label} onClick={() => setTeamStep(index + 1)}>{index + 1}. {label}</button>)}
                 </div>
@@ -6890,7 +6909,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                   <p className="wizard-help">Initial rooms required: {delegationSize ? Math.ceil(delegationSize / 2) : "—"}. Admins can adjust room assignments later.</p>
                 </div>
                 <div hidden={teamStep !== 4} className="team-wizard-step">
-                  <label className="portal-field wide checkbox-field"><input type="checkbox" name="invoice_requested" value="1" checked={invoiceRequested} onChange={(event) => setInvoiceRequested(event.target.checked)} /><span>I would like to receive an invoice.</span></label>
+                  <label className="portal-field wide checkbox-field"><input type="checkbox" name="invoice_requested" value="1" checked={invoiceRequested} onChange={(event) => { setInvoiceRequested(event.target.checked); setWizardRevision((value) => value + 1); }} /><span>I would like to receive an invoice during payment for administration.</span></label>
                   {invoiceRequested && <><Field label="Billing name / organisation" name="billing_name" defaultValue={editing?.billing_name} required /><Field label="Street and house number" name="billing_address" defaultValue={editing?.billing_address} required /><Field label="Postal code" name="billing_postal_code" defaultValue={editing?.billing_postal_code} required /><Field label="City" name="billing_city" defaultValue={editing?.billing_city} required /><Field label="Country" name="billing_country" defaultValue={editing?.billing_country} required /><Field label="VAT number (optional)" name="vat_number" defaultValue={editing?.vat_number} /></>}
                 </div>
                 <div hidden={teamStep !== 5} className="team-wizard-step team-wizard-review">
@@ -6898,7 +6917,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                   <p>Check the entered details before creating the team. The logo is uploaded first and the selected HEX color is used for team branding.</p>
                   {!editing?.id && <><Field label="Login email" name="login_email" type="email" required /><Field label="Temporary password" name="login_password" type="password" minLength={8} required /></>}
                 </div>
-                <div className="wizard-actions"><button type="button" className="btn" onClick={() => teamStep > 1 && setTeamStep(teamStep - 1)}>Back</button>{teamStep < 5 && <button type="button" className="btn primary" onClick={() => setTeamStep(teamStep + 1)}>Next</button>}</div>
+                <div className="wizard-actions"><button type="button" className="btn" onClick={() => teamStep > 1 && setTeamStep(teamStep - 1)}>Back</button>{teamStep < 5 && <button type="button" className="btn primary" disabled={!stepValid} onClick={() => setTeamStep(teamStep + 1)}>Next</button>}</div>
                 {teamStep === 5 && <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}
               </form>
             </Modal>
