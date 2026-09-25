@@ -6725,7 +6725,10 @@ function Payments({ refresh }: { refresh: number }) {
 function TeamsAdminV2({ refresh }: { refresh: number }) {
   const teams = useData("/teams", refresh),
     [editing, setEditing] = useState<Row | null | undefined>(undefined),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [teamStep, setTeamStep] = useState(1),
+    [invoiceRequested, setInvoiceRequested] = useState(false),
+    [delegationSize, setDelegationSize] = useState(0);
   const [teamTab, setTeamTab] = useState("directory");
   useEffect(() => {
     const readTab = () => {
@@ -6762,6 +6765,13 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
       else if (editing?.team_photo) b.team_photo = editing.team_photo;
       delete b.logo_file;
       delete b.team_photo_file;
+      if (/^#[0-9a-fA-F]{6}$/.test(String(b.color_hex || ""))) b.color = b.color_hex;
+      delete b.color_hex;
+      if (!b.invoice_requested) {
+        b.billing_name = "";
+        b.billing_address = "";
+        b.vat_number = "";
+      }
       editing?.id
         ? await api(`/teams/${editing.id}`, {
             method: "PUT",
@@ -6803,7 +6813,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
           <section className="panel teams-directory-panel">
             <div className="panelhead">
               <h3>Registered teams</h3>
-              <button className="btn primary" onClick={() => setEditing(null)}>
+              <button className="btn primary" onClick={() => { setTeamStep(1); setInvoiceRequested(false); setDelegationSize(0); setEditing(null); }}>
                 <Plus /> Add team
               </button>
             </div>
@@ -6837,7 +6847,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                     <a href={`/api/teams/${t.id}/pdf`} download>
                       <Download /> Team PDF
                     </a>
-                    <button onClick={() => setEditing(t)}>Edit</button>
+                    <button onClick={() => { setTeamStep(1); setInvoiceRequested(Boolean(t.invoice_requested)); setDelegationSize(Number(t.expected_delegation_size || 0)); setEditing(t); }}>Edit</button>
                     <Confirm
                       title="Delete team"
                       text={`Delete ${t.name}?`}
@@ -6858,69 +6868,38 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
               onOpenChange={(v) => !v && setEditing(undefined)}
               className="team-editor-dialog"
             >
-              <form className="portal-form" onSubmit={save}>
-                <Field
-                  label="Team name"
-                  name="name"
-                  defaultValue={editing?.name}
-                  required
-                />
-                <Field
-                  label="Contact person"
-                  name="contact_person"
-                  defaultValue={editing?.contact_person}
-                />
-                <Field
-                  label="Group"
-                  name="group_id"
-                  defaultValue={editing?.group_id}
-                />
-                <Field
-                  label="Team color"
-                  name="color"
-                  type="color"
-                  defaultValue={
-                    editing?.color || teamColors[teams.data.length % 8]
-                  }
-                />
-                <PhoneField
-                  defaultValue={editing?.phone}
-                  defaultCode={editing?.phone_country_code || "+32"}
-                />
-                <Field
-                  label="Website"
-                  name="website"
-                  type="url"
-                  defaultValue={editing?.website}
-                />
-                <AddressFields team={editing || undefined} />
-                <Field label="Team logo file" name="logo_file" type="file" />
-                <Field
-                  label="Team photo file"
-                  name="team_photo_file"
-                  type="file"
-                />
-                {!editing?.id && (
-                  <>
-                    <Field
-                      label="Login email"
-                      name="login_email"
-                      type="email"
-                      required
-                    />
-                    <Field
-                      label="Temporary password"
-                      name="login_password"
-                      type="password"
-                      minLength={8}
-                      required
-                    />
-                  </>
-                )}
-                <FormButtons
-                  busy={busy}
-                  onCancel={() => setEditing(undefined)}
-                />
+              <form className="portal-form team-wizard" onSubmit={save}>
+                <div className="wizard-progress" aria-label="Team creation steps">
+                  {["Team identity", "Contact person", "Delegation", "Invoice & billing", "Review & create"].map((label, index) => <button type="button" className={teamStep === index + 1 ? "active" : ""} key={label} onClick={() => setTeamStep(index + 1)}>{index + 1}. {label}</button>)}
+                </div>
+                <div hidden={teamStep !== 1} className="team-wizard-step">
+                  <Field label="Team name" name="name" defaultValue={editing?.name} required />
+                  <Field label="Country" name="address_country" defaultValue={editing?.address_country} required />
+                  <Field label="Team logo" name="logo_file" type="file" required={!editing?.logo} children={<input name="logo_file" type="file" accept="image/*" required={!editing?.logo} onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; const suggested = await suggestTeamColor(file); const input = document.querySelector<HTMLInputElement>('input[name="color_hex"]'); const picker = document.querySelector<HTMLInputElement>('input[data-team-color-picker]'); if (suggested && input && picker) { input.value = suggested; picker.value = suggested; } }} />} />
+                  <Field label="Team color (HEX)" name="color_hex" defaultValue={editing?.color || teamColors[teams.data.length % 8]} required children={<div className="hex-color-control"><input name="color_hex" defaultValue={editing?.color || teamColors[teams.data.length % 8]} required /><input data-team-color-picker type="color" defaultValue={editing?.color || teamColors[teams.data.length % 8]} aria-label="Choose team color" onChange={(event) => { const input = document.querySelector<HTMLInputElement>('input[name="color_hex"]'); if (input) input.value = event.target.value; }} /></div>} />
+                  <Field label="Group" name="group_id" defaultValue={editing?.group_id} />
+                </div>
+                <div hidden={teamStep !== 2} className="team-wizard-step">
+                  <Field label="Full name" name="contact_person" defaultValue={editing?.contact_person} required />
+                  <Field label="Email address" name="contact_email" type="email" defaultValue={editing?.contact_email} required />
+                  <PhoneField defaultValue={editing?.phone} defaultCode={editing?.phone_country_code || "+32"} required />
+                  <Field label="WhatsApp number / contact" name="whatsapp" type="tel" defaultValue={editing?.whatsapp} />
+                </div>
+                <div hidden={teamStep !== 3} className="team-wizard-step">
+                  <Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={0} max={16} defaultValue={editing?.expected_delegation_size || ""} required onChange={(event) => setDelegationSize(Math.min(16, Math.max(0, Number(event.target.value || 0))))} />
+                  <p className="wizard-help">Initial rooms required: {delegationSize ? Math.ceil(delegationSize / 2) : "—"}. Admins can adjust room assignments later.</p>
+                </div>
+                <div hidden={teamStep !== 4} className="team-wizard-step">
+                  <label className="portal-field wide checkbox-field"><input type="checkbox" name="invoice_requested" value="1" checked={invoiceRequested} onChange={(event) => setInvoiceRequested(event.target.checked)} /><span>I would like to receive an invoice.</span></label>
+                  {invoiceRequested && <><Field label="Billing name / organisation" name="billing_name" defaultValue={editing?.billing_name} required /><Field label="Street and house number" name="billing_address" defaultValue={editing?.billing_address} required /><Field label="Postal code" name="billing_postal_code" defaultValue={editing?.billing_postal_code} required /><Field label="City" name="billing_city" defaultValue={editing?.billing_city} required /><Field label="Country" name="billing_country" defaultValue={editing?.billing_country} required /><Field label="VAT number (optional)" name="vat_number" defaultValue={editing?.vat_number} /></>}
+                </div>
+                <div hidden={teamStep !== 5} className="team-wizard-step team-wizard-review">
+                  <h4>Review team</h4>
+                  <p>Check the entered details before creating the team. The logo is uploaded first and the selected HEX color is used for team branding.</p>
+                  {!editing?.id && <><Field label="Login email" name="login_email" type="email" required /><Field label="Temporary password" name="login_password" type="password" minLength={8} required /></>}
+                </div>
+                <div className="wizard-actions"><button type="button" className="btn" onClick={() => teamStep > 1 && setTeamStep(teamStep - 1)}>Back</button>{teamStep < 5 && <button type="button" className="btn primary" onClick={() => setTeamStep(teamStep + 1)}>Next</button>}</div>
+                {teamStep === 5 && <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}
               </form>
             </Modal>
           </section>
