@@ -7848,5 +7848,4 @@ function ContactsPanel({
                   {value !== "phone" ? <WhatsAppIcon /> : null}
                   {label}
                 </label>
-              ))}.map(([value, label]) => <label key={value}><input type="checkbox" checked={contactMethods.includes(value)} onChange={(event) => setContactMethods((current) => event.target.checked ? [...new Set([...current, value])] : current.filter((item) => item !== value))} />{value === "whatsapp" ? <WhatsAppIcon /> : null}{label}</label>)}
-            
+              ))} 
