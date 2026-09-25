@@ -4268,8 +4268,21 @@ function Delegation({
       "PLAYER" | "COACH" | "STAFF" | "REFEREE" | "TEAM_MANAGER" | "ASSISTANT"
     >("PLAYER"),
     [memberStep, setMemberStep] = useState(1),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [memberStepValid, setMemberStepValid] = useState(false),
+    [memberRevision, setMemberRevision] = useState(0);
   const saveLock = useRef(false);
+  const memberFormRef = useRef<HTMLFormElement>(null);
+  function readMemberStepValidity() {
+    const form = memberFormRef.current;
+    if (!form) return;
+    const value = (name: string) => String(new FormData(form).get(name) || "").trim();
+    let valid = true;
+    if (memberStep === 1) valid = Boolean(value("name") && value("role") && value("dob"));
+    if (memberStep === 2 && memberType === "PLAYER") valid = Boolean(value("player_role") && value("number"));
+    setMemberStepValid(valid);
+  }
+  useEffect(() => { readMemberStepValidity(); }, [memberStep, memberType, editing, memberRevision]);
   const shown = members.data.filter(
       (m) => team === "all" || m.team_id === team,
     ),
@@ -4451,7 +4464,7 @@ function Delegation({
         open={editing !== undefined}
         onOpenChange={(v) => !v && setEditing(undefined)}
       >
-        <form className="portal-form" onSubmit={save}>
+        <form ref={memberFormRef} className="portal-form" onInput={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
           <div className="wizard-progress" aria-label="Delegation member steps">
             {["Basic information", "Role details", "Additional information"].map((label, index) => (
               <button type="button" className={memberStep === index + 1 ? "active" : ""} key={label} onClick={() => setMemberStep(index + 1)}>
@@ -4545,6 +4558,7 @@ function Delegation({
             name="dob"
             type="date"
             defaultValue={editing?.dob}
+            required
           />
           </div>
           <div hidden={memberStep !== 3}><Field
@@ -4582,7 +4596,7 @@ function Delegation({
           /></div>
           <div className="wizard-actions">
             {memberStep > 1 && <button type="button" className="btn" onClick={() => setMemberStep((step) => step - 1)}>Back</button>}
-            {memberStep < 3 && <button type="button" className="btn primary" onClick={() => setMemberStep((step) => step + 1)}>Next</button>}
+            {memberStep < 3 && <button type="button" className="btn primary" disabled={!memberStepValid} onClick={() => setMemberStep((step) => step + 1)}>Next</button>}
           </div>
           <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />
         </form>
@@ -6898,7 +6912,6 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                   <Field label="Full name" name="contact_person" defaultValue={editing?.contact_person} required />
                   <Field label="Email address" name="contact_email" type="email" defaultValue={editing?.contact_email} required />
                   <PhoneField defaultValue={editing?.phone} defaultCode={editing?.phone_country_code || "+32"} required />
-                  <label className="portal-field wide whatsapp-field"><span><WhatsAppIcon /> WhatsApp number / contact</span><input name="whatsapp" type="tel" defaultValue={editing?.whatsapp} /></label>
                 </div>
                 <div hidden={teamStep !== 3} className="team-wizard-step">
                   <Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={0} max={16} defaultValue={editing?.expected_delegation_size || ""} required onChange={(event) => setDelegationSize(Math.min(16, Math.max(0, Number(event.target.value || 0))))} />
@@ -7735,6 +7748,7 @@ function ContactsPanel({
               <h4>{c.name}</h4>
               <a href={`tel:${c.phone}`}>{c.phone}</a>
               {c.email && <a href={`mailto:${c.email}`}>{c.email}</a>}
+              {c.whatsapp && <a className="whatsapp-link" href={`https://wa.me/${String(c.whatsapp).replace(/[^\d+]/g, "").replace(/^\+/, "")}`} target="_blank" rel="noreferrer"><WhatsAppIcon /> {c.whatsapp}</a>}
             </div>
             {c.emergency ? <Badge>Emergency</Badge> : null}
             {admin && (
@@ -7780,6 +7794,7 @@ function ContactsPanel({
               defaultValue={editing?.phone}
               required
             />
+            <label className="portal-field whatsapp-field"><span><WhatsAppIcon /> WhatsApp contact</span><input name="whatsapp" type="tel" defaultValue={editing?.whatsapp} /></label>
             <Field
               label="Email"
               name="email"

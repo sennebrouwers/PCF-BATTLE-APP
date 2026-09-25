@@ -194,6 +194,7 @@ async function ensureScheduleSchema() {
     "ALTER TABLE delegation_members ADD COLUMN custom_staff_role text",
     "ALTER TABLE delegation_members ADD COLUMN assistant_player_id text",
     "ALTER TABLE delegation_members ADD COLUMN wheelchair_user integer DEFAULT 0",
+    "ALTER TABLE organization_contacts ADD COLUMN whatsapp text",
   ]) {
     try { await db().prepare(statement).run(); } catch (error: unknown) {
       if (!/duplicate column|already exists/i.test(String(error instanceof Error ? error.message : error))) throw error;
@@ -1681,7 +1682,7 @@ export async function GET(
         await db().batch([
           db()
             .prepare(
-              "INSERT OR IGNORE INTO organization_contacts VALUES (?,?,?,?,?,?,?,?,?)",
+              "INSERT OR IGNORE INTO organization_contacts (id,name,role,email,phone,emergency,sort_order,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?)",
             )
             .bind(
               "contact-main",
@@ -1696,7 +1697,7 @@ export async function GET(
             ),
           db()
             .prepare(
-              "INSERT OR IGNORE INTO organization_contacts VALUES (?,?,?,?,?,?,?,?,?)",
+              "INSERT OR IGNORE INTO organization_contacts (id,name,role,email,phone,emergency,sort_order,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?)",
             )
             .bind(
               "contact-emergency",
@@ -2677,13 +2678,14 @@ export async function POST(
         return out({ error: "Name and phone number are required" }, 422);
       const id = uuid();
       await db()
-        .prepare("INSERT INTO organization_contacts VALUES (?,?,?,?,?,?,?,?,?)")
+        .prepare("INSERT INTO organization_contacts (id,name,role,email,phone,whatsapp,emergency,sort_order,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)")
         .bind(
           id,
           name,
           body.role || null,
           body.email || null,
           phone,
+          body.whatsapp || null,
           body.emergency ? 1 : 0,
           Number(body.sort_order || 0),
           now(),
@@ -3213,6 +3215,7 @@ export async function PUT(
       "role",
       "email",
       "phone",
+      "whatsapp",
       "emergency",
       "sort_order",
     ].filter((k) => body[k] !== undefined);
