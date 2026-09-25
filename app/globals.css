@@ -35,11 +35,14 @@
 .wizard-progress button{border:1px solid var(--line);border-radius:999px;background:var(--surface-2);color:var(--muted);padding:8px 12px;font:inherit;cursor:pointer}
 .wizard-progress button.active{background:var(--pink);border-color:var(--pink);color:#fff}
 .wizard-actions{display:flex;gap:10px;margin-top:4px}
+.wizard-footer{grid-column:1/-1;min-height:72px;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;padding-top:16px;border-top:1px solid var(--line)}.wizard-footer .wizard-actions{display:grid;grid-template-columns:1fr auto;align-items:center;min-height:42px;margin:0}.wizard-footer .wizard-actions .btn:first-child{justify-self:start}.wizard-footer .wizard-actions .btn:last-child{justify-self:end}.wizard-footer .form-actions{margin:0;min-height:42px}.team-wizard,.member-editor-dialog .portal-form{grid-template-columns:1fr!important}.team-wizard .portal-field,.member-editor-dialog .portal-field{grid-column:1/-1;width:100%}
 .checkbox-field{display:flex!important;align-items:center;gap:10px}
 .checkbox-field input{width:18px!important;height:18px!important}
 .hex-color-control{display:grid;grid-template-columns:minmax(0,1fr) 52px;gap:8px}.hex-color-control input[type=color]{width:52px;height:42px;padding:4px;cursor:pointer}.team-wizard-step{display:grid;gap:12px}.team-wizard-review{padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}.team-wizard-review h4{margin:0}.team-wizard-review p,.wizard-help{margin:0;color:var(--muted)}
 .whatsapp-field > span{display:flex;align-items:center;gap:7px;color:#15803d}.whatsapp-field input{border-color:#86efac!important}.whatsapp-icon{width:18px;height:18px;color:#16a34a;flex:none}.whatsapp-field input:focus{border-color:#16a34a!important;box-shadow:0 0 0 3px #22c55e33}
 .whatsapp-link{display:flex!important;align-items:center;gap:6px;color:#15803d!important}.whatsapp-link .whatsapp-icon{width:16px;height:16px}
+.contact-grid article.whatsapp-only{border-color:#86efac;background:#f0fdf4}.contact-grid article.whatsapp-only .contact-icon{color:#16a34a;background:#dcfce7}.contact-grid article.whatsapp-only h4{color:#166534}
+:root[data-theme="dark"] .contact-grid article.whatsapp-only{border-color:#267746;background:#142b1d}.contact-grid article.whatsapp-only .contact-icon{color:#86efac;background:#1d4b2c}
 .contact-method-option{display:flex;align-items:center;gap:8px;margin-top:8px;color:#15803d!important;font-size:.9em}.contact-method-option input{width:17px!important;height:17px!important;accent-color:#16a34a}
 .wizard-validation{grid-column:1/-1;margin:0;padding:10px 12px;border:1px solid #f5a3ad;border-radius:10px;background:#fff1f2;color:#b42335;font-size:.9rem;font-weight:700}.wizard-actions button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
 :root[data-theme="dark"] .wizard-validation{border-color:#8f3948;background:#3a1e26;color:#ffb4bf}

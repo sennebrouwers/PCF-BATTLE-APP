@@ -4588,11 +4588,13 @@ function Delegation({
             onLabel="Granted"
             offLabel="Not granted"
           /></div>
+          <div className="wizard-footer">
           <div className="wizard-actions">
             {memberStep > 1 && <button type="button" className="btn" onClick={() => setMemberStep((step) => step - 1)}>Back</button>}
             {memberStep < 3 && <button type="button" className="btn primary" disabled={!memberStepValid} onClick={() => setMemberStep((step) => step + 1)}>Next</button>}
           </div>
-          <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />
+          {memberStep === 3 && <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}
+          </div>
         </form>
       </Modal>
     </section>
@@ -6921,8 +6923,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                   <p>Check the entered details before creating the team. The logo is uploaded first and the selected HEX color is used for team branding.</p>
                   {!editing?.id && <><Field label="Login email" name="login_email" type="email" required /><Field label="Temporary password" name="login_password" type="password" minLength={8} required /></>}
                 </div>
-                <div className="wizard-actions"><button type="button" className="btn" onClick={() => teamStep > 1 && setTeamStep(teamStep - 1)}>Back</button>{teamStep < 5 && <button type="button" className="btn primary" disabled={!stepValid} onClick={() => setTeamStep(teamStep + 1)}>Next</button>}</div>
-                {teamStep === 5 && <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}
+                <div className="wizard-footer"><div className="wizard-actions"><button type="button" className="btn" onClick={() => teamStep > 1 && setTeamStep(teamStep - 1)}>Back</button>{teamStep < 5 && <button type="button" className="btn primary" disabled={!stepValid} onClick={() => setTeamStep(teamStep + 1)}>Next</button>}</div>{teamStep === 5 && <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}</div>
               </form>
             </Modal>
           </section>
@@ -7741,14 +7742,14 @@ function ContactsPanel({
       </div>
       <div className="contact-grid">
         {contacts.data.map((c: Row) => (
-          <article key={c.id} className={c.emergency ? "emergency" : ""}>
+          <article key={c.id} className={`${c.emergency ? "emergency" : ""}${c.whatsapp && !c.phone && !c.email ? " whatsapp-only" : ""}`}>
             <span className="contact-icon">
-              <Phone />
+              {c.whatsapp && !c.phone && !c.email ? <WhatsAppIcon /> : <Phone />}
             </span>
             <div>
               <small>{c.role || "Organization"}</small>
               <h4>{c.name}</h4>
-              <a href={`tel:${c.phone}`}>{c.phone}</a>
+              {c.phone && <a href={`tel:${c.phone}`}>{c.phone}</a>}
               {c.email && <a href={`mailto:${c.email}`}>{c.email}</a>}
               {c.whatsapp && <a className="whatsapp-link" href={`https://wa.me/${String(c.whatsapp).replace(/[^\d+]/g, "").replace(/^\+/, "")}`} target="_blank" rel="noreferrer"><WhatsAppIcon /> {c.whatsapp}</a>}
             </div>
