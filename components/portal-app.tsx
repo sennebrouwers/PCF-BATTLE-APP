@@ -895,6 +895,7 @@ export default function PortalApp({ role }: { role: Role }) {
             refresh={refresh}
             reload={reload}
             onOpenGameControl={() => navigate("control")}
+            onNavigate={navigate}
           />
         ) : role === "team" ? (
           <Team
@@ -959,11 +960,13 @@ function Admin({
   refresh,
   reload,
   onOpenGameControl,
+  onNavigate,
 }: {
   active: string;
   refresh: number;
   reload: () => void;
   onOpenGameControl: () => void;
+  onNavigate: (page: string) => void;
 }) {
   if (active === "dashboard") return <Dashboard refresh={refresh} />;
   if (active === "operations")
@@ -971,7 +974,7 @@ function Admin({
       <OperationsHub refresh={refresh} onOpenGameControl={onOpenGameControl} />
     );
   if (active === "messages") return <ChatPanel refresh={refresh} />;
-  if (active === "contacts") return <ContactsPanel refresh={refresh} admin />;
+  if (active === "contacts") return <ContactsPanel refresh={refresh} admin onOpenTeam={() => onNavigate("teams")} />;
   if (active === "teams") return <TeamsAdminV2 refresh={refresh} />;
   if (active === "tournament") return <TournamentManager refresh={refresh} />;
   if (active === "matches") return <MatchesAdmin refresh={refresh} />;
@@ -7681,16 +7684,19 @@ function ChatPanel({ refresh }: { refresh: number }) {
 function ContactsPanel({
   refresh,
   admin = false,
+  onOpenTeam,
 }: {
   refresh: number;
   admin?: boolean;
+  onOpenTeam?: () => void;
 }) {
   const contacts = useData("/contacts", refresh),
     teams = useData(admin ? "/teams" : "/contacts", refresh),
     [editing, setEditing] = useState<Row | null | undefined>(undefined),
     [busy, setBusy] = useState(false),
     [sameAsPhone, setSameAsPhone] = useState(true),
-    [contactMethods, setContactMethods] = useState<string[]>(["phone"]);
+    [contactMethods, setContactMethods] = useState<string[]>(["phone"]),
+    [details, setDetails] = useState<Row | null>(null);
   const saveLock = useRef(false);
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -7774,7 +7780,7 @@ function ContactsPanel({
               {c.phone && <a href={`tel:${c.phone}`}>{c.phone}</a>}
               {c.email && <a href={`mailto:${c.email}`}>{c.email}</a>}
               {c.whatsapp && <a className="whatsapp-link" href={`https://wa.me/${String(c.whatsapp).replace(/[^\d+]/g, "").replace(/^\+/, "")}`} target="_blank" rel="noreferrer"><WhatsAppIcon /> {c.whatsapp}</a>}
-              {admin && c.team_id && <Link className="contact-team-link" href="/admin#teams"><Users /> {c.team_name || "Linked team"}</Link>}
+              {admin && c.team_id && <button type="button" className="contact-team-link" onClick={() => setDetails(c)}><Users /> {c.team_name || "Linked team"}</button>}
             </div>
             {c.emergency ? <Badge>Emergency</Badge> : null}
             {admin && (
@@ -7846,6 +7852,20 @@ function ContactsPanel({
             />
             <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />
           </form>
+        </Modal>
+      )}
+      {admin && details && (
+        <Modal title={`${details.name} · Contact details`} open={Boolean(details)} onOpenChange={(open) => !open && setDetails(null)}>
+          <div className="contact-details">
+            <p><strong>Name</strong><span>{details.name}</span></p>
+            <p><strong>Role or department</strong><span>{details.role || "Organization"}</span></p>
+            <p><strong>Connected team</strong><span>{details.team_name || "Organization-wide contact"}</span></p>
+            <p><strong>Phone</strong><span>{details.phone ? <a href={`tel:${details.phone}`}>{details.phone}</a> : "—"}</span></p>
+            <p><strong>WhatsApp</strong><span>{details.whatsapp ? <a href={`https://wa.me/${String(details.whatsapp).replace(/[^\d+]/g, "").replace(/^\+/, "")}`} target="_blank" rel="noreferrer">{details.whatsapp}</a> : "—"}</span></p>
+            <p><strong>Email</strong><span>{details.email ? <a href={`mailto:${details.email}`}>{details.email}</a> : "—"}</span></p>
+            <p><strong>Contact type</strong><span>{details.emergency ? "Emergency contact" : "General contact"}</span></p>
+          </div>
+          <div className="form-actions"><button className="btn" type="button" onClick={() => { setDetails(null); onOpenTeam?.(); }}>Open team administration</button></div>
         </Modal>
       )}
     </section>
