@@ -4464,7 +4464,7 @@ function Delegation({
         open={editing !== undefined}
         onOpenChange={(v) => !v && setEditing(undefined)}
       >
-        <form ref={memberFormRef} className="portal-form" onInput={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
+        <form ref={memberFormRef} className="portal-form" onInput={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onChange={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
           <div className="wizard-progress" aria-label="Delegation member steps">
             {["Basic information", "Role details", "Additional information"].map((label, index) => (
               <button type="button" className={memberStep === index + 1 ? "active" : ""} key={label} onClick={() => setMemberStep(index + 1)}>
@@ -4472,6 +4472,7 @@ function Delegation({
               </button>
             ))}
           </div>
+          {!memberStepValid && <p className="wizard-validation" role="alert">Complete the required fields in this step to continue.</p>}
           {admin && (
             <Field
               label="Team"
@@ -6897,10 +6898,11 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
               onOpenChange={(v) => !v && setEditing(undefined)}
               className="team-editor-dialog"
             >
-              <form ref={wizardFormRef} className="portal-form team-wizard" onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
+              <form ref={wizardFormRef} className="portal-form team-wizard" onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
                 <div className="wizard-progress" aria-label="Team creation steps">
                   {["Team identity", "Contact person", "Delegation", "Invoice & billing", "Review & create"].map((label, index) => <button type="button" className={teamStep === index + 1 ? "active" : ""} key={label} onClick={() => setTeamStep(index + 1)}>{index + 1}. {label}</button>)}
                 </div>
+                {!stepValid && <p className="wizard-validation" role="alert">Complete the required fields in this step to continue.</p>}
                 <div hidden={teamStep !== 1} className="team-wizard-step">
                   <Field label="Team name" name="name" defaultValue={editing?.name} required />
                   <Field label="Country" name="address_country" defaultValue={editing?.address_country} required />
@@ -7701,13 +7703,16 @@ function ContactsPanel({
 }) {
   const contacts = useData("/contacts", refresh),
     [editing, setEditing] = useState<Row | null | undefined>(undefined),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [sameAsPhone, setSameAsPhone] = useState(true);
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
     const b: any = Object.fromEntries(new FormData(e.currentTarget));
     b.emergency = b.emergency === "1";
     b.sort_order = Number(b.sort_order || 0);
+    if (sameAsPhone) b.whatsapp = b.phone || null;
+    else b.whatsapp = String(b.whatsapp || "").trim() || null;
     try {
       editing?.id
         ? await api(`/contacts/${editing.id}`, {
@@ -7732,7 +7737,7 @@ function ContactsPanel({
           <small>Call or email the tournament organization</small>
         </div>
         {admin && (
-          <button className="btn primary" onClick={() => setEditing(null)}>
+          <button className="btn primary" onClick={() => { setSameAsPhone(true); setEditing(null); }}>
             <Plus /> Add contact
           </button>
         )}
@@ -7753,7 +7758,7 @@ function ContactsPanel({
             {c.emergency ? <Badge>Emergency</Badge> : null}
             {admin && (
               <div className="row-actions">
-                <button onClick={() => setEditing(c)}>Edit</button>
+                <button onClick={() => { setSameAsPhone(!c.whatsapp || c.whatsapp === c.phone); setEditing(c); }}>Edit</button>
                 <Confirm
                   title="Delete contact"
                   text={`Delete ${c.name}?`}
@@ -7794,7 +7799,8 @@ function ContactsPanel({
               defaultValue={editing?.phone}
               required
             />
-            <label className="portal-field whatsapp-field"><span><WhatsAppIcon /> WhatsApp contact</span><input name="whatsapp" type="tel" defaultValue={editing?.whatsapp} /></label>
+            <label className="portal-field whatsapp-field"><span><WhatsAppIcon /> WhatsApp</span><span className="contact-method-option"><input type="checkbox" checked={sameAsPhone} onChange={(event) => setSameAsPhone(event.target.checked)} /> This number is also used for WhatsApp.</span></label>
+            {!sameAsPhone && <label className="portal-field whatsapp-field"><span><WhatsAppIcon /> Different WhatsApp number <small>(optional)</small></span><input name="whatsapp" type="tel" defaultValue={editing?.whatsapp} /></label>}
             <Field
               label="Email"
               name="email"
