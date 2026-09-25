@@ -974,7 +974,7 @@ function Admin({
       <OperationsHub refresh={refresh} onOpenGameControl={onOpenGameControl} />
     );
   if (active === "messages") return <ChatPanel refresh={refresh} />;
-  if (active === "contacts") return <ContactsPanel refresh={refresh} admin onOpenTeam={() => onNavigate("teams")} />;
+  if (active === "contacts") return <ContactsPanel refresh={refresh} admin />;
   if (active === "teams") return <TeamsAdminV2 refresh={refresh} />;
   if (active === "tournament") return <TournamentManager refresh={refresh} />;
   if (active === "matches") return <MatchesAdmin refresh={refresh} />;
