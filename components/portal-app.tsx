@@ -7698,7 +7698,8 @@ function ContactsPanel({
   const contacts = useData("/contacts", refresh),
     [editing, setEditing] = useState<Row | null | undefined>(undefined),
     [busy, setBusy] = useState(false),
-    [sameAsPhone, setSameAsPhone] = useState(true);
+    [sameAsPhone, setSameAsPhone] = useState(true),
+    [contactMethods, setContactMethods] = useState<string[]>(["phone"]);
   const saveLock = useRef(false);
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -7706,10 +7707,22 @@ function ContactsPanel({
     saveLock.current = true;
     setBusy(true);
     const b: any = Object.fromEntries(new FormData(e.currentTarget));
+    const hasPhone = contactMethods.includes("phone");
+    const hasWhatsApp = contactMethods.includes("whatsapp");
+    const hasEmail = contactMethods.includes("email");
+    if (!hasPhone) b.phone = null;
+    if (!hasEmail) b.email = null;
+    if (!hasWhatsApp) b.whatsapp = null;
     b.emergency = b.emergency === "1";
     b.sort_order = Number(b.sort_order || 0);
-    if (sameAsPhone) b.whatsapp = b.phone || null;
-    else b.whatsapp = String(b.whatsapp || "").trim() || null;
+    if (hasWhatsApp && sameAsPhone) b.whatsapp = b.phone || null;
+    else if (hasWhatsApp) b.whatsapp = String(b.whatsapp || "").trim() || null;
+    if (!b.phone && !b.whatsapp && !b.email) {
+      toast.error("Select at least one contact method and provide its value");
+      saveLock.current = false;
+      setBusy(false);
+      return;
+    }
     try {
       editing?.id
         ? await api(`/contacts/${editing.id}`, {
@@ -7735,7 +7748,7 @@ function ContactsPanel({
           <small>Call or email the tournament organization</small>
         </div>
         {admin && (
-          <button className="btn primary" onClick={() => { setSameAsPhone(true); setEditing(null); }}>
+          <button className="btn primary" onClick={() => { setSameAsPhone(true); setContactMethods(["phone"]); setEditing(null); }}>
             <Plus /> Add contact
           </button>
         )}
@@ -7756,7 +7769,7 @@ function ContactsPanel({
             {c.emergency ? <Badge>Emergency</Badge> : null}
             {admin && (
               <div className="row-actions">
-                <button onClick={() => { setSameAsPhone(!c.whatsapp || c.whatsapp === c.phone); setEditing(c); }}>Edit</button>
+                <button onClick={() => { setSameAsPhone(Boolean(c.phone && c.whatsapp && c.phone === c.whatsapp)); setContactMethods([...(c.phone ? ["phone"] : []), ...(c.whatsapp ? ["whatsapp"] : []), ...(c.email ? ["email"] : [])]); setEditing(c); }}>Edit</button>
                 <Confirm
                   title="Delete contact"
                   text={`Delete ${c.name}?`}
@@ -7790,21 +7803,17 @@ function ContactsPanel({
               name="role"
               defaultValue={editing?.role}
             />
-            <Field
-              label="Phone number"
-              name="phone"
-              type="tel"
-              defaultValue={editing?.phone}
-              required
-            />
-            <label className="portal-field whatsapp-field"><span><WhatsAppIcon /> WhatsApp</span><span className="contact-method-option"><input type="checkbox" checked={sameAsPhone} onChange={(event) => setSameAsPhone(event.target.checked)} /> This number is also used for WhatsApp.</span></label>
-            {!sameAsPhone && <label className="portal-field whatsapp-field"><span><WhatsAppIcon /> Different WhatsApp number <small>(optional)</small></span><input name="whatsapp" type="tel" defaultValue={editing?.whatsapp} /></label>}
-            <Field
-              label="Email"
-              name="email"
-              type="email"
-              defaultValue={editing?.email}
-            />
+            <fieldset className="contact-method-picker">
+              <legend>Contact methods</legend>
+              <small>Select only the ways people should contact this person.</small>
+              {[['phone', 'Phone'], ['whatsapp', 'WhatsApp'], ['email', 'Email']].map(([value, label]) => <label key={value}><input type="checkbox" checked={contactMethods.includes(value)} onChange={(event) => setContactMethods((current) => event.target.checked ? [...new Set([...current, value])] : current.filter((item) => item !== value))} />{value === "whatsapp" ? <WhatsAppIcon /> : null}{label}</label>)}
+            </fieldset>
+            {contactMethods.includes("phone") && <Field label="Phone number" name="phone" type="tel" defaultValue={editing?.phone} required />}
+            {contactMethods.includes("whatsapp") && <>
+              {contactMethods.includes("phone") && <label className="portal-field whatsapp-field"><span><WhatsAppIcon /> WhatsApp</span><span className="contact-method-option"><input type="checkbox" checked={sameAsPhone} onChange={(event) => setSameAsPhone(event.target.checked)} /> This number is also used for WhatsApp.</span></label>}
+              {(!contactMethods.includes("phone") || !sameAsPhone) && <label className="portal-field whatsapp-field"><span><WhatsAppIcon /> WhatsApp number</span><input name="whatsapp" type="tel" defaultValue={editing?.whatsapp} required={!contactMethods.includes("phone")} /></label>}
+            </>}
+            {contactMethods.includes("email") && <Field label="Email" name="email" type="email" defaultValue={editing?.email} required />}
             <Field
               label="Contact type"
               name="emergency"

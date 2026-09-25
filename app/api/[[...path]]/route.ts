@@ -2674,8 +2674,10 @@ export async function POST(
       await ensureScheduleSchema();
       const name = String(body.name || "").trim(),
         phone = String(body.phone || "").trim();
-      if (!name || !phone)
-        return out({ error: "Name and phone number are required" }, 422);
+      const whatsapp = String(body.whatsapp || "").trim(),
+        email = String(body.email || "").trim();
+      if (!name || (!phone && !whatsapp && !email))
+        return out({ error: "Name and at least one contact method are required" }, 422);
       const id = uuid();
       await db()
         .prepare("INSERT INTO organization_contacts (id,name,role,email,phone,whatsapp,emergency,sort_order,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)")
@@ -2683,9 +2685,9 @@ export async function POST(
           id,
           name,
           body.role || null,
-          body.email || null,
-          phone,
-          body.whatsapp || null,
+          email || null,
+          phone || null,
+          whatsapp || null,
           body.emergency ? 1 : 0,
           Number(body.sort_order || 0),
           now(),
@@ -3147,6 +3149,14 @@ export async function POST(
           now(),
         )
         .run();
+      const expected = Math.min(16, Math.max(0, Number(body.expected_delegation_size || 0)));
+      const requiredRooms = Math.ceil(expected / 2);
+      for (let index = 0; index < requiredRooms; index++) {
+        await db()
+          .prepare("INSERT INTO rooms (id,number,capacity,locked,team_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?)")
+          .bind(uuid(), `${rid.slice(0, 6)}-${index + 1}`, 2, 0, rid, now(), now())
+          .run();
+      }
     }
     let emailSent = false;
     if (table === "invites" && body.recipient_email) {
