@@ -7032,7 +7032,8 @@ function ResourcePanel({ refresh }: { refresh: number }) {
 function UsersPanel({ refresh }: { refresh: number }) {
   const users = useData("/users", refresh),
     teams = useData("/teams", refresh),
-    [editing, setEditing] = useState<Row | null | undefined>(undefined);
+    [editing, setEditing] = useState<Row | null | undefined>(undefined),
+    [details, setDetails] = useState<Row | null>(null);
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const b: any = Object.fromEntries(new FormData(e.currentTarget));
@@ -7076,7 +7077,7 @@ function UsersPanel({ refresh }: { refresh: number }) {
         </div>
       </div>
       {users.data.map((u) => (
-        <div className="portal-row user-row" key={u.id}>
+        <div className="portal-row user-row" key={u.id} onClick={() => setDetails(u)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setDetails(u); }}>
           <span className="member-avatar">
             {u.name
               .split(" ")
@@ -7084,14 +7085,15 @@ function UsersPanel({ refresh }: { refresh: number }) {
               .join("")
               .slice(0, 2)}
           </span>
-          <span>
-            <b>{u.name}</b>
-            <small>{u.email}</small>
+            <span>
+              <b>{u.name}</b>
+              <small>{u.email}</small>
+              {u.team_name && <small className="user-team-name">Team: {u.team_name}</small>}
           </span>
           <Badge>{u.role}</Badge>
           <Badge>{u.active ? "Active" : "Inactive"}</Badge>
           <div className="row-actions">
-            <button onClick={() => setEditing(u)}>Edit</button>
+              <button onClick={(event) => { event.stopPropagation(); setEditing(u); }}>Edit</button>
             <Confirm
               title="Delete user"
               text={`Delete ${u.name}?`}
@@ -7185,6 +7187,16 @@ function UsersPanel({ refresh }: { refresh: number }) {
           <FormButtons busy={false} onCancel={() => setEditing(undefined)} />
         </form>
       </Modal>
+      {details && <Modal title={`${details.name} · User details`} open={Boolean(details)} onOpenChange={(open) => !open && setDetails(null)}>
+        <div className="contact-details">
+          <p><strong>Name</strong><span>{details.name}</span></p>
+          <p><strong>Email</strong><span><a href={`mailto:${details.email}`}>{details.email}</a></span></p>
+          <p><strong>Role</strong><span>{details.role}</span></p>
+          <p><strong>Connected team</strong><span>{details.team_name || "No team"}</span></p>
+          <p><strong>Country</strong><span>{details.country || "—"}</span></p>
+          <p><strong>Status</strong><span>{details.active ? "Active" : "Inactive"}</span></p>
+        </div>
+      </Modal>}
     </section>
   );
 }
@@ -7807,7 +7819,7 @@ function ContactsPanel({
           open={editing !== undefined}
           onOpenChange={(v) => !v && setEditing(undefined)}
         >
-          <form className="portal-form" noValidate onSubmit={save}>
+          <form key={editing?.id || "new-contact"} className="portal-form" noValidate onSubmit={save}>
             <Field
               label="Name"
               name="name"
