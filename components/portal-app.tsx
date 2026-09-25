@@ -7686,7 +7686,7 @@ function ContactsPanel({
   admin?: boolean;
 }) {
   const contacts = useData("/contacts", refresh),
-    teams = useData("/teams", refresh),
+    teams = useData(admin ? "/teams" : "/contacts", refresh),
     [editing, setEditing] = useState<Row | null | undefined>(undefined),
     [busy, setBusy] = useState(false),
     [sameAsPhone, setSameAsPhone] = useState(true),
