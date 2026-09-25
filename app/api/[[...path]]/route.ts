@@ -123,6 +123,9 @@ async function ensureScheduleSchema() {
     db().prepare("CREATE INDEX IF NOT EXISTS idx_schedule_match ON schedule_items(match_id)"),
     db().prepare("CREATE INDEX IF NOT EXISTS idx_room_assignments_room_member ON room_assignments(room_id,member_id)"),
   ]);
+  // Room numbers are assigned later by the hotel. Multiple newly-created
+  // rooms therefore need to be allowed to remain blank for now.
+  await db().prepare("DROP INDEX IF EXISTS rooms_number_unique").run();
   await db().prepare("CREATE TABLE IF NOT EXISTS mvp_votes (id text PRIMARY KEY NOT NULL,tournament_id text NOT NULL,referee_id text NOT NULL,category text NOT NULL,candidate_id text NOT NULL,created_at text NOT NULL,UNIQUE(tournament_id,referee_id,category))").run();
   await db().prepare("CREATE TABLE IF NOT EXISTS mvp_settings (tournament_id text PRIMARY KEY NOT NULL,enabled integer DEFAULT 0 NOT NULL,assistant_coach_eligible integer DEFAULT 1 NOT NULL)").run();
   for (const statement of [
@@ -3002,7 +3005,7 @@ export async function POST(
       return out({ id: bid, data }, 201);
     }
     const table = mapName(parts[0]);
-    if (table === "rooms" || table === "tournaments") await ensureScheduleSchema();
+    if (table === "rooms" || table === "tournaments" || table === "teams") await ensureScheduleSchema();
     if (
       !resources[table] ||
       !permit(u, table === "delegation_members" ? ["ADMIN", "TEAM"] : ["ADMIN"])
@@ -3154,7 +3157,7 @@ export async function POST(
       for (let index = 0; index < requiredRooms; index++) {
         await db()
           .prepare("INSERT INTO rooms (id,number,capacity,locked,team_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?)")
-          .bind(uuid(), `${rid.slice(0, 6)}-${index + 1}`, 2, 0, rid, now(), now())
+          .bind(uuid(), "", 2, 0, rid, now(), now())
           .run();
       }
     }
@@ -3400,7 +3403,7 @@ export async function PUT(
     const requiredRooms = Math.ceil(expected / 2);
     const currentRooms: any = await db().prepare("SELECT COUNT(*) count FROM rooms WHERE team_id=?").bind(rid).first();
     for (let index = Number(currentRooms?.count || 0); index < requiredRooms; index++) {
-      await db().prepare("INSERT INTO rooms (id,number,capacity,locked,team_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?)").bind(uuid(), `${rid.slice(0, 6)}-${index + 1}`, 2, 0, rid, now(), now()).run();
+      await db().prepare("INSERT INTO rooms (id,number,capacity,locked,team_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?)").bind(uuid(), "", 2, 0, rid, now(), now()).run();
     }
   }
   if (table === "matches" && (body.match_date !== undefined || body.start_time !== undefined || body.court !== undefined)) {

@@ -4499,20 +4499,10 @@ function Delegation({
           <div hidden={memberStep !== 1}>
             <Field label="Full name" name="name" defaultValue={editing?.name} required />
           </div>
-          <div hidden={memberStep !== 1}><Field
-            label="Member type"
-            name="role"
-            children={
-              <select
-                name="role"
-                value={memberType}
-                onChange={(event) =>
-                  setMemberType(
-                    event.target.value as
-                      "PLAYER" | "COACH" | "STAFF" | "REFEREE" | "TEAM_MANAGER" | "ASSISTANT",
-                  )
-                }
-              >
+          <div hidden={memberStep !== 1}>
+            <label className="portal-field">
+              <span>Member type<i className="required-mark" aria-hidden="true">*</i></span>
+              <select name="role" value={memberType} required onChange={(event) => { setMemberType(event.target.value as typeof memberType); setMemberRevision((value) => value + 1); }}>
                 <option value="PLAYER">Player</option>
                 <option value="COACH">Coach</option>
                 <option value="STAFF">Staff</option>
@@ -4520,10 +4510,10 @@ function Delegation({
                 <option value="ASSISTANT">Assistant</option>
                 <option value="REFEREE">Referee</option>
               </select>
-            }
-          /></div>
+            </label>
+          </div>
           <input type="hidden" name="member_type" value={memberType} />
-          <div hidden={memberStep !== 2}>{memberType === "PLAYER" && (
+          <div key={memberType} hidden={memberStep !== 2}>{memberType === "PLAYER" && (
             <>
               <Field
                 label="Player role"
@@ -7723,6 +7713,24 @@ function ContactsPanel({
       setBusy(false);
       return;
     }
+    if (hasPhone && !b.phone) {
+      toast.error("Enter a phone number or deselect Phone");
+      saveLock.current = false;
+      setBusy(false);
+      return;
+    }
+    if (hasWhatsApp && !sameAsPhone && !b.whatsapp) {
+      toast.error("Enter a WhatsApp number or deselect WhatsApp");
+      saveLock.current = false;
+      setBusy(false);
+      return;
+    }
+    if (hasEmail && !b.email) {
+      toast.error("Enter an email address or deselect Email");
+      saveLock.current = false;
+      setBusy(false);
+      return;
+    }
     try {
       editing?.id
         ? await api(`/contacts/${editing.id}`, {
@@ -7791,7 +7799,7 @@ function ContactsPanel({
           open={editing !== undefined}
           onOpenChange={(v) => !v && setEditing(undefined)}
         >
-          <form className="portal-form" onSubmit={save}>
+          <form className="portal-form" noValidate onSubmit={save}>
             <Field
               label="Name"
               name="name"
