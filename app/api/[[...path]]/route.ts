@@ -547,7 +547,6 @@ const resources: Record<string, string[]> = {
     "privacy_consent",
     "photo_consent",
     "emergency_contact",
-    "medical_notes",
     "assistant_player_id",
     "wheelchair_user",
   ],
@@ -2672,6 +2671,7 @@ export async function POST(
     }
     if (path === "contacts") {
       if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
+      await ensureScheduleSchema();
       const name = String(body.name || "").trim(),
         phone = String(body.phone || "").trim();
       if (!name || !phone)
@@ -3210,6 +3210,7 @@ export async function PUT(
   }
   if (parts[0] === "contacts" && rid) {
     if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
+    await ensureScheduleSchema();
     const fields = [
       "name",
       "role",

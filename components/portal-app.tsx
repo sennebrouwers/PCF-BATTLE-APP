@@ -4463,11 +4463,12 @@ function Delegation({
         title={editing?.id ? "Edit member" : "Add member"}
         open={editing !== undefined}
         onOpenChange={(v) => !v && setEditing(undefined)}
+        className="member-editor-dialog"
       >
         <form ref={memberFormRef} className="portal-form" onInput={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onChange={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
           <div className="wizard-progress" aria-label="Delegation member steps">
             {["Basic information", "Role details", "Additional information"].map((label, index) => (
-              <button type="button" className={memberStep === index + 1 ? "active" : ""} key={label} onClick={() => setMemberStep(index + 1)}>
+              <button type="button" disabled={index + 1 > memberStep + 1 || (index + 1 === memberStep + 1 && !memberStepValid)} className={memberStep === index + 1 ? "active" : ""} key={label} onClick={() => { if (index + 1 <= memberStep || (index + 1 === memberStep + 1 && memberStepValid)) setMemberStep(index + 1); }}>
                 {index + 1}. {label}
               </button>
             ))}
@@ -4573,14 +4574,6 @@ function Delegation({
             name="emergency_contact"
             defaultValue={editing?.emergency_contact}
           />
-          <label className="portal-field wide">
-            <span>Restricted medical/accessibility notes</span>
-            <textarea
-              name="medical_notes"
-              rows={3}
-              defaultValue={editing?.medical_notes || ""}
-            />
-          </label>
           <VisibilityField
             label="Privacy consent"
             name="privacy_consent"
@@ -6900,7 +6893,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
             >
               <form ref={wizardFormRef} className="portal-form team-wizard" onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
                 <div className="wizard-progress" aria-label="Team creation steps">
-                  {["Team identity", "Contact person", "Delegation", "Invoice & billing", "Review & create"].map((label, index) => <button type="button" className={teamStep === index + 1 ? "active" : ""} key={label} onClick={() => setTeamStep(index + 1)}>{index + 1}. {label}</button>)}
+                  {["Team identity", "Contact person", "Delegation", "Invoice & billing", "Review & create"].map((label, index) => <button type="button" disabled={index + 1 > teamStep + 1 || (index + 1 === teamStep + 1 && !stepValid)} className={teamStep === index + 1 ? "active" : ""} key={label} onClick={() => { if (index + 1 <= teamStep || (index + 1 === teamStep + 1 && stepValid)) setTeamStep(index + 1); }}>{index + 1}. {label}</button>)}
                 </div>
                 {!stepValid && <p className="wizard-validation" role="alert">Complete the required fields in this step to continue.</p>}
                 <div hidden={teamStep !== 1} className="team-wizard-step">
@@ -7705,8 +7698,11 @@ function ContactsPanel({
     [editing, setEditing] = useState<Row | null | undefined>(undefined),
     [busy, setBusy] = useState(false),
     [sameAsPhone, setSameAsPhone] = useState(true);
+  const saveLock = useRef(false);
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (saveLock.current || busy) return;
+    saveLock.current = true;
     setBusy(true);
     const b: any = Object.fromEntries(new FormData(e.currentTarget));
     b.emergency = b.emergency === "1";
@@ -7726,6 +7722,7 @@ function ContactsPanel({
     } catch (err: unknown) {
       toast.error(errorMessage(err));
     } finally {
+      saveLock.current = false;
       setBusy(false);
     }
   }
