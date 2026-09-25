@@ -299,6 +299,25 @@ async function uploadFile(file: File) {
   if (!res.ok) throw new Error(data.error || "Upload failed");
   return data;
 }
+async function suggestTeamColor(file: File) {
+  try {
+    const image = await createImageBitmap(file), canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 24;
+    const context = canvas.getContext("2d");
+    if (!context) return null;
+    context.drawImage(image, 0, 0, 24, 24);
+    const pixels = context.getImageData(0, 0, 24, 24).data;
+    let best: { score: number; r: number; g: number; b: number } | null = null;
+    for (let i = 0; i < pixels.length; i += 4) {
+      const [r, g, b, a] = pixels.slice(i, i + 4), spread = Math.max(r, g, b) - Math.min(r, g, b);
+      if (a < 180 || Math.max(r, g, b) > 245 || spread < 18) continue;
+      const score = spread * a;
+      if (!best || score > best.score) best = { score, r, g, b };
+    }
+    image.close();
+    return best ? `#${[best.r, best.g, best.b].map((v) => v.toString(16).padStart(2, "0")).join("")}` : null;
+  } catch { return null; }
+}
 const fmtMoney = (n: unknown) =>
   new Intl.NumberFormat("en-BE", {
     style: "currency",
@@ -1411,11 +1430,13 @@ function TeamReview({ refresh }: { refresh: number }) {
     }
   }
   async function withdraw() {
+    const reason = window.prompt("Why are you withdrawing this review?", "")?.trim();
+    if (reason === undefined) return;
     setBusy(true);
     try {
       await api("/team-review/withdraw", {
         method: "POST",
-        body: JSON.stringify({}),
+        body: JSON.stringify({ reason }),
       });
       toast.success("Review withdrawn — you can update your information now");
       review.load();
@@ -1861,11 +1882,8 @@ function OperationsHub({
           delegation.some(
             (member: Row) =>
               member.member_type === "PLAYER" &&
-              (!member.player_role ||
-                member.classification_points === null ||
-                member.classification_points === undefined ||
-                Number(member.classification_points) < 0),
-          ) && "player role/classification",
+              !member.player_role,
+          ) && "player role",
         ].filter(Boolean);
       return { team, delegation, players, assignedRooms, invoice, missing };
     }),
@@ -3900,20 +3918,7 @@ export function MatchCard({
               >
                 Set time
               </button>
-              <button
-                className="btn small"
-                disabled={timerRunning}
-                onClick={() => {
-                  setSeconds(durationMinutes * 60);
-                  update({
-                    clock: `${String(durationMinutes).padStart(2, "0")}:00`,
-                    clock_running: 0,
-                    clock_started_at: null,
-                  });
-                }}
-              >
-                Reset {durationMinutes}:00
-              </button>
+              <Confirm title="Reset match clock?" text={timerRunning ? "The running match will be stopped and the clock reset to 15:00." : "Reset the match clock to 15:00?"} onConfirm={() => { setTimerRunning(false); setSeconds(900); void update({ clock: "15:00", clock_running: 0, clock_started_at: null }); }}><button type="button" className="btn small" disabled={busy}>Reset clock</button></Confirm>
               <select
                 aria-label="Match period"
                 value={match.period || "1st half"}
@@ -4257,8 +4262,9 @@ function Delegation({
     [editing, setEditing] = useState<Row | null | undefined>(undefined),
     [team, setTeam] = useState("all"),
     [memberType, setMemberType] = useState<
-      "PLAYER" | "COACH" | "STAFF" | "REFEREE"
+      "PLAYER" | "COACH" | "STAFF" | "REFEREE" | "TEAM_MANAGER" | "ASSISTANT"
     >("PLAYER"),
+    [memberStep, setMemberStep] = useState(1),
     [busy, setBusy] = useState(false);
   const saveLock = useRef(false);
   const shown = members.data.filter(
@@ -4311,6 +4317,7 @@ function Delegation({
           className="btn primary"
           onClick={() => {
             setMemberType("PLAYER");
+            setMemberStep(1);
             setEditing(null);
           }}
         >
@@ -4377,6 +4384,7 @@ function Delegation({
                           : "COACH"
                       : "STAFF";
                   setMemberType(type);
+                  setMemberStep(1);
                   setEditing(m);
                 }}
               >
@@ -4441,6 +4449,13 @@ function Delegation({
         onOpenChange={(v) => !v && setEditing(undefined)}
       >
         <form className="portal-form" onSubmit={save}>
+          <div className="wizard-progress" aria-label="Delegation member steps">
+            {["Basic information", "Role details", "Additional information"].map((label, index) => (
+              <button type="button" className={memberStep === index + 1 ? "active" : ""} key={label} onClick={() => setMemberStep(index + 1)}>
+                {index + 1}. {label}
+              </button>
+            ))}
+          </div>
           {admin && (
             <Field
               label="Team"
@@ -4463,13 +4478,10 @@ function Delegation({
               }
             />
           )}
-          <Field
-            label="Name"
-            name="name"
-            defaultValue={editing?.name}
-            required
-          />
-          <Field
+          <div hidden={memberStep !== 1}>
+            <Field label="Full name" name="name" defaultValue={editing?.name} required />
+          </div>
+          <div hidden={memberStep !== 1}><Field
             label="Member type"
             name="role"
             children={
@@ -4479,19 +4491,21 @@ function Delegation({
                 onChange={(event) =>
                   setMemberType(
                     event.target.value as
-                      "PLAYER" | "COACH" | "STAFF" | "REFEREE",
+                      "PLAYER" | "COACH" | "STAFF" | "REFEREE" | "TEAM_MANAGER" | "ASSISTANT",
                   )
                 }
               >
                 <option value="PLAYER">Player</option>
                 <option value="COACH">Coach</option>
                 <option value="STAFF">Staff</option>
+                <option value="TEAM_MANAGER">Team Manager</option>
+                <option value="ASSISTANT">Assistant</option>
                 <option value="REFEREE">Referee</option>
               </select>
             }
-          />
+          /></div>
           <input type="hidden" name="member_type" value={memberType} />
-          {memberType === "PLAYER" && (
+          <div hidden={memberStep !== 2}>{memberType === "PLAYER" && (
             <>
               <Field
                 label="Player role"
@@ -4508,7 +4522,7 @@ function Delegation({
                 }
               />
               <Field
-                label="Classification points"
+                label="Classification points (optional)"
                 name="classification_points"
                 type="number"
                 defaultValue={editing?.classification_points ?? ""}
@@ -4518,6 +4532,9 @@ function Delegation({
               />
             </>
           )}
+          {memberType === "ASSISTANT" && <Field label="Linked player (optional)" name="assistant_player_id" children={<select name="assistant_player_id" defaultValue={editing?.assistant_player_id || ""}><option value="">No linked player</option>{players.map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select>} />}
+          </div>
+          <div hidden={memberStep !== 1}>
           {memberType === "PLAYER" && (
             <Field
               label="Shirt number"
@@ -4532,7 +4549,8 @@ function Delegation({
             type="date"
             defaultValue={editing?.dob}
           />
-          <Field
+          </div>
+          <div hidden={memberStep !== 3}><Field
             label="Dietary requirements"
             name="dietary"
             defaultValue={editing?.dietary}
@@ -4564,7 +4582,11 @@ function Delegation({
             defaultValue={editing?.photo_consent ?? 0}
             onLabel="Granted"
             offLabel="Not granted"
-          />
+          /></div>
+          <div className="wizard-actions">
+            {memberStep > 1 && <button type="button" className="btn" onClick={() => setMemberStep((step) => step - 1)}>Back</button>}
+            {memberStep < 3 && <button type="button" className="btn primary" onClick={() => setMemberStep((step) => step + 1)}>Next</button>}
+          </div>
           <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />
         </form>
       </Modal>
@@ -7853,10 +7875,7 @@ function TeamOnboardingProgress({
       if (!member.name) return false;
       return (
         member.member_type !== "PLAYER" ||
-        Boolean(
-          member.player_role &&
-          Number.isFinite(Number(member.classification_points)),
-        )
+        Boolean(member.player_role)
       );
     }),
   );
@@ -8105,7 +8124,8 @@ function TeamInfoV2({
     [removeLogo, setRemoveLogo] = useState(false),
     [removePhoto, setRemovePhoto] = useState(false),
     [logoSelected, setLogoSelected] = useState(false),
-    [photoSelected, setPhotoSelected] = useState(false);
+    [photoSelected, setPhotoSelected] = useState(false),
+    [invoiceRequested, setInvoiceRequested] = useState(Boolean(team?.invoice_requested));
   const logoInputRef = useRef<HTMLInputElement>(null),
     photoInputRef = useRef<HTMLInputElement>(null);
   if (!team)
@@ -8118,13 +8138,21 @@ function TeamInfoV2({
       photoFile = b.team_photo_file;
     try {
       if (removeLogo) b.logo = null;
-      else if (logoFile instanceof File && logoFile.size)
+      else if (logoFile instanceof File && logoFile.size) {
+        if (!/^#[0-9a-fA-F]{6}$/.test(String(b.color_hex || ""))) {
+          const suggested = await suggestTeamColor(logoFile);
+          if (suggested) b.color = suggested;
+        }
         b.logo = (await uploadFile(logoFile)).url;
+      }
       if (removePhoto) b.team_photo = null;
       else if (photoFile instanceof File && photoFile.size)
         b.team_photo = (await uploadFile(photoFile)).url;
       delete b.logo_file;
       delete b.team_photo_file;
+      if (/^#[0-9a-fA-F]{6}$/.test(String(b.color_hex || ""))) b.color = b.color_hex;
+      delete b.color_hex;
+      if (!b.invoice_requested) b.billing_address = "";
       await api(`/teams/${team.id}`, {
         method: "PUT",
         body: JSON.stringify(b),
@@ -8164,6 +8192,9 @@ function TeamInfoV2({
           defaultCode={team.phone_country_code || "+32"}
           required
         />
+        <Field label="Contact email" name="contact_email" type="email" defaultValue={team.contact_email} />
+        <Field label="WhatsApp" name="whatsapp" type="tel" defaultValue={team.whatsapp} />
+        <Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={0} max={16} defaultValue={team.expected_delegation_size ?? ""} />
         <Field
           label="Website"
           name="website"
@@ -8177,6 +8208,12 @@ function TeamInfoV2({
           type="color"
           defaultValue={team.color}
         />
+        <Field label="HEX color" name="color_hex" defaultValue={team.color || "#ec3d91"} />
+        <label className="portal-field wide checkbox-field">
+          <input name="invoice_requested" type="checkbox" value="1" checked={invoiceRequested} onChange={(event) => setInvoiceRequested(event.target.checked)} />
+          <span>I would like to receive an invoice.</span>
+        </label>
+        {invoiceRequested && <Field label="Billing/address information" name="billing_address" defaultValue={team.billing_address} />}
         <Field
           label="Team logo file"
           name="logo_file"

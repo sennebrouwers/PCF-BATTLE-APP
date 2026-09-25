@@ -176,11 +176,19 @@ async function ensureScheduleSchema() {
     "ALTER TABLE teams ADD COLUMN address_postal_code text",
     "ALTER TABLE teams ADD COLUMN address_city text",
     "ALTER TABLE teams ADD COLUMN address_country text",
+    "ALTER TABLE teams ADD COLUMN expected_delegation_size integer",
+    "ALTER TABLE teams ADD COLUMN invoice_requested integer DEFAULT 0",
+    "ALTER TABLE teams ADD COLUMN billing_address text",
+    "ALTER TABLE teams ADD COLUMN contact_email text",
+    "ALTER TABLE teams ADD COLUMN whatsapp text",
+    "ALTER TABLE teams ADD COLUMN withdrawal_reason text",
     "ALTER TABLE delegation_members ADD COLUMN member_type text DEFAULT 'STAFF'",
     "ALTER TABLE delegation_members ADD COLUMN player_role text",
     "ALTER TABLE delegation_members ADD COLUMN classification_points real",
     "ALTER TABLE delegation_members ADD COLUMN staff_role text",
     "ALTER TABLE delegation_members ADD COLUMN custom_staff_role text",
+    "ALTER TABLE delegation_members ADD COLUMN assistant_player_id text",
+    "ALTER TABLE delegation_members ADD COLUMN wheelchair_user integer DEFAULT 0",
   ]) {
     try { await db().prepare(statement).run(); } catch (error: unknown) {
       if (!/duplicate column|already exists/i.test(String(error instanceof Error ? error.message : error))) throw error;
@@ -227,7 +235,7 @@ async function buildTeamReview(teamId: string, prepareSchema = true) {
   const singleRooms = rooms.filter((room: any) => room.members.length === 1);
   const issues: string[] = [];
   for (const member of members) {
-    if (member.member_type === "PLAYER" && (!member.player_role || member.classification_points === null || !Number.isFinite(Number(member.classification_points)))) issues.push(`${member.name} is missing player role or classification`);
+    if (member.member_type === "PLAYER" && !member.player_role) issues.push(`${member.name} is missing a playing role`);
   }
   if (!members.length) issues.push("Add at least one delegation member");
   if (unassigned.length) issues.push(`${unassigned.length} delegation member(s) have no room assignment`);
@@ -261,7 +269,7 @@ async function buildOnboardingStatus(teamId: string) {
   const hasValue = (value: unknown) => String(value || "").trim().length > 0;
   const hasAddress = hasValue(team.address) || [team.address_street, team.address_number, team.address_postal_code, team.address_city, team.address_country].some(hasValue);
   const setupDone = hasValue(team.contact_person) && hasValue(team.phone) && hasAddress;
-  const delegationDone = Boolean(review.members.length && !review.members.some((member: any) => !member.name || (member.member_type === "PLAYER" && (!member.player_role || !Number.isFinite(Number(member.classification_points))))));
+  const delegationDone = Boolean(review.members.length && !review.members.some((member: any) => !member.name || (member.member_type === "PLAYER" && !member.player_role)));
   const roomsDone = review.unassigned.length === 0 && review.members.length > 0;
   const stages = [
     { key: "registration", label: "Registration", done: true, state: "completed" },
@@ -483,6 +491,12 @@ const resources: Record<string, string[]> = {
     "address_country",
     "website",
     "group_id",
+    "expected_delegation_size",
+    "invoice_requested",
+    "billing_address",
+    "contact_email",
+    "whatsapp",
+    "withdrawal_reason",
   ],
   matches: [
     "tournament_id",
@@ -523,6 +537,8 @@ const resources: Record<string, string[]> = {
     "photo_consent",
     "emergency_contact",
     "medical_notes",
+    "assistant_player_id",
+    "wheelchair_user",
   ],
   rooms: ["number", "capacity", "price", "locked", "team_id"],
   payments: [
@@ -2007,7 +2023,7 @@ export async function POST(
       const team: any = await db().prepare("SELECT review_status FROM teams WHERE id=?").bind(u.teamId).first();
       if (!team) return out({ error: "Team not found" }, 404);
       if (team.review_status !== "awaiting_admin") return out({ error: "This review can no longer be withdrawn" }, 409);
-      await db().prepare("UPDATE teams SET review_status='information_incomplete',review_snapshot=NULL,approved_snapshot=NULL,team_reviewed_at=NULL,team_reviewed_by=NULL,admin_reviewed_at=NULL,admin_reviewed_by=NULL,review_message=NULL,updated_at=? WHERE id=?").bind(now(), u.teamId).run();
+      await db().prepare("UPDATE teams SET review_status='information_incomplete',review_snapshot=NULL,approved_snapshot=NULL,team_reviewed_at=NULL,team_reviewed_by=NULL,admin_reviewed_at=NULL,admin_reviewed_by=NULL,review_message=NULL,withdrawal_reason=?,updated_at=? WHERE id=?").bind(String(body.reason || "Review withdrawn by team."), now(), u.teamId).run();
       await log(u, "TEAM_REVIEW_WITHDRAWN", "team", String(u.teamId));
       return out({ ok: true, status: "information_incomplete" });
     }
@@ -2022,7 +2038,7 @@ export async function POST(
         const payment: any = await db().prepare("SELECT id FROM finance_payments WHERE team_id=? LIMIT 1").bind(teamId).first();
         if (payment) return out({ error: "This review cannot be reopened because a payment has already been recorded" }, 409);
         await db().prepare("UPDATE invoices SET status='cancelled',updated_at=? WHERE team_id=? AND invoice_type='DEPOSIT' AND status!='paid'").bind(now(), teamId).run();
-        await db().prepare("UPDATE teams SET review_status='information_incomplete',review_snapshot=NULL,approved_snapshot=NULL,team_reviewed_at=NULL,team_reviewed_by=NULL,admin_reviewed_at=NULL,admin_reviewed_by=NULL,review_message=NULL,updated_at=? WHERE id=?").bind(now(), teamId).run();
+        await db().prepare("UPDATE teams SET review_status='information_incomplete',review_snapshot=NULL,approved_snapshot=NULL,team_reviewed_at=NULL,team_reviewed_by=NULL,admin_reviewed_at=NULL,admin_reviewed_by=NULL,review_message=NULL,withdrawal_reason=?,updated_at=? WHERE id=?").bind(String(body.reason || "Review withdrawn by administrator."), now(), teamId).run();
         await log(u, "ADMIN_REOPENED_TEAM_REVIEW", "team", teamId);
         return out({ ok: true, status: "information_incomplete" });
       }
@@ -2835,7 +2851,7 @@ export async function POST(
       const times: string[] = [];
       for (let minute = startMinutes; minute + gameMinutes <= endMinutes; minute += gameMinutes + pauseMinutes) times.push(`${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`);
       if (!times.length) return out({ error: "The playing window is shorter than one game" }, 422);
-      const courts = Array.isArray(body.courts) && body.courts.length ? body.courts : ["Court 1"];
+      const courts = ["Court 1"];
       const slots = times.map((time: string) => ({ date: dates[0], time }));
       const firstDay = dates[0];
       await db().batch([
@@ -2961,9 +2977,9 @@ export async function POST(
       body.player_role = body.player_role ? String(body.player_role).toUpperCase() : null;
       body.staff_role = body.staff_role ? String(body.staff_role).toUpperCase() : null;
       body.classification_points = body.classification_points === "" || body.classification_points === undefined ? null : Number(body.classification_points);
-      if (!["PLAYER", "COACH", "STAFF", "REFEREE"].includes(body.member_type)) return out({ error: "Choose player, coach, staff or referee" }, 422);
-      if (body.member_type === "PLAYER" && (!["KEEPER", "T_STICK", "HANDSTICK"].includes(body.player_role) || !Number.isFinite(body.classification_points) || body.classification_points < 0.5 || body.classification_points > 4.5 || Math.round(body.classification_points * 2) !== body.classification_points * 2)) return out({ error: "Classification points must be between 0.5 and 4.5 in half-point steps" }, 422);
-      if (body.member_type === "COACH" || body.member_type === "STAFF") { body.staff_role = null; body.custom_staff_role = null; }
+      if (!["PLAYER", "COACH", "STAFF", "REFEREE", "TEAM_MANAGER", "ASSISTANT"].includes(body.member_type)) return out({ error: "Choose a valid delegation role" }, 422);
+      if (body.member_type === "PLAYER" && !["KEEPER", "T_STICK", "HANDSTICK"].includes(body.player_role)) return out({ error: "Players require a valid playing role" }, 422);
+      if (["COACH", "STAFF", "TEAM_MANAGER", "ASSISTANT"].includes(body.member_type)) { body.player_role = null; body.classification_points = null; body.staff_role = body.member_type; body.custom_staff_role = null; }
       if (body.member_type === "REFEREE") { body.player_role = null; body.staff_role = null; body.classification_points = null; }
       const total =
           (
@@ -3230,9 +3246,9 @@ export async function PUT(
     body.player_role = body.player_role ? String(body.player_role).toUpperCase() : null;
     body.staff_role = body.staff_role ? String(body.staff_role).toUpperCase() : null;
     body.classification_points = body.classification_points === "" || body.classification_points === undefined ? null : Number(body.classification_points);
-    if (!["PLAYER", "COACH", "STAFF", "REFEREE"].includes(body.member_type)) return out({ error: "Choose player, coach, staff or referee" }, 422);
-    if (body.member_type === "PLAYER" && (!["KEEPER", "T_STICK", "HANDSTICK"].includes(body.player_role) || !Number.isFinite(body.classification_points) || body.classification_points < 0.5 || body.classification_points > 4.5 || Math.round(body.classification_points * 2) !== body.classification_points * 2)) return out({ error: "Classification points must be between 0.5 and 4.5 in half-point steps" }, 422);
-    if (body.member_type === "COACH" || body.member_type === "STAFF") { body.staff_role = null; body.custom_staff_role = null; }
+    if (!["PLAYER", "COACH", "STAFF", "REFEREE", "TEAM_MANAGER", "ASSISTANT"].includes(body.member_type)) return out({ error: "Choose a valid delegation role" }, 422);
+    if (body.member_type === "PLAYER" && !["KEEPER", "T_STICK", "HANDSTICK"].includes(body.player_role)) return out({ error: "Players require a valid playing role" }, 422);
+    if (["COACH", "STAFF", "TEAM_MANAGER", "ASSISTANT"].includes(body.member_type)) { body.player_role = null; body.classification_points = null; body.staff_role = body.member_type; body.custom_staff_role = null; }
     if (body.member_type === "REFEREE") { body.player_role = null; body.staff_role = null; body.classification_points = null; }
     if (body.role === "PLAYER") {
       const current: any = await db()
@@ -3331,6 +3347,14 @@ export async function PUT(
     .run();
   if (!result.meta.changes)
     return out({ error: "Record changed by another user" }, 409);
+  if (table === "teams" && body.expected_delegation_size !== undefined) {
+    const expected = Math.min(16, Math.max(0, Number(body.expected_delegation_size || 0)));
+    const requiredRooms = Math.ceil(expected / 2);
+    const currentRooms: any = await db().prepare("SELECT COUNT(*) count FROM rooms WHERE team_id=?").bind(rid).first();
+    for (let index = Number(currentRooms?.count || 0); index < requiredRooms; index++) {
+      await db().prepare("INSERT INTO rooms (id,number,capacity,locked,team_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?)").bind(uuid(), `${rid.slice(0, 6)}-${index + 1}`, 2, 0, rid, now(), now()).run();
+    }
+  }
   if (table === "matches" && (body.match_date !== undefined || body.start_time !== undefined || body.court !== undefined)) {
     const scheduleFields: string[] = [], scheduleValues: any[] = [];
     if (body.match_date !== undefined) { scheduleFields.push("match_date=?"); scheduleValues.push(body.match_date || null); }
