@@ -7780,7 +7780,7 @@ function ContactsPanel({
               {c.phone && <a href={`tel:${c.phone}`}>{c.phone}</a>}
               {c.email && <a href={`mailto:${c.email}`}>{c.email}</a>}
               {c.whatsapp && <a className="whatsapp-link" href={`https://wa.me/${String(c.whatsapp).replace(/[^\d+]/g, "").replace(/^\+/, "")}`} target="_blank" rel="noreferrer"><WhatsAppIcon /> {c.whatsapp}</a>}
-              {admin && c.team_id && <button type="button" className="contact-team-link" onClick={() => setDetails(c)}><Users /> {c.team_name || "Linked team"}</button>}
+              {admin && c.team_name && <button type="button" className="contact-team-link" onClick={() => setDetails(c)}><Users /> Team: {c.team_name}</button>}
             </div>
             {c.emergency ? <Badge>Emergency</Badge> : null}
             {admin && (
