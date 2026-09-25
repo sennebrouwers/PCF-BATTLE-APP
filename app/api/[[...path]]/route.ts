@@ -1994,7 +1994,7 @@ export async function GET(
           ]),
         );
       if (table === "users")
-        return out((await db().prepare("SELECT u.id,u.email,u.role,u.name,u.team_id,u.country,u.photo,u.phone,u.whatsapp,u.active,u.created_at,u.updated_at,t.name team_name,t.phone team_phone,t.whatsapp team_whatsapp,t.contact_email team_contact_email FROM users u LEFT JOIN teams t ON t.id=u.team_id ORDER BY u.role,u.name").all()).results);
+        return out((await db().prepare("SELECT u.id,u.email,u.role,u.name,u.team_id,u.country,u.photo,NULL AS phone,NULL AS whatsapp,u.active,u.created_at,u.updated_at,t.name team_name,t.phone team_phone FROM users u LEFT JOIN teams t ON t.id=u.team_id ORDER BY u.role,u.name").all()).results);
       if (u?.role === "REFEREE" && table === "matches")
         return out(
           await list(table, "WHERE referee_ids LIKE ?", [`%${u.id}%`]),
