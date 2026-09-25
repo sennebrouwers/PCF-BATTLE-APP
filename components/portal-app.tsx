@@ -7686,6 +7686,7 @@ function ContactsPanel({
   admin?: boolean;
 }) {
   const contacts = useData("/contacts", refresh),
+    teams = useData("/teams", refresh),
     [editing, setEditing] = useState<Row | null | undefined>(undefined),
     [busy, setBusy] = useState(false),
     [sameAsPhone, setSameAsPhone] = useState(true),
@@ -7773,6 +7774,7 @@ function ContactsPanel({
               {c.phone && <a href={`tel:${c.phone}`}>{c.phone}</a>}
               {c.email && <a href={`mailto:${c.email}`}>{c.email}</a>}
               {c.whatsapp && <a className="whatsapp-link" href={`https://wa.me/${String(c.whatsapp).replace(/[^\d+]/g, "").replace(/^\+/, "")}`} target="_blank" rel="noreferrer"><WhatsAppIcon /> {c.whatsapp}</a>}
+              {admin && c.team_id && <Link className="contact-team-link" href="/admin#teams"><Users /> {c.team_name || "Linked team"}</Link>}
             </div>
             {c.emergency ? <Badge>Emergency</Badge> : null}
             {admin && (
@@ -7811,6 +7813,7 @@ function ContactsPanel({
               name="role"
               defaultValue={editing?.role}
             />
+            {admin && <Field label="Connected team (optional)" name="team_id" children={<select name="team_id" defaultValue={editing?.team_id || ""}><option value="">Organization-wide contact</option>{teams.data.map((team: Row) => <option key={team.id} value={team.id}>{team.name}</option>)}</select>} />}
             <fieldset className="contact-method-picker">
               <legend>Contact methods</legend>
               <small>Select only the ways people should contact this person.</small>

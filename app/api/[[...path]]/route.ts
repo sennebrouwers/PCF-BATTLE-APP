@@ -198,6 +198,7 @@ async function ensureScheduleSchema() {
     "ALTER TABLE delegation_members ADD COLUMN assistant_player_id text",
     "ALTER TABLE delegation_members ADD COLUMN wheelchair_user integer DEFAULT 0",
     "ALTER TABLE organization_contacts ADD COLUMN whatsapp text",
+    "ALTER TABLE organization_contacts ADD COLUMN team_id text",
   ]) {
     try { await db().prepare(statement).run(); } catch (error: unknown) {
       if (!/duplicate column|already exists/i.test(String(error instanceof Error ? error.message : error))) throw error;
@@ -1674,6 +1675,7 @@ export async function GET(
     }
     if (path === "contacts") {
       if (!u) return out({ error: "Unauthorized" }, 401);
+      await ensureScheduleSchema();
       const count =
         (
           await db()
@@ -1713,9 +1715,7 @@ export async function GET(
               now(),
             ),
         ]);
-      return out(
-        await list("organization_contacts", "ORDER BY sort_order,name"),
-      );
+      return out((await db().prepare("SELECT c.*,t.name team_name FROM organization_contacts c LEFT JOIN teams t ON t.id=c.team_id ORDER BY c.sort_order,c.name").all()).results);
     }
     if (path === "preregistrations") {
       if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
@@ -2683,7 +2683,7 @@ export async function POST(
         return out({ error: "Name and at least one contact method are required" }, 422);
       const id = uuid();
       await db()
-        .prepare("INSERT INTO organization_contacts (id,name,role,email,phone,whatsapp,emergency,sort_order,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)")
+        .prepare("INSERT INTO organization_contacts (id,name,role,email,phone,whatsapp,team_id,emergency,sort_order,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
         .bind(
           id,
           name,
@@ -2691,6 +2691,7 @@ export async function POST(
           email || null,
           phone || null,
           whatsapp || null,
+          body.team_id || null,
           body.emergency ? 1 : 0,
           Number(body.sort_order || 0),
           now(),
@@ -3230,6 +3231,7 @@ export async function PUT(
       "email",
       "phone",
       "whatsapp",
+      "team_id",
       "emergency",
       "sort_order",
     ].filter((k) => body[k] !== undefined);
