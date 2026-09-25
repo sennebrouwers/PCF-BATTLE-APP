@@ -4501,6 +4501,9 @@ input:not([type="checkbox"]):not([type="radio"]), select { min-height:var(--cont
 .scoreboard-goal-flash { position:fixed; inset:0; z-index:35; display:grid; place-content:center; gap:2vh; text-align:center; color:#fff; background:var(--board-pink); animation:scoreboard-goal 2.6s ease both; }
 .scoreboard-goal-flash strong { font-size:clamp(7rem,20vw,22rem); font-weight:950; line-height:.8; letter-spacing:-.07em; }
 .scoreboard-goal-flash span { font-size:clamp(4rem,9vw,9rem); font-weight:900; }
+.scoreboard-goal-flash.celebration-1{animation-name:scoreboard-goal-pop}.scoreboard-goal-flash.celebration-2{animation-name:scoreboard-goal-slide}
+@keyframes scoreboard-goal-pop{0%{opacity:0;transform:scale(.7)}18%{opacity:1;transform:scale(1.08)}35%{transform:scale(1)}100%{opacity:0}}
+@keyframes scoreboard-goal-slide{0%{opacity:0;transform:translateY(-12vh)}18%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(8vh)}}
 @keyframes scoreboard-goal { 0%{opacity:0;transform:scale(1.08)} 10%,80%{opacity:1;transform:scale(1)} 100%{opacity:0} }
 .scoreboard-black { position:fixed; inset:0; background:#000; }
 .scoreboard-sponsor { position:fixed; z-index:12; left:50%; bottom:7.5vh; display:flex; align-items:center; gap:18px; padding:10px 20px; transform:translateX(-50%); border-radius:16px 16px 0 0; color:#2a2026; background:#fff; box-shadow:0 -12px 40px #0004; }

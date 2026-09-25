@@ -37,6 +37,7 @@ export default function ScoreboardDisplay() {
     [offline, setOffline] = useState(false),
     [started, setStarted] = useState(false),
     [goalFlash, setGoalFlash] = useState(false),
+    [celebration, setCelebration] = useState(0),
     lastGoalCount = useRef<number | null>(null),
     lastMatchId = useRef<string | null>(null),
     previousSeconds = useRef<number | null>(null),
@@ -83,6 +84,7 @@ export default function ScoreboardDisplay() {
       return;
     }
     if (lastGoalCount.current !== null && count > lastGoalCount.current) {
+      setCelebration((value) => (value + 1) % 3);
       setGoalFlash(true);
       const timeout = setTimeout(() => setGoalFlash(false), 2600);
       lastGoalCount.current = count;
@@ -147,7 +149,7 @@ export default function ScoreboardDisplay() {
   </main>;
   return <main className={`scoreboard-screen ${match.status}`} style={style}>
     {!started && <button className="scoreboard-start" onClick={startScoreboard}><img src="/PFB_Logo_Pink.svg" alt="" /><b>Start scoreboard</b><span>Enables fullscreen and the final buzzer</span></button>}
-    {goalFlash && <div className="scoreboard-goal-flash"><strong>GOAL!</strong><span>{match.home_score} : {match.away_score}</span></div>}
+    {goalFlash && <div className={`scoreboard-goal-flash celebration-${celebration}`}><strong>GOAL!</strong><span>{match.home_score} : {match.away_score}</span></div>}
     {offline && <div className="scoreboard-connection-warning">Connection lost — showing the last received score</div>}
     <header>
       <div className="scoreboard-brand"><img src="/PFB_Logo_Pink.svg" alt="PCF Battle" /><span>PCF <b>BATTLE</b></span></div>

@@ -349,7 +349,7 @@ function simplePdf(lines: string[]) {
     const pageId = objects.length, contentId = pageId + 1;
     pageIds.push(pageId);
     objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 ${contentId + 1} 0 R >> >> /Contents ${contentId} 0 R >>`);
-    const stream = `BT /F1 11 Tf 48 790 Td 15 TL ${page.map((line, index) => `${index ? "T* " : ""}(${clean(line)}) Tj`).join(" ")} ET`;
+    const stream = `BT /F1 18 Tf 48 790 Td (${clean(page[0] || "PCF BATTLE")}) Tj /F1 10 Tf 0 -28 Td 15 TL ${page.slice(1).map((line, index) => `${index ? "T* " : ""}(${clean(line)}) Tj`).join(" ")} ET`;
     objects.push(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
     objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
   });
@@ -1412,7 +1412,7 @@ export async function GET(
       if (!team) return out({ error: "Team not found" }, 404);
       const members = await list("delegation_members", "WHERE team_id=? ORDER BY role,number,name", [team.id]);
       const rooms = (await db().prepare("SELECT r.number,r.capacity,m.name FROM room_assignments ra JOIN rooms r ON r.id=ra.room_id JOIN delegation_members m ON m.id=ra.member_id WHERE m.team_id=? ORDER BY r.number,m.name").bind(team.id).all()).results as any[];
-      const lines = ["PCF BATTLE - TEAM INFORMATION", "", team.name, `Group: ${team.group_id || "-"}`, `Contact: ${team.contact_person || "-"}`, `Phone: ${team.phone || "-"}`, `Address: ${team.address || "-"}`, `Website: ${team.website || "-"}`, "", "DELEGATION", ...members.map((member: any) => `${member.role}  #${member.number ?? "-"}  ${member.name}${member.dietary ? `  | Dietary: ${member.dietary}` : ""}`), "", "ROOM ALLOCATION", ...(rooms.length ? rooms.map((room: any) => `Room ${room.number}  -  ${room.name}`) : ["No rooms assigned"]), "", `Generated: ${new Date().toLocaleString("en-BE")}`];
+      const lines = ["PCF BATTLE · TEAM INFORMATION", "", team.name, `Group: ${team.group_id || "-"}`, `Contact person: ${team.contact_person || "-"}`, `Email: ${team.contact_email || "-"}`, `Phone: ${team.phone || "-"}`, `WhatsApp: ${team.whatsapp || "-"}`, `Address: ${team.address || "-"}`, `Website: ${team.website || "-"}`, `Invoice requested: ${team.invoice_requested ? "Yes" : "No"}`, "", "DELEGATION OVERVIEW", ...members.map((member: any) => `${member.role}  #${member.number ?? "-"}  ${member.name}${member.dob ? `  | DOB: ${member.dob}` : ""}${member.classification_points ? `  | Classification: ${member.classification_points}` : ""}${member.player_role ? `  | Role: ${member.player_role}` : ""}`), "", "ROOM ALLOCATION", ...(rooms.length ? rooms.map((room: any) => `Room ${room.number}  ·  ${room.name}`) : ["No rooms assigned"]), "", `Generated: ${new Date().toLocaleString("en-BE")}`];
       return new NextResponse(simplePdf(lines), { headers: { "Content-Type": "application/pdf", "Content-Disposition": `attachment; filename="${team.name.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-team-info.pdf"`, "Cache-Control": "private, no-store" } });
     }
     if (path === "live-state") {
@@ -1922,7 +1922,7 @@ export async function GET(
     }
     if (path === "team-reviews") {
       if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
-      const teams = (await db().prepare("SELECT id,name,review_status,review_snapshot,team_reviewed_at,admin_reviewed_at,review_message FROM teams ORDER BY name").all()).results as any[];
+      const teams = (await db().prepare("SELECT id,name,review_status,review_snapshot,team_reviewed_at,admin_reviewed_at,review_message,withdrawal_reason,contact_person,contact_email,phone,whatsapp,address,address_street,address_number,address_postal_code,address_city,address_country FROM teams ORDER BY name").all()).results as any[];
       return out(teams);
     }
     if (path === "finance") {
@@ -2017,6 +2017,30 @@ export async function POST(
       await db().prepare("UPDATE teams SET review_status='awaiting_admin',review_snapshot=?,team_reviewed_at=?,team_reviewed_by=?,review_message=NULL,updated_at=? WHERE id=?").bind(snapshot, now(), u.id, now(), u.teamId).run();
       await log(u, "TEAM_REVIEW_SUBMITTED", "team", String(u.teamId), { total: review.pricing.total });
       return out({ ok: true, status: "awaiting_admin", total: review.pricing.total });
+    }
+    if (path === "matches/assign-referees") {
+      if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
+      const tournament: any = await db().prepare("SELECT id FROM tournaments WHERE active=1 LIMIT 1").first();
+      if (!tournament) return out({ error: "No active tournament" }, 409);
+      const officials = (await db().prepare("SELECT id,wheelchair_user FROM delegation_members WHERE role='REFEREE' ORDER BY name").all()).results as any[];
+      if (officials.length < 2) return out({ error: "At least two referees are required" }, 422);
+      const matches = (await db().prepare("SELECT id,referee_ids FROM matches WHERE tournament_id=? ORDER BY match_date,start_time,id").bind(tournament.id).all()).results as any[];
+      const assignments: { id: string; referee_ids: string[] }[] = [];
+      for (const match of matches) {
+        const shuffled = [...officials].sort(() => Math.random() - 0.5);
+        const selected = shuffled.find((first) => {
+          const second = shuffled.find((candidate) => candidate.id !== first.id && !(first.wheelchair_user && candidate.wheelchair_user));
+          return Boolean(second);
+        });
+        if (!selected) continue;
+        const second = shuffled.find((candidate) => candidate.id !== selected.id && !(selected.wheelchair_user && candidate.wheelchair_user));
+        if (!second) continue;
+        const ids = [selected.id, second.id];
+        await db().prepare("UPDATE matches SET referee_ids=?,updated_at=? WHERE id=?").bind(JSON.stringify(ids), now(), match.id).run();
+        assignments.push({ id: match.id, referee_ids: ids });
+      }
+      await log(u, "RANDOM_REFEREES_ASSIGNED", "tournament", tournament.id, { count: assignments.length });
+      return out({ ok: true, assignments });
     }
     if (path === "team-review/withdraw") {
       if (!u || u.role !== "TEAM" || !u.teamId) return out({ error: "Only a team account can withdraw its review" }, 403);

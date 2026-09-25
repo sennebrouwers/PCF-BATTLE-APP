@@ -4533,6 +4533,7 @@ function Delegation({
             </>
           )}
           {memberType === "ASSISTANT" && <Field label="Linked player (optional)" name="assistant_player_id" children={<select name="assistant_player_id" defaultValue={editing?.assistant_player_id || ""}><option value="">No linked player</option>{players.map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select>} />}
+          {memberType === "REFEREE" && <label className="portal-field wide checkbox-field"><input type="hidden" name="wheelchair_user" value="0" /><input name="wheelchair_user" type="checkbox" value="1" defaultChecked={Boolean(editing?.wheelchair_user)} /><span>This referee uses a wheelchair</span></label>}
           </div>
           <div hidden={memberStep !== 1}>
           {memberType === "PLAYER" && (
