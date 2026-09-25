@@ -7792,7 +7792,6 @@ function ContactsPanel({
               {c.phone && <a href={`tel:${c.phone}`}>{c.phone}</a>}
               {c.email && <a href={`mailto:${c.email}`}>{c.email}</a>}
               {c.whatsapp && <a className="whatsapp-link" href={`https://wa.me/${String(c.whatsapp).replace(/[^\d+]/g, "").replace(/^\+/, "")}`} target="_blank" rel="noreferrer"><WhatsAppIcon /> {c.whatsapp}</a>}
-              {admin && c.team_name && <button type="button" className="contact-team-link" onClick={() => setDetails(c)}><Users /> Team: {c.team_name}</button>}
             </div>
             {c.emergency ? <Badge>Emergency</Badge> : null}
             {admin && (
@@ -7871,13 +7870,11 @@ function ContactsPanel({
           <div className="contact-details">
             <p><strong>Name</strong><span>{details.name}</span></p>
             <p><strong>Role or department</strong><span>{details.role || "Organization"}</span></p>
-            <p><strong>Connected team</strong><span>{details.team_id ? <button type="button" className="contact-team-link" onClick={() => { setDetails(null); onOpenTeam?.(); }}><Users /> {details.team_name || "Open team"}</button> : "Organization-wide contact"}</span></p>
             <p><strong>Phone</strong><span>{details.phone ? <a href={`tel:${details.phone}`}>{details.phone}</a> : "—"}</span></p>
             <p><strong>WhatsApp</strong><span>{details.whatsapp ? <a href={`https://wa.me/${String(details.whatsapp).replace(/[^\d+]/g, "").replace(/^\+/, "")}`} target="_blank" rel="noreferrer">{details.whatsapp}</a> : "—"}</span></p>
             <p><strong>Email</strong><span>{details.email ? <a href={`mailto:${details.email}`}>{details.email}</a> : "—"}</span></p>
             <p><strong>Contact type</strong><span>{details.emergency ? "Emergency contact" : "General contact"}</span></p>
           </div>
-          <div className="form-actions"><button className="btn" type="button" onClick={() => { setDetails(null); onOpenTeam?.(); }}>Open team administration</button></div>
         </Modal>
       )}
     </section>
