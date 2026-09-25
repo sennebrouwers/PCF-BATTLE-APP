@@ -1731,7 +1731,7 @@ export async function GET(
               now(),
             ),
         ]);
-      return out((await db().prepare("SELECT c.*,COALESCE(c.team_id,matched.id) team_id,COALESCE(t.name,matched.name) team_name FROM organization_contacts c LEFT JOIN teams t ON t.id=c.team_id LEFT JOIN teams matched ON (c.team_id IS NULL AND ((c.email IS NOT NULL AND c.email!='' AND lower(c.email)=lower(matched.contact_email)) OR (c.phone IS NOT NULL AND c.phone!='' AND c.phone=matched.phone) OR (c.name IS NOT NULL AND c.name!='' AND lower(c.name)=lower(matched.contact_person)))) ORDER BY c.sort_order,c.name").all()).results);
+      return out((await db().prepare("SELECT id,name,role,email,phone,whatsapp,emergency,sort_order,created_at,updated_at FROM organization_contacts ORDER BY sort_order,name").all()).results);
     }
     if (path === "preregistrations") {
       if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
@@ -1994,7 +1994,7 @@ export async function GET(
           ]),
         );
       if (table === "users")
-        return out((await db().prepare("SELECT u.id,u.email,u.role,u.name,u.team_id,u.country,u.photo,u.active,u.created_at,u.updated_at,t.name team_name FROM users u LEFT JOIN teams t ON t.id=u.team_id ORDER BY u.role,u.name").all()).results);
+        return out((await db().prepare("SELECT u.id,u.email,u.role,u.name,u.team_id,u.country,u.photo,u.phone,u.whatsapp,u.active,u.created_at,u.updated_at,t.name team_name,t.phone team_phone,t.whatsapp team_whatsapp,t.contact_email team_contact_email FROM users u LEFT JOIN teams t ON t.id=u.team_id ORDER BY u.role,u.name").all()).results);
       if (u?.role === "REFEREE" && table === "matches")
         return out(
           await list(table, "WHERE referee_ids LIKE ?", [`%${u.id}%`]),
@@ -2701,7 +2701,7 @@ export async function POST(
         return out({ error: "Name and at least one contact method are required" }, 422);
       const id = uuid();
       await db()
-        .prepare("INSERT INTO organization_contacts (id,name,role,email,phone,whatsapp,team_id,emergency,sort_order,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
+        .prepare("INSERT INTO organization_contacts (id,name,role,email,phone,whatsapp,emergency,sort_order,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)")
         .bind(
           id,
           name,
@@ -2709,7 +2709,6 @@ export async function POST(
           email || null,
           phone || null,
           whatsapp || null,
-          body.team_id || null,
           body.emergency ? 1 : 0,
           Number(body.sort_order || 0),
           now(),
@@ -3249,7 +3248,6 @@ export async function PUT(
       "email",
       "phone",
       "whatsapp",
-      "team_id",
       "emergency",
       "sort_order",
     ].filter((k) => body[k] !== undefined);
