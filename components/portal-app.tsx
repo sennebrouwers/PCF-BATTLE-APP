@@ -7712,7 +7712,7 @@ function ContactsPanel({
     if (!hasWhatsApp) b.whatsapp = null;
     b.emergency = b.emergency === "1";
     b.sort_order = Number(b.sort_order || 0);
-    if (hasWhatsApp && sameAsPhone) b.whatsapp = b.phone || null;
+    if (hasWhatsApp && hasPhone && sameAsPhone) b.whatsapp = b.phone || null;
     else if (hasWhatsApp) b.whatsapp = String(b.whatsapp || "").trim() || null;
     if (!b.phone && !b.whatsapp && !b.email) {
       toast.error("Select at least one contact method and provide its value");

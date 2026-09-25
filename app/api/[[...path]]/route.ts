@@ -1731,7 +1731,7 @@ export async function GET(
               now(),
             ),
         ]);
-      return out((await db().prepare("SELECT c.*,t.name team_name FROM organization_contacts c LEFT JOIN teams t ON t.id=c.team_id ORDER BY c.sort_order,c.name").all()).results);
+      return out((await db().prepare("SELECT c.*,COALESCE(c.team_id,matched.id) team_id,COALESCE(t.name,matched.name) team_name FROM organization_contacts c LEFT JOIN teams t ON t.id=c.team_id LEFT JOIN teams matched ON (c.team_id IS NULL AND ((c.email IS NOT NULL AND c.email!='' AND lower(c.email)=lower(matched.contact_email)) OR (c.phone IS NOT NULL AND c.phone!='' AND c.phone=matched.phone) OR (c.name IS NOT NULL AND c.name!='' AND lower(c.name)=lower(matched.contact_person)))) ORDER BY c.sort_order,c.name").all()).results);
     }
     if (path === "preregistrations") {
       if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
