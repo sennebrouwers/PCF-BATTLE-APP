@@ -88,6 +88,9 @@ const teamColors = [
   "#10b981",
   "#64748b",
 ];
+function WhatsAppIcon() {
+  return <svg className="whatsapp-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a9.8 9.8 0 0 0-8.47 14.75L2 22l5.43-1.5A9.8 9.8 0 1 0 12 2Zm0 17.8a8 8 0 0 1-4.08-1.12l-.29-.17-3.22.89.91-3.13-.19-.31A8 8 0 1 1 12 19.8Zm4.38-5.98c-.24-.12-1.42-.7-1.64-.78-.22-.08-.38-.12-.55.12-.16.24-.62.78-.76.94-.14.16-.28.18-.52.06-1.4-.7-2.32-1.25-3.25-2.8-.25-.43.25-.4.71-1.33.08-.16.04-.3-.02-.42-.06-.12-.55-1.32-.75-1.8-.2-.47-.4-.4-.55-.41h-.47c-.16 0-.43.06-.65.3-.22.24-.85.83-.85 2.02s.87 2.35.99 2.51c.12.16 1.71 2.61 4.15 3.66 1.54.67 2.14.73 2.91.61.47-.07 1.42-.58 1.62-1.15.2-.57.2-1.05.14-1.15-.06-.1-.22-.16-.46-.28Z" /></svg>;
+}
 const nav = {
   admin: [
     ["dashboard", "Dashboard", LayoutDashboard],
@@ -4534,16 +4537,9 @@ function Delegation({
           )}
           {memberType === "ASSISTANT" && <Field label="Linked player (optional)" name="assistant_player_id" children={<select name="assistant_player_id" defaultValue={editing?.assistant_player_id || ""}><option value="">No linked player</option>{players.map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select>} />}
           {memberType === "REFEREE" && <label className="portal-field wide checkbox-field"><input type="hidden" name="wheelchair_user" value="0" /><input name="wheelchair_user" type="checkbox" value="1" defaultChecked={Boolean(editing?.wheelchair_user)} /><span>This referee uses a wheelchair</span></label>}
+          {memberType === "PLAYER" && <Field label="Shirt number" name="number" type="number" defaultValue={editing?.number} />}
           </div>
           <div hidden={memberStep !== 1}>
-          {memberType === "PLAYER" && (
-            <Field
-              label="Shirt number"
-              name="number"
-              type="number"
-              defaultValue={editing?.number}
-            />
-          )}
           <Field
             label="Date of birth"
             name="dob"
@@ -6902,7 +6898,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                   <Field label="Full name" name="contact_person" defaultValue={editing?.contact_person} required />
                   <Field label="Email address" name="contact_email" type="email" defaultValue={editing?.contact_email} required />
                   <PhoneField defaultValue={editing?.phone} defaultCode={editing?.phone_country_code || "+32"} required />
-                  <Field label="WhatsApp number / contact" name="whatsapp" type="tel" defaultValue={editing?.whatsapp} />
+                  <label className="portal-field wide whatsapp-field"><span><WhatsAppIcon /> WhatsApp number / contact</span><input name="whatsapp" type="tel" defaultValue={editing?.whatsapp} /></label>
                 </div>
                 <div hidden={teamStep !== 3} className="team-wizard-step">
                   <Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={0} max={16} defaultValue={editing?.expected_delegation_size || ""} required onChange={(event) => setDelegationSize(Math.min(16, Math.max(0, Number(event.target.value || 0))))} />
@@ -8192,7 +8188,7 @@ function TeamInfoV2({
           required
         />
         <Field label="Contact email" name="contact_email" type="email" defaultValue={team.contact_email} />
-        <Field label="WhatsApp" name="whatsapp" type="tel" defaultValue={team.whatsapp} />
+        <label className="portal-field whatsapp-field"><span><WhatsAppIcon /> WhatsApp</span><input name="whatsapp" type="tel" defaultValue={team.whatsapp} /></label>
         <Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={0} max={16} defaultValue={team.expected_delegation_size ?? ""} />
         <Field
           label="Website"
