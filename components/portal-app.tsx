@@ -7717,7 +7717,7 @@ function ContactsPanel({
     const b: any = Object.fromEntries(new FormData(e.currentTarget));
     const hasPhone = contactMethods.includes("phone");
     const hasWhatsApp = contactMethods.includes("whatsapp");
-    if (!hasPhone) b.phone = null;
+    if (!hasPhone) b.phone = "";
     if (!hasWhatsApp) b.whatsapp = null;
     b.emergency = b.emergency === "1";
     b.sort_order = Number(b.sort_order || 0);
