@@ -7190,8 +7190,11 @@ function UsersPanel({ refresh }: { refresh: number }) {
       {details && <Modal title={`${details.name} · User details`} open={Boolean(details)} onOpenChange={(open) => !open && setDetails(null)}>
         <div className="contact-details">
           <p><strong>Name</strong><span>{details.name}</span></p>
-          <p><strong>Email</strong><span><a href={`mailto:${details.email}`}>{details.email}</a></span></p>
+          <p><strong>Email</strong><span>{details.email ? <a href={`mailto:${details.email}`}>{details.email}</a> : "—"}</span></p>
+          <p><strong>Phone</strong><span>{details.phone || details.team_phone ? <a href={`tel:${details.phone || details.team_phone}`}>{details.phone || details.team_phone}{(details.whatsapp || details.team_whatsapp) === (details.phone || details.team_phone) ? " (also WhatsApp)" : ""}</a> : "—"}</span></p>
+          {(details.whatsapp || details.team_whatsapp) && (details.whatsapp || details.team_whatsapp) !== (details.phone || details.team_phone) && <p><strong>WhatsApp</strong><span><a href={`https://wa.me/${String(details.whatsapp || details.team_whatsapp).replace(/[^\\d+]/g, "").replace(/^\\+/, "")}`} target="_blank" rel="noreferrer">{details.whatsapp || details.team_whatsapp}</a></span></p>}
           <p><strong>Role</strong><span>{details.role}</span></p>
+          <p><strong>Connected team</strong><span>{details.team_name || "No team"}</span></p>
           <p><strong>Country</strong><span>{details.country || "—"}</span></p>
           <p><strong>Status</strong><span>{details.active ? "Active" : "Inactive"}</span></p>
         </div>
