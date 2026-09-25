@@ -2707,7 +2707,7 @@ export async function POST(
           name,
           body.role || null,
           email || null,
-          phone || null,
+          phone || "",
           whatsapp || null,
           body.emergency ? 1 : 0,
           Number(body.sort_order || 0),
