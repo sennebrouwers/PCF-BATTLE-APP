@@ -83,6 +83,7 @@ async function hasAllowedFileSignature(file: File) {
   return false;
 }
 let scheduleSchemaReady: Promise<void> | null = null;
+let contactsSchemaReady: Promise<void> | null = null;
 let mvpSchemaReady: Promise<void> | null = null;
 let financeSchemaReady: Promise<void> | null = null;
 async function ensureFinanceSchema() {
@@ -206,6 +207,21 @@ async function ensureScheduleSchema() {
   }
   })();
   try { await scheduleSchemaReady; } catch (error) { scheduleSchemaReady = null; throw error; }
+}
+async function ensureContactsSchema() {
+  if (contactsSchemaReady) return contactsSchemaReady;
+  contactsSchemaReady = (async () => {
+    await db().prepare("CREATE TABLE IF NOT EXISTS organization_contacts (id text PRIMARY KEY NOT NULL,name text NOT NULL,role text,email text,phone text,whatsapp text,team_id text,emergency integer DEFAULT 0,sort_order integer DEFAULT 0,created_at text NOT NULL,updated_at text NOT NULL)").run();
+    for (const statement of [
+      "ALTER TABLE organization_contacts ADD COLUMN whatsapp text",
+      "ALTER TABLE organization_contacts ADD COLUMN team_id text",
+    ]) {
+      try { await db().prepare(statement).run(); } catch (error: unknown) {
+        if (!/duplicate column|already exists/i.test(String(error instanceof Error ? error.message : error))) throw error;
+      }
+    }
+  })();
+  try { await contactsSchemaReady; } catch (error) { contactsSchemaReady = null; throw error; }
 }
 function groupTeamRooms(rows: any[]) {
   const rooms = new Map<string, { id: string; number: string; capacity: number; room_type: string; members: { id: string; name: string }[] }>();
@@ -1675,7 +1691,7 @@ export async function GET(
     }
     if (path === "contacts") {
       if (!u) return out({ error: "Unauthorized" }, 401);
-      await ensureScheduleSchema();
+      await ensureContactsSchema();
       const count =
         (
           await db()
@@ -2674,7 +2690,7 @@ export async function POST(
     }
     if (path === "contacts") {
       if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
-      await ensureScheduleSchema();
+      await ensureContactsSchema();
       const name = String(body.name || "").trim(),
         phone = String(body.phone || "").trim();
       const whatsapp = String(body.whatsapp || "").trim(),
@@ -3224,7 +3240,7 @@ export async function PUT(
   }
   if (parts[0] === "contacts" && rid) {
     if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
-    await ensureScheduleSchema();
+    await ensureContactsSchema();
     const fields = [
       "name",
       "role",
