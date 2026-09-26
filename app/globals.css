@@ -9085,3 +9085,12 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
  .member-editor-dialog .wizard-question,.team-editor-dialog .wizard-question{margin-top:28px!important}
  .member-editor-dialog .wizard-topbar,.team-editor-dialog .wizard-topbar{margin-top:18px!important}
 }
+
+
+/* Keep the active field directly below the question */
+.member-editor-dialog .wizard-question,
+.team-editor-dialog .wizard-question{margin-bottom:14px!important}
+.member-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer):not([hidden]),
+.team-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer):not([hidden]),
+.member-editor-dialog .wizard-form>.portal-field:not([hidden]),
+.team-editor-dialog .wizard-form>.portal-field:not([hidden]){flex:0 0 auto!important;margin-top:0!important;margin-bottom:0!important}
