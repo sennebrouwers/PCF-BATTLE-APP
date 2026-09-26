@@ -7706,8 +7706,7 @@ function ContactsPanel({
     [editing, setEditing] = useState<Row | null | undefined>(undefined),
     [busy, setBusy] = useState(false),
     [sameAsPhone, setSameAsPhone] = useState(true),
-    [contactMethods, setContactMethods] = useState<string[]>(["phone"]),
-    [details, setDetails] = useState<Row | null>(null);
+    [contactMethods, setContactMethods] = useState<string[]>(["phone"]);
   const saveLock = useRef(false);
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
