@@ -1997,8 +1997,7 @@ function OperationsHub({
             <small>Control the active match from one focused workspace</small>
           </div>
           {checks.data?.issues && (
-            <Badge>
-              {checks.data.ready
+            <Badge>              {checks.data.ready
                 ? "Ready"
                 : `${checks.data.issues.length} checks`}
             </Badge>
@@ -3997,8 +3996,7 @@ export function MatchCard({
                 onClick={() => removeGoal(match.home_team_id)}
               >
                 <Minus />
-              </button>
-              <button
+              </button>              <button
                 disabled={busy}
                 aria-label="Record home goal"
                 onClick={() => openGoal(match.home_team_id)}
@@ -4281,8 +4279,16 @@ function Delegation({
     if (!form) return;
     const value = (name: string) => String(new FormData(form).get(name) || "").trim();
     let valid = true;
-    if (memberStep === 1) valid = Boolean(value("name") && value("role") && value("dob"));
-    if (memberStep === 2 && memberType === "PLAYER") valid = Boolean(value("player_role") && value("number"));
+    if (memberStep === 1 && admin) valid = Boolean(value("team_id"));
+    if (memberStep === 2) valid = Boolean(value("name"));
+    if (memberStep === 3) valid = Boolean(value("dob"));
+    if (memberStep === 4) valid = Boolean(value("role"));
+    if (memberStep === 5 && memberType === "PLAYER") valid = Boolean(value("player_role"));
+    if (memberStep === 6 && memberType === "PLAYER") valid = Boolean(value("number"));
+    if (memberStep === 7 && memberType === "ASSISTANT") valid = Boolean(value("assistant_player_id"));
+    if (memberStep === 8) valid = true;
+    if (memberStep === 9) valid = true;
+    if (memberStep === 10) valid = true;
     setMemberStepValid(valid);
   }
   useEffect(() => { readMemberStepValidity(); }, [memberStep, memberType, editing, memberRevision]);
@@ -4346,7 +4352,7 @@ function Delegation({
           className="btn primary"
           onClick={() => {
             setMemberType("PLAYER");
-            setMemberStep(1);
+            setMemberStep(admin ? 1 : 2);
             setEditing(null);
           }}
         >
@@ -4413,7 +4419,7 @@ function Delegation({
                           : "COACH"
                       : "STAFF";
                   setMemberType(type);
-                  setMemberStep(1);
+                  setMemberStep(admin ? 1 : 2);
                   setEditing(m);
                 }}
               >
@@ -4478,123 +4484,30 @@ function Delegation({
         onOpenChange={(v) => !v && setEditing(undefined)}
         className="member-editor-dialog"
       >
-        <form ref={memberFormRef} className="portal-form" onInput={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onChange={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
-          <div className="wizard-progress" aria-label="Delegation member steps">
-            {["Basic information", "Role details", "Additional information"].map((label, index) => (
-              <button type="button" disabled={index + 1 > memberStep + 1 || (index + 1 === memberStep + 1 && !memberStepValid)} className={memberStep === index + 1 ? "active" : ""} key={label} onClick={() => { if (index + 1 <= memberStep || (index + 1 === memberStep + 1 && memberStepValid)) setMemberStep(index + 1); }}>
-                {index + 1}. {label}
+        <form ref={memberFormRef} className="portal-form wizard-form" onInput={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onChange={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
+          <div className="wizard-progress wizard-progress-bar" aria-label="Delegation member progress">
+            {["Team","Full name","Date of birth","Member type","Playing role","Shirt number","Linked player","Classification","Photo","Notes & save"].map((label, index) => (
+              <button type="button" key={label} disabled={index + 1 > memberStep || (index + 1 === memberStep + 1 && !memberStepValid)} className={memberStep === index + 1 ? "active" : memberStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= memberStep && (index + 1 !== 1 || admin)) setMemberStep(index + 1); }}>
+                <span>{index + 1}</span>{label}
               </button>
             ))}
           </div>
-          {!memberStepValid && <p className="wizard-validation" role="alert">Complete the required fields in this step to continue.</p>}
-          {admin && (
-            <Field
-              label="Team"
-              name="team_id"
-              children={
-                <select
-                  name="team_id"
-                  defaultValue={
-                    editing?.team_id || (team === "all" ? "" : team)
-                  }
-                  required
-                >
-                  <option value="">Choose team</option>
-                  {teams.data.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-              }
-            />
-          )}
-          <div hidden={memberStep !== 1}>
-            <Field label="Full name" name="name" defaultValue={editing?.name} required />
-          </div>
-          <div hidden={memberStep !== 1}>
-            <label className="portal-field">
-              <span>Member type<i className="required-mark" aria-hidden="true">*</i></span>
-              <select name="role" value={memberType} required onChange={(event) => { const next = event.target.value as typeof memberType; setMemberType(next); setMemberStepValid(false); setMemberRevision((value) => value + 1); }}>
-                <option value="PLAYER">Player</option>
-                <option value="COACH">Coach</option>
-                <option value="STAFF">Staff</option>
-                <option value="TEAM_MANAGER">Team Manager</option>
-                <option value="ASSISTANT">Assistant</option>
-                <option value="REFEREE">Referee</option>
-              </select>
-            </label>
+          {!memberStepValid && <p className="wizard-validation" role="alert">Complete this required field to continue.</p>}
+          {admin && <div hidden={memberStep !== 1}><Field label="Team" name="team_id" children={<select name="team_id" defaultValue={editing?.team_id || (team === "all" ? "" : team)} required><option value="">Choose team</option>{teams.data.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select>} /></div>}
+          <div hidden={memberStep !== (admin ? 2 : 1)}><Field label="Full name" name="name" defaultValue={editing?.name} required /></div>
+          <div hidden={memberStep !== (admin ? 3 : 2)}><Field label="Date of birth" name="dob" type="date" defaultValue={editing?.dob} required /></div>
+          <div hidden={memberStep !== (admin ? 4 : 3)}>
+            <label className="portal-field"><span>Member type<i className="required-mark" aria-hidden="true">*</i></span><select name="role" value={memberType} required onChange={(event) => { const next = event.target.value as typeof memberType; setMemberType(next); setMemberStepValid(false); setMemberRevision((value) => value + 1); }}><option value="PLAYER">Player</option><option value="COACH">Coach</option><option value="STAFF">Staff</option><option value="TEAM_MANAGER">Team Manager</option><option value="ASSISTANT">Assistant</option><option value="REFEREE">Referee</option></select></label>
           </div>
           <input type="hidden" name="member_type" value={memberType} />
-          <div key={memberType} hidden={memberStep !== 2}>{memberType === "PLAYER" && (
-            <>
-              <Field
-                label="Player role"
-                name="player_role"
-                children={
-                  <select
-                    name="player_role"
-                    defaultValue={editing?.player_role || "KEEPER"}
-                  >
-                    <option value="KEEPER">Goalkeeper</option>
-                    <option value="T_STICK">T-stick</option>
-                    <option value="HANDSTICK">Handstick</option>
-                  </select>
-                }
-              />
-              <Field
-                label="Classification points (optional)"
-                name="classification_points"
-                type="number"
-                defaultValue={editing?.classification_points ?? ""}
-                min={0.5}
-                max={4.5}
-                step={0.5}
-              />
-            </>
-          )}
-          {memberType === "ASSISTANT" && <Field label="Linked player (optional)" name="assistant_player_id" children={<select name="assistant_player_id" defaultValue={editing?.assistant_player_id || ""}><option value="">No linked player</option>{players.map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select>} />}
-          {memberType === "REFEREE" && <label className="portal-field wide checkbox-field"><input type="hidden" name="wheelchair_user" value="0" /><input name="wheelchair_user" type="checkbox" value="1" defaultChecked={Boolean(editing?.wheelchair_user)} /><span>This referee uses a wheelchair</span></label>}
-          {memberType === "PLAYER" && <Field label="Shirt number" name="number" type="number" defaultValue={editing?.number} />}
-          </div>
-          <div hidden={memberStep !== 1}>
-          <Field
-            label="Date of birth"
-            name="dob"
-            type="date"
-            defaultValue={editing?.dob}
-            required
-          />
-          </div>
-          <div hidden={memberStep !== 3}>
-          <Field label="Portrait photo (optional)" name="photo_file" type="file" />
-          <Field
-            label="Dietary requirements"
-            name="dietary"
-            defaultValue={editing?.dietary}
-          />
-          <Field label="Notes" name="notes" defaultValue={editing?.notes} />
-          <VisibilityField
-            label="Privacy consent"
-            name="privacy_consent"
-            defaultValue={editing?.privacy_consent ?? 0}
-            onLabel="Recorded"
-            offLabel="Missing"
-          />
-          <VisibilityField
-            label="Photo publication consent"
-            name="photo_consent"
-            defaultValue={editing?.photo_consent ?? 0}
-            onLabel="Granted"
-            offLabel="Not granted"
-          /></div>
-          <div className="wizard-footer">
-          <div className="wizard-actions">
-            {memberStep > 1 && <button type="button" className="btn" onClick={() => setMemberStep((step) => step - 1)}>Back</button>}
-            {memberStep < 3 && <button type="button" className="btn primary" disabled={!memberStepValid} onClick={() => setMemberStep((step) => step + 1)}>Next</button>}
-          </div>
-          {memberStep === 3 && <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}
-          </div>
+          {memberType === "PLAYER" && <div hidden={memberStep !== (admin ? 5 : 4)}><Field label="Playing role" name="player_role" children={<select name="player_role" defaultValue={editing?.player_role || "KEEPER"}><option value="KEEPER">Goalkeeper</option><option value="T_STICK">T-stick</option><option value="HANDSTICK">Handstick</option></select>} /></div>}
+          {memberType === "PLAYER" && <div hidden={memberStep !== (admin ? 6 : 5)}><Field label="Shirt number" name="number" type="number" defaultValue={editing?.number} required /></div>}
+          {memberType === "ASSISTANT" && <div hidden={memberStep !== (admin ? 7 : 6)}><Field label="Linked player (optional)" name="assistant_player_id" children={<select name="assistant_player_id" defaultValue={editing?.assistant_player_id || ""}><option value="">No linked player</option>{players.map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select>} /></div>}
+          {memberType === "PLAYER" && <div hidden={memberStep !== (admin ? 8 : 7)}><Field label="Classification points (optional)" name="classification_points" type="number" defaultValue={editing?.classification_points ?? ""} min={0.5} max={4.5} step={0.5} /></div>}
+          {memberType === "REFEREE" && <div hidden={memberStep !== (admin ? 8 : 7)}><label className="portal-field wide checkbox-field"><input type="hidden" name="wheelchair_user" value="0" /><input name="wheelchair_user" type="checkbox" value="1" defaultChecked={Boolean(editing?.wheelchair_user)} /><span>This referee uses a wheelchair</span></label></div>}
+          <div hidden={memberStep !== (admin ? 9 : 8)}><Field label="Portrait photo (optional)" name="photo_file" type="file" /></div>
+          <div hidden={memberStep !== (admin ? 10 : 9)} className="wizard-final-fields"><Field label="Dietary requirements (optional)" name="dietary" defaultValue={editing?.dietary} /><Field label="Notes (optional)" name="notes" defaultValue={editing?.notes} /><VisibilityField label="Privacy consent" name="privacy_consent" defaultValue={editing?.privacy_consent ?? 0} onLabel="Recorded" offLabel="Missing" /><VisibilityField label="Photo publication consent" name="photo_consent" defaultValue={editing?.photo_consent ?? 0} onLabel="Granted" offLabel="Not granted" /></div>
+          <div className="wizard-footer"><div className="wizard-actions">{memberStep > 1 && <button type="button" className="btn" onClick={() => setMemberStep((step) => step - 1)}>Back</button>}{memberStep < (admin ? 10 : 9) && <button type="button" className="btn primary" disabled={!memberStepValid} onClick={() => setMemberStep((step) => step + 1)}>Next</button>}</div>{memberStep === (admin ? 10 : 9) && <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}</div>
         </form>
       </Modal>
     </section>
@@ -5997,8 +5910,7 @@ function AdminFinanceSimple({ refresh }: { refresh: number }) {
                     )}
                     {state === "awaiting_admin" && (
                       <button
-                        className="btn primary"
-                        onClick={async () => {
+                        className="btn primary"                        onClick={async () => {
                           try {
                             await api("/team-review/admin", {
                               method: "POST",
@@ -6742,15 +6654,25 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
     const form = wizardFormRef.current;
     if (!form) return;
     const value = (name: string) => String(new FormData(form).get(name) || "").trim();
-    let valid = false;
-    if (teamStep === 1) {
-      const logo = form.elements.namedItem("logo_file") as HTMLInputElement | null;
-      valid = Boolean(value("name") && value("address_country") && /^#[0-9a-fA-F]{6}$/.test(value("color_hex")) && (editing?.logo || logo?.files?.length));
-    }
-    if (teamStep === 2) valid = Boolean(value("contact_person") && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value("contact_email")) && value("phone"));
-    if (teamStep === 3) valid = /^\d+$/.test(value("expected_delegation_size")) && Number(value("expected_delegation_size")) <= 16;
-    if (teamStep === 4) valid = !invoiceRequested || Boolean(value("billing_name") && value("billing_address") && value("billing_postal_code") && value("billing_city") && value("billing_country"));
-    if (teamStep === 5) valid = true;
+    const input = form.elements.namedItem("logo_file") as HTMLInputElement | null;
+    let valid = true;
+    if (teamStep === 1) valid = Boolean(value("name"));
+    if (teamStep === 2) valid = Boolean(value("address_country"));
+    if (teamStep === 3) valid = Boolean(editing?.logo || input?.files?.length);
+    if (teamStep === 4) valid = true;
+    if (teamStep === 5) valid = /^#[0-9a-fA-F]{6}$/.test(value("color_hex"));
+    if (teamStep === 6) valid = true;
+    if (teamStep === 7) valid = Boolean(value("contact_person"));
+    if (teamStep === 8) valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value("contact_email"));
+    if (teamStep === 9) valid = Boolean(value("phone"));
+    if (teamStep === 10) valid = /^\d+$/.test(value("expected_delegation_size")) && Number(value("expected_delegation_size")) <= 16;
+    if (teamStep === 11) valid = true;
+    if (teamStep === 12) valid = !invoiceRequested || Boolean(value("billing_name"));
+    if (teamStep === 13) valid = !invoiceRequested || Boolean(value("billing_address"));
+    if (teamStep === 14) valid = !invoiceRequested || Boolean(value("billing_postal_code"));
+    if (teamStep === 15) valid = !invoiceRequested || Boolean(value("billing_city"));
+    if (teamStep === 16) valid = !invoiceRequested || Boolean(value("billing_country"));
+    if (teamStep >= 17) valid = true;
     setStepValid(valid);
   }
   useEffect(() => { readStepValidity(); }, [teamStep, editing, invoiceRequested, wizardRevision]);
@@ -6906,38 +6828,35 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
               onOpenChange={(v) => !v && setEditing(undefined)}
               className="team-editor-dialog"
             >
-              <form ref={wizardFormRef} className="portal-form team-wizard" onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
-                <div className="wizard-progress" aria-label="Team creation steps">
-                  {["Team identity", "Contact person", "Delegation", "Invoice & billing", "Review & create"].map((label, index) => <button type="button" disabled={index + 1 > teamStep + 1 || (index + 1 === teamStep + 1 && !stepValid)} className={teamStep === index + 1 ? "active" : ""} key={label} onClick={() => { if (index + 1 <= teamStep || (index + 1 === teamStep + 1 && stepValid)) setTeamStep(index + 1); }}>{index + 1}. {label}</button>)}
+              <form ref={wizardFormRef} className="portal-form team-wizard wizard-form" onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
+                <div className="wizard-progress wizard-progress-bar" aria-label="Team creation progress">
+                  {["Team name","Country","Team logo","Team photo","Team color","Group","Contact name","Email","Phone","Delegation size","Invoice option","Billing name","Billing address","Postal code","City","Billing country","Login email","Password","Review"].map((label, index) => (
+                    <button type="button" key={label} disabled={index + 1 > teamStep || index + 1 === teamStep + 1 && !stepValid} className={teamStep === index + 1 ? "active" : teamStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= teamStep) setTeamStep(index + 1); }}>
+                      <span>{index + 1}</span>{label}
+                    </button>
+                  ))}
                 </div>
-                {!stepValid && <p className="wizard-validation" role="alert">Complete the required fields in this step to continue.</p>}
-                <div hidden={teamStep !== 1} className="team-wizard-step">
-                  <Field label="Team name" name="name" defaultValue={editing?.name} required />
-                  <Field label="Country" name="address_country" defaultValue={editing?.address_country} required />
-                  <Field label="Team logo" name="logo_file" type="file" required={!editing?.logo} children={<input name="logo_file" type="file" accept="image/*" required={!editing?.logo} onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; const suggested = await suggestTeamColor(file); const input = document.querySelector<HTMLInputElement>('input[name="color_hex"]'); const picker = document.querySelector<HTMLInputElement>('input[data-team-color-picker]'); if (suggested && input && picker) { input.value = suggested; picker.value = suggested; } }} />} />
-                  <Field label="Team photo (optional)" name="team_photo_file" type="file" children={<input name="team_photo_file" type="file" accept="image/*" />} />
-                  <Field label="Team color (HEX)" name="color_hex" defaultValue={editing?.color || teamColors[teams.data.length % 8]} required children={<div className="hex-color-control"><input name="color_hex" defaultValue={editing?.color || teamColors[teams.data.length % 8]} required /><input data-team-color-picker type="color" defaultValue={editing?.color || teamColors[teams.data.length % 8]} aria-label="Choose team color" onChange={(event) => { const input = document.querySelector<HTMLInputElement>('input[name="color_hex"]'); if (input) input.value = event.target.value; }} /></div>} />
-                  <Field label="Group" name="group_id" defaultValue={editing?.group_id} />
-                </div>
-                <div hidden={teamStep !== 2} className="team-wizard-step">
-                  <Field label="Full name" name="contact_person" defaultValue={editing?.contact_person} required />
-                  <Field label="Email address" name="contact_email" type="email" defaultValue={editing?.contact_email} required />
-                  <PhoneField defaultValue={editing?.phone} defaultCode={editing?.phone_country_code || "+32"} required />
-                </div>
-                <div hidden={teamStep !== 3} className="team-wizard-step">
-                  <Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={0} max={16} defaultValue={editing?.expected_delegation_size || ""} required onChange={(event) => setDelegationSize(Math.min(16, Math.max(0, Number(event.target.value || 0))))} />
-                  <p className="wizard-help">Initial rooms required: {delegationSize ? Math.ceil(delegationSize / 2) : "—"}. Admins can adjust room assignments later.</p>
-                </div>
-                <div hidden={teamStep !== 4} className="team-wizard-step">
-                  <label className="portal-field wide checkbox-field"><input type="checkbox" name="invoice_requested" value="1" checked={invoiceRequested} onChange={(event) => { setInvoiceRequested(event.target.checked); setWizardRevision((value) => value + 1); }} /><span>I would like to receive an invoice during payment for administration.</span></label>
-                  {invoiceRequested && <><Field label="Billing name / organisation" name="billing_name" defaultValue={editing?.billing_name} required /><Field label="Street and house number" name="billing_address" defaultValue={editing?.billing_address} required /><Field label="Postal code" name="billing_postal_code" defaultValue={editing?.billing_postal_code} required /><Field label="City" name="billing_city" defaultValue={editing?.billing_city} required /><Field label="Country" name="billing_country" defaultValue={editing?.billing_country} required /><Field label="VAT number (optional)" name="vat_number" defaultValue={editing?.vat_number} /></>}
-                </div>
-                <div hidden={teamStep !== 5} className="team-wizard-step team-wizard-review">
-                  <h4>Review team</h4>
-                  <p>Check the entered details before creating the team. The logo is uploaded first and the selected HEX color is used for team branding.</p>
-                  {!editing?.id && <><Field label="Login email" name="login_email" type="email" required /><Field label="Temporary password" name="login_password" type="password" minLength={8} required /></>}
-                </div>
-                <div className="wizard-footer"><div className="wizard-actions"><button type="button" className="btn" onClick={() => teamStep > 1 && setTeamStep(teamStep - 1)}>Back</button>{teamStep < 5 && <button type="button" className="btn primary" disabled={!stepValid} onClick={() => setTeamStep(teamStep + 1)}>Next</button>}</div>{teamStep === 5 && <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}</div>
+                {!stepValid && <p className="wizard-validation" role="alert">Complete this required field to continue.</p>}
+                <div hidden={teamStep !== 1}><Field label="Team name" name="name" defaultValue={editing?.name} required /></div>
+                <div hidden={teamStep !== 2}><Field label="Country" name="address_country" defaultValue={editing?.address_country} required /></div>
+                <div hidden={teamStep !== 3}><Field label="Team logo" name="logo_file" type="file" required={!editing?.logo} children={<input name="logo_file" type="file" accept="image/*" required={!editing?.logo} onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; const suggested = await suggestTeamColor(file); const input = document.querySelector<HTMLInputElement>('input[name="color_hex"]'); const picker = document.querySelector<HTMLInputElement>('input[data-team-color-picker]'); if (suggested && input && picker) { input.value = suggested; picker.value = suggested; setWizardRevision((value) => value + 1); } }} />} /></div>
+                <div hidden={teamStep !== 4}><Field label="Team photo (optional)" name="team_photo_file" type="file" children={<input name="team_photo_file" type="file" accept="image/*" />} /></div>
+                <div hidden={teamStep !== 5}><Field label="Team color (HEX)" name="color_hex" defaultValue={editing?.color || teamColors[teams.data.length % 8]} required children={<div className="hex-color-control"><input name="color_hex" defaultValue={editing?.color || teamColors[teams.data.length % 8]} required /><input data-team-color-picker type="color" defaultValue={editing?.color || teamColors[teams.data.length % 8]} aria-label="Choose team color" onChange={(event) => { const input = document.querySelector<HTMLInputElement>('input[name="color_hex"]'); if (input) { input.value = event.target.value; input.dispatchEvent(new Event("input", { bubbles: true })); } }} /></div>} /></div>
+                <div hidden={teamStep !== 6}><Field label="Group (optional)" name="group_id" defaultValue={editing?.group_id} /></div>
+                <div hidden={teamStep !== 7}><Field label="Contact full name" name="contact_person" defaultValue={editing?.contact_person} required /></div>
+                <div hidden={teamStep !== 8}><Field label="Contact email address" name="contact_email" type="email" defaultValue={editing?.contact_email} required /></div>
+                <div hidden={teamStep !== 9}><PhoneField defaultValue={editing?.phone} defaultCode={editing?.phone_country_code || "+32"} required /></div>
+                <div hidden={teamStep !== 10}><Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={0} max={16} defaultValue={editing?.expected_delegation_size || ""} required onChange={(event) => setDelegationSize(Math.min(16, Math.max(0, Number(event.target.value || 0))))} /><p className="wizard-help">Initial rooms required: {delegationSize ? Math.ceil(delegationSize / 2) : "—"}. Room numbers remain empty until the hotel meeting.</p></div>
+                <div hidden={teamStep !== 11}><label className="portal-field wide checkbox-field"><input type="checkbox" name="invoice_requested" value="1" checked={invoiceRequested} onChange={(event) => { setInvoiceRequested(event.target.checked); setWizardRevision((value) => value + 1); }} /><span>I would like to receive an invoice during payment for administration.</span></label></div>
+                <div hidden={teamStep !== 12}><Field label="Billing name / organisation" name="billing_name" defaultValue={editing?.billing_name} required={invoiceRequested} /></div>
+                <div hidden={teamStep !== 13}><Field label="Street and house number" name="billing_address" defaultValue={editing?.billing_address} required={invoiceRequested} /></div>
+                <div hidden={teamStep !== 14}><Field label="Postal code" name="billing_postal_code" defaultValue={editing?.billing_postal_code} required={invoiceRequested} /></div>
+                <div hidden={teamStep !== 15}><Field label="City" name="billing_city" defaultValue={editing?.billing_city} required={invoiceRequested} /></div>
+                <div hidden={teamStep !== 16}><Field label="Country" name="billing_country" defaultValue={editing?.billing_country} required={invoiceRequested} /></div>
+                <div hidden={teamStep !== 17}><Field label="Login email" name="login_email" type="email" required={!editing?.id} /></div>
+                <div hidden={teamStep !== 18}><Field label="Temporary password" name="login_password" type="password" minLength={8} required={!editing?.id} /></div>
+                <div hidden={teamStep !== 19} className="team-wizard-review"><h4>Review and create</h4><p>Review the information before saving this team.</p></div>
+                <div className="wizard-footer"><div className="wizard-actions">{teamStep > 1 && <button type="button" className="btn" onClick={() => setTeamStep((step) => step - 1)}>Back</button>}{teamStep < 19 && <button type="button" className="btn primary" disabled={!stepValid} onClick={() => setTeamStep((step) => step + 1)}>Next</button>}</div>{teamStep === 19 && <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}</div>
               </form>
             </Modal>
           </section>
@@ -7997,8 +7916,7 @@ function TeamOnboardingProgress({
   const fallbackStages = [
     {
       key: "setup",
-      label: "Team setup",
-      done: localSetup,
+      label: "Team setup",      done: localSetup,
       state: localSetup ? "completed" : "current",
     },
     {
