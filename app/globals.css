@@ -8483,3 +8483,21 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .member-editor-dialog .portal-form > div:not(.wizard-progress):not(.wizard-footer):not(.wizard-validation) {
   min-width: 0;
 }
+
+
+/* Goal history must remain readable on dark match-control panels. */
+:root[data-theme="dark"] .goal-history > span {
+  background: #352532 !important;
+  border-color: #a34b7a !important;
+  color: #f8f1f7 !important;
+}
+:root[data-theme="dark"] .goal-history > span strong {
+  color: #fff !important;
+}
+:root[data-theme="dark"] .goal-history > span small {
+  color: #d8c8d5 !important;
+}
+:root[data-theme="dark"] .incident-history span > button {
+  color: #ff9bc8 !important;
+  background: #482638 !important;
+}
