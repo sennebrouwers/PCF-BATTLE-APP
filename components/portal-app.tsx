@@ -1997,8 +1997,7 @@ function OperationsHub({
             <small>Control the active match from one focused workspace</small>
           </div>
           {checks.data?.issues && (
-            <Badge>              {checks.data.ready                ? "Ready"
-                : `${checks.data.issues.length} checks`}
+            <Badge>              {checks.data.ready                ? "Ready"                : `${checks.data.issues.length} checks`}
             </Badge>
           )}
         </div>
@@ -3997,8 +3996,7 @@ export function MatchCard({
                 <Minus />
               </button>              <button
                 disabled={busy}                aria-label="Record home goal"
-                onClick={() => openGoal(match.home_team_id)}
-              >
+                onClick={() => openGoal(match.home_team_id)}              >
                 <Plus />
               </button>
               <small>HOME</small>
@@ -4485,7 +4483,7 @@ function Delegation({
       >
         <form ref={memberFormRef} className="portal-form wizard-form" onInput={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onChange={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
           <div className="wizard-progress wizard-progress-bar" aria-label="Delegation member progress">
-            {["Team","Full name","Date of birth","Member type","Playing role","Shirt number","Linked player","Classification","Photo","Notes & save"].map((label, index) => (
+            {(admin ? ["Team","Full name","Date of birth","Member type","Playing role","Shirt number","Linked player","Classification","Photo","Notes & save"] : ["Full name","Date of birth","Member type","Playing role","Shirt number","Linked player","Classification","Photo","Notes & save"]).map((label, index) => (
               <button type="button" key={label} disabled={index + 1 > memberStep + 1 || (index + 1 === memberStep + 1 && !memberStepValid)} className={memberStep === index + 1 ? "active" : memberStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= memberStep + 1 && (index + 1 !== 1 || admin) && (index + 1 <= memberStep || memberStepValid)) setMemberStep(index + 1); }}>
                 <span>{index + 1}</span>{label}
               </button>
@@ -5997,8 +5995,7 @@ function AdminFinanceSimple({ refresh }: { refresh: number }) {
           title="Record payment"
           open
           onOpenChange={() => setEditing(null)}        >
-          <form className="portal-form" onSubmit={record}>
-            <input type="hidden" name="invoice_id" value={editing.invoice_id} />
+          <form className="portal-form" onSubmit={record}>            <input type="hidden" name="invoice_id" value={editing.invoice_id} />
             <Field
               label="Amount"
               name="amount"
@@ -7997,8 +7994,7 @@ function TeamOnboardingProgress({
         : reviewStatus === "changes_requested"
           ? "Review the requested changes"          : reviewStatus === "awaiting_admin"
             ? "No action required — Registration Review is pending"
-            : reviewStatus === "approved_payment_open"
-              ? "Payment is being prepared"
+            : reviewStatus === "approved_payment_open"              ? "Payment is being prepared"
               : "Review and confirm your tournament information";
   const displayAction = depositOpen
     ? `Pay the deposit of ${fmtMoney(Number(data.payment.deposit))}`
