@@ -130,6 +130,18 @@ async function ensureScheduleSchema() {
   await db().prepare("CREATE TABLE IF NOT EXISTS mvp_votes (id text PRIMARY KEY NOT NULL,tournament_id text NOT NULL,referee_id text NOT NULL,category text NOT NULL,candidate_id text NOT NULL,created_at text NOT NULL,UNIQUE(tournament_id,referee_id,category))").run();
   await db().prepare("CREATE TABLE IF NOT EXISTS mvp_settings (tournament_id text PRIMARY KEY NOT NULL,enabled integer DEFAULT 0 NOT NULL,assistant_coach_eligible integer DEFAULT 1 NOT NULL)").run();
   for (const statement of [
+    "ALTER TABLE preregistrations ADD COLUMN status text DEFAULT 'registered' NOT NULL",
+    "ALTER TABLE preregistrations ADD COLUMN confirmation_sent_at text",
+    "ALTER TABLE preregistrations ADD COLUMN selection_sent_at text",
+    "ALTER TABLE preregistrations ADD COLUMN portal_invite_sent_at text",
+    "ALTER TABLE preregistrations ADD COLUMN selected integer DEFAULT 0 NOT NULL",
+    "ALTER TABLE preregistrations ADD COLUMN registration_confirmation_sent_at text",
+    "ALTER TABLE preregistrations ADD COLUMN selection_email_sent_at text",
+    "ALTER TABLE preregistrations ADD COLUMN portal_invitation_sent_at text",
+    "ALTER TABLE links ADD COLUMN dark_url text",
+    "CREATE INDEX IF NOT EXISTS idx_matches_tournament_schedule ON matches(tournament_id,match_date,start_time)",
+    "CREATE INDEX IF NOT EXISTS idx_matches_tournament_group ON matches(tournament_id,group_id)",
+    "CREATE INDEX IF NOT EXISTS idx_schedule_items_match ON schedule_items(match_id)",
     "ALTER TABLE schedule_items ADD COLUMN court text",
     "ALTER TABLE tournaments ADD COLUMN schedule_start_time text DEFAULT '09:00'",
     "ALTER TABLE tournaments ADD COLUMN schedule_half_duration_minutes integer DEFAULT 15",
