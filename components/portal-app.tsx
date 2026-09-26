@@ -1997,8 +1997,7 @@ function OperationsHub({
             <small>Control the active match from one focused workspace</small>
           </div>
           {checks.data?.issues && (
-            <Badge>              {checks.data.ready
-                ? "Ready"
+            <Badge>              {checks.data.ready                ? "Ready"
                 : `${checks.data.issues.length} checks`}
             </Badge>
           )}
@@ -3997,8 +3996,7 @@ export function MatchCard({
               >
                 <Minus />
               </button>              <button
-                disabled={busy}
-                aria-label="Record home goal"
+                disabled={busy}                aria-label="Record home goal"
                 onClick={() => openGoal(match.home_team_id)}
               >
                 <Plus />
@@ -4279,16 +4277,17 @@ function Delegation({
     if (!form) return;
     const value = (name: string) => String(new FormData(form).get(name) || "").trim();
     let valid = true;
-    if (memberStep === 1 && admin) valid = Boolean(value("team_id"));
-    if (memberStep === 2) valid = Boolean(value("name"));
-    if (memberStep === 3) valid = Boolean(value("dob"));
-    if (memberStep === 4) valid = Boolean(value("role"));
-    if (memberStep === 5 && memberType === "PLAYER") valid = Boolean(value("player_role"));
-    if (memberStep === 6 && memberType === "PLAYER") valid = Boolean(value("number"));
-    if (memberStep === 7 && memberType === "ASSISTANT") valid = Boolean(value("assistant_player_id"));
-    if (memberStep === 8) valid = true;
-    if (memberStep === 9) valid = true;
-    if (memberStep === 10) valid = true;
+    const effectiveStep = admin ? memberStep : memberStep + 1;
+    if (effectiveStep === 1 && admin) valid = Boolean(value("team_id"));
+    if (effectiveStep === 2) valid = Boolean(value("name"));
+    if (effectiveStep === 3) valid = Boolean(value("dob"));
+    if (effectiveStep === 4) valid = Boolean(value("role"));
+    if (effectiveStep === 5 && memberType === "PLAYER") valid = Boolean(value("player_role"));
+    if (effectiveStep === 6 && memberType === "PLAYER") valid = Boolean(value("number"));
+    if (effectiveStep === 7 && memberType === "ASSISTANT") valid = Boolean(value("assistant_player_id"));
+    if (effectiveStep === 8) valid = true;
+    if (effectiveStep === 9) valid = true;
+    if (effectiveStep === 10) valid = true;
     setMemberStepValid(valid);
   }
   useEffect(() => { readMemberStepValidity(); }, [memberStep, memberType, editing, memberRevision]);
@@ -4352,7 +4351,7 @@ function Delegation({
           className="btn primary"
           onClick={() => {
             setMemberType("PLAYER");
-            setMemberStep(admin ? 1 : 2);
+            setMemberStep(1);
             setEditing(null);
           }}
         >
@@ -4419,7 +4418,7 @@ function Delegation({
                           : "COACH"
                       : "STAFF";
                   setMemberType(type);
-                  setMemberStep(admin ? 1 : 2);
+                  setMemberStep(1);
                   setEditing(m);
                 }}
               >
@@ -5997,8 +5996,7 @@ function AdminFinanceSimple({ refresh }: { refresh: number }) {
         <Modal
           title="Record payment"
           open
-          onOpenChange={() => setEditing(null)}
-        >
+          onOpenChange={() => setEditing(null)}        >
           <form className="portal-form" onSubmit={record}>
             <input type="hidden" name="invoice_id" value={editing.invoice_id} />
             <Field
@@ -7997,8 +7995,7 @@ function TeamOnboardingProgress({
       : !localRooms
         ? "Assign everyone to a room"
         : reviewStatus === "changes_requested"
-          ? "Review the requested changes"
-          : reviewStatus === "awaiting_admin"
+          ? "Review the requested changes"          : reviewStatus === "awaiting_admin"
             ? "No action required — Registration Review is pending"
             : reviewStatus === "approved_payment_open"
               ? "Payment is being prepared"
