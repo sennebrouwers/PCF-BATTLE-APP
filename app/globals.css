@@ -8278,3 +8278,38 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 :root:not([data-theme="dark"]) .contact-grid article.whatsapp-only > div:nth-child(2) > a {
   color: #15803d !important;
 }
+
+
+/* Final contact icon sizing and light-mode WhatsApp contrast. */
+.contact-grid article .contact-icon {
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 15px !important;
+}
+.contact-grid article .contact-icon svg {
+  width: 28px !important;
+  height: 28px !important;
+}
+:root:not([data-theme="dark"]) .contact-grid article.whatsapp-only .contact-icon {
+  background: #dcfce7 !important;
+  color: #15803d !important;
+  border-color: #86efac !important;
+  box-shadow: 0 8px 18px rgba(22,163,74,.18) !important;
+}
+:root:not([data-theme="dark"]) .contact-grid article.whatsapp-only .contact-icon svg,
+:root:not([data-theme="dark"]) .contact-grid article.whatsapp-only .whatsapp-icon {
+  color: #15803d !important;
+  stroke: #15803d !important;
+  opacity: 1 !important;
+}
+@media (max-width: 760px) {
+  .contact-grid article .contact-icon {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 13px !important;
+  }
+  .contact-grid article .contact-icon svg {
+    width: 24px !important;
+    height: 24px !important;
+  }
+}
