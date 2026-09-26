@@ -2,7 +2,7 @@ import { get, put } from "@vercel/blob";
 
 export async function readBlob(pathname: string) {
   try {
-    const result = await get(pathname, { access: "public", useCache: true });
+    const result = await get(pathname, { access: "private", useCache: true });
     if (!result || result.statusCode !== 200 || !result.stream) return null;
     return {
       body: result.stream,
@@ -22,7 +22,7 @@ export async function writeBlob(
   owner: string,
 ) {
   return put(pathname, body, {
-    access: "public",
+    access: "private",
     contentType,
     addRandomSuffix: false,
     multipart: true,
