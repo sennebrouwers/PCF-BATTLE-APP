@@ -8007,3 +8007,130 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .contact-grid article.whatsapp-only .whatsapp-link .whatsapp-icon {
   color: #fff !important;
 }
+
+
+/* Contact cards: dashboard-style treatment inspired by the supplied WhatsApp reference. */
+.contact-grid article {
+  position: relative;
+  isolation: isolate;
+  min-height: 238px;
+  overflow: hidden;
+  grid-template-columns: 74px minmax(0, 1fr) auto;
+  padding: 28px 28px 22px;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 92% 35%, rgba(236,72,153,.22), transparent 35%),
+    linear-gradient(120deg, #17131d 0%, #211a27 58%, #321d32 100%) !important;
+  border-color: #514457 !important;
+}
+.contact-grid article::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 52%;
+  height: 170%;
+  right: -12%;
+  top: -35%;
+  border-radius: 48% 0 0 48%;
+  background: linear-gradient(135deg, rgba(236,72,153,.22), rgba(236,72,153,.04));
+  transform: rotate(18deg);
+  pointer-events: none;
+}
+.contact-grid article .contact-icon {
+  width: 74px;
+  height: 74px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(145deg, #ec4899, #9d174d) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.25);
+  box-shadow: 0 10px 24px rgba(236,72,153,.25);
+}
+.contact-grid article .contact-icon svg {
+  width: 38px;
+  height: 38px;
+}
+.contact-grid article > div:nth-child(2) {
+  align-self: center;
+  min-width: 0;
+}
+.contact-grid article > div:nth-child(2) small {
+  color: #f472b6 !important;
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.contact-grid article h4 {
+  margin: 7px 0 9px;
+  color: #fff !important;
+  font-size: clamp(1.2rem, 2vw, 1.7rem);
+}
+.contact-grid article > div:nth-child(2) > a {
+  color: #f9a8d4 !important;
+  font-weight: 750;
+}
+.contact-grid article .row-actions {
+  align-self: end;
+  z-index: 2;
+  display: flex;
+  gap: 10px;
+}
+.contact-grid article .row-actions button {
+  min-height: 42px;
+  padding: 9px 18px;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 12px;
+  background: rgba(255,255,255,.05);
+  color: #fff;
+  font-weight: 800;
+}
+.contact-grid article .row-actions .danger-link {
+  color: #f472b6;
+  border-color: rgba(236,72,153,.35);
+}
+.contact-grid article.whatsapp-only {
+  background:
+    radial-gradient(circle at 92% 35%, rgba(34,197,94,.3), transparent 35%),
+    linear-gradient(120deg, #11171a 0%, #12231b 58%, #0f4b2c 100%) !important;
+  border-color: #238b57 !important;
+}
+.contact-grid article.whatsapp-only::after {
+  background: linear-gradient(135deg, rgba(34,197,94,.3), rgba(34,197,94,.04));
+}
+.contact-grid article.whatsapp-only .contact-icon {
+  background: linear-gradient(145deg, #22c55e, #15803d) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 24px rgba(34,197,94,.3);
+}
+.contact-grid article.whatsapp-only > div:nth-child(2) small {
+  color: #4ade80 !important;
+}
+.contact-grid article.whatsapp-only > div:nth-child(2) > a,
+.contact-grid article.whatsapp-only .whatsapp-link {
+  color: #86efac !important;
+}
+.contact-grid article.whatsapp-only .row-actions .danger-link {
+  color: #86efac;
+  border-color: rgba(34,197,94,.4);
+}
+@media (max-width: 760px) {
+  .contact-grid article {
+    grid-template-columns: 58px minmax(0, 1fr);
+    padding: 20px;
+  }
+  .contact-grid article .contact-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 15px;
+  }
+  .contact-grid article .contact-icon svg {
+    width: 30px;
+    height: 30px;
+  }
+  .contact-grid article .row-actions {
+    grid-column: 1 / -1;
+    margin-top: 12px;
+  }
+}
