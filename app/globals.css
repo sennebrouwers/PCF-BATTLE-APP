@@ -8397,3 +8397,89 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     flex: 1 1 120px;
   }
 }
+
+
+/* Unified upload control for team, delegation, media and sponsor forms. */
+.portal-field input[type="file"] {
+  width: 100% !important;
+  min-height: 52px !important;
+  padding: 7px !important;
+  border: 1px dashed var(--line) !important;
+  border-radius: 12px !important;
+  background: var(--surface-2) !important;
+  color: var(--muted) !important;
+  cursor: pointer;
+}
+.portal-field input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid var(--pink);
+  border-radius: 9px;
+  background: var(--pink);
+  color: #fff;
+  font: inherit;
+  font-size: .9rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+.portal-field input[type="file"]::file-selector-button:hover {
+  background: #db2777;
+  transform: translateY(-1px);
+}
+.portal-field input[type="file"]:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.file-picker-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.file-picker-control input[type="file"] { flex: 1 1 auto; min-width: 0; }
+.file-picker-control .icon-only {
+  flex: 0 0 42px;
+  width: 42px;
+  min-height: 42px;
+  padding: 8px;
+}
+:root[data-theme="dark"] .portal-field input[type="file"] {
+  background: #211d24 !important;
+  border-color: #5a4e61 !important;
+  color: #d8cddd !important;
+}
+:root[data-theme="dark"] .portal-field input[type="file"]::file-selector-button {
+  background: #ec4899;
+  border-color: #f472b6;
+}
+@media (max-width: 760px) {
+  .portal-field input[type="file"] {
+    min-height: 48px !important;
+    font-size: .85rem;
+  }
+  .portal-field input[type="file"]::file-selector-button {
+    margin-right: 8px;
+    padding: 7px 10px;
+    font-size: .8rem;
+  }
+  .file-picker-control { align-items: stretch; }
+  .file-picker-control .icon-only { flex-basis: 38px; width: 38px; min-height: 38px; }
+}
+
+/* Keep both wizard shells stable and spacious while retaining mobile behavior. */
+.team-editor-dialog,
+.member-editor-dialog {
+  width: min(900px, calc(100vw - 32px)) !important;
+  max-width: calc(100vw - 32px) !important;
+}
+.team-editor-dialog .portal-form,
+.member-editor-dialog .portal-form {
+  min-width: 0;
+  width: 100%;
+}
+.team-wizard-step,
+.member-editor-dialog .portal-form > div:not(.wizard-progress):not(.wizard-footer):not(.wizard-validation) {
+  min-width: 0;
+}
