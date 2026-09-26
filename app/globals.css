@@ -7973,3 +7973,37 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     font-size:12px !important;
   }
 }
+
+
+/* WhatsApp-only organization contact card: keep the green treatment above later theme overrides. */
+.contact-grid article.whatsapp-only,
+:root[data-theme="dark"] .contact-grid article.whatsapp-only {
+  background: linear-gradient(135deg, #22c55e 0%, #15803d 100%) !important;
+  background-color: #16a34a !important;
+  border-color: #4ade80 !important;
+  color: #fff !important;
+  box-shadow: 0 14px 30px rgba(22, 163, 74, .28) !important;
+}
+.contact-grid article.whatsapp-only .contact-icon,
+:root[data-theme="dark"] .contact-grid article.whatsapp-only .contact-icon {
+  display: grid;
+  place-items: center;
+  background: #fff !important;
+  color: #15803d !important;
+  border-color: #bbf7d0 !important;
+}
+.contact-grid article.whatsapp-only h4,
+.contact-grid article.whatsapp-only small,
+.contact-grid article.whatsapp-only a,
+:root[data-theme="dark"] .contact-grid article.whatsapp-only h4,
+:root[data-theme="dark"] .contact-grid article.whatsapp-only small,
+:root[data-theme="dark"] .contact-grid article.whatsapp-only a {
+  color: #fff !important;
+}
+.contact-grid article.whatsapp-only .whatsapp-link {
+  font-weight: 800;
+  text-decoration-color: rgba(255,255,255,.7);
+}
+.contact-grid article.whatsapp-only .whatsapp-link .whatsapp-icon {
+  color: #fff !important;
+}
