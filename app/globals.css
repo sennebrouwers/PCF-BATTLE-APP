@@ -8358,3 +8358,42 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     bottom: -10% !important;
   }
 }
+
+
+/* Contact cards: prevent clipping when the admin workspace becomes narrow. */
+.contact-grid {
+  min-width: 0 !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+.contact-grid article {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  grid-template-columns: 58px minmax(0, 1fr) auto !important;
+}
+.contact-grid article > div,
+.contact-grid article h4,
+.contact-grid article a {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1400px) {
+  .contact-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+@media (max-width: 760px) {
+  .contact-grid article {
+    grid-template-columns: 48px minmax(0, 1fr) !important;
+    padding: 18px !important;
+  }
+  .contact-grid article .row-actions {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    flex-wrap: wrap;
+  }
+  .contact-grid article .row-actions button {
+    flex: 1 1 120px;
+  }
+}
