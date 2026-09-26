@@ -9111,3 +9111,31 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .team-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer)[hidden]{display:none!important}
 .member-editor-dialog .wizard-form>.portal-field,
 .team-editor-dialog .wizard-form>.portal-field{height:auto!important;min-height:0!important}
+
+
+/* Keep the form content high; footer no longer participates in vertical spacing */
+.member-editor-dialog .wizard-form,
+.team-editor-dialog .wizard-form{
+  position:relative!important;
+  justify-content:flex-start!important;
+  padding-bottom:96px!important;
+}
+.member-editor-dialog .wizard-footer,
+.team-editor-dialog .wizard-footer{
+  position:absolute!important;
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  width:100%!important;
+  margin:0!important;
+  z-index:2!important;
+}
+.member-editor-dialog .wizard-question,
+.team-editor-dialog .wizard-question{
+  margin-top:32px!important;
+  margin-bottom:14px!important;
+}
+.member-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer):not([hidden]),
+.team-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer):not([hidden]){
+  align-self:center!important;
+}
