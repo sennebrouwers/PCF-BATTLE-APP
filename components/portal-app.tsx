@@ -4297,6 +4297,13 @@ function Delegation({
     saveLock.current = true;
     setBusy(true);
     const b: any = Object.fromEntries(new FormData(e.currentTarget));
+    const portraitFile = b.photo_file;
+    delete b.photo_file;
+    if (portraitFile instanceof File && portraitFile.size) {
+      b.photo = (await uploadFile(portraitFile)).url;
+    } else if (editing?.photo) {
+      b.photo = editing.photo;
+    }
     if (b.number) b.number = Number(b.number);
     else b.number = null;
     try {
@@ -4556,17 +4563,14 @@ function Delegation({
             required
           />
           </div>
-          <div hidden={memberStep !== 3}><Field
+          <div hidden={memberStep !== 3}>
+          <Field label="Portrait photo (optional)" name="photo_file" type="file" />
+          <Field
             label="Dietary requirements"
             name="dietary"
             defaultValue={editing?.dietary}
           />
           <Field label="Notes" name="notes" defaultValue={editing?.notes} />
-          <Field
-            label="Emergency contact"
-            name="emergency_contact"
-            defaultValue={editing?.emergency_contact}
-          />
           <VisibilityField
             label="Privacy consent"
             name="privacy_consent"
