@@ -8704,10 +8704,3 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .member-editor-dialog .wizard-form,.team-editor-dialog .wizard-form{height:clamp(620px,calc(100vh - 230px),820px);min-height:0}
 .member-editor-dialog .wizard-footer,.team-editor-dialog .wizard-footer{margin-top:auto}
 @media(max-width:700px){.member-editor-dialog .wizard-form,.team-editor-dialog .wizard-form{height:clamp(500px,calc(100vh - 180px),680px)}.wizard-progress-line{grid-template-columns:1fr;gap:8px}}
-
-.wizard-progress-line{grid-template-columns:1fr;gap:8px}
-.wizard-progress-copy{display:flex;justify-content:space-between;align-items:center;gap:16px}
-.wizard-progress-copy strong{color:var(--text,#f7f1f8);font-size:1rem}
-.wizard-progress-copy span{color:var(--muted,#aaa0b3);font-size:.82rem}
-.member-editor-dialog .wizard-form,.team-editor-dialog .wizard-form{height:min(620px,calc(100vh - 220px));min-height:520px}
-@media(max-width:700px){.member-editor-dialog .wizard-form,.team-editor-dialog .wizard-form{height:min(560px,calc(100vh - 150px));min-height:480px}}
