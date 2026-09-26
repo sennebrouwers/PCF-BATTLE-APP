@@ -8313,3 +8313,18 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     height: 24px !important;
   }
 }
+
+
+/* Balance the artwork scale: the WhatsApp illustration has less transparent padding than the pink artwork. */
+.contact-grid article.whatsapp-only .contact-card-art {
+  width: 34% !important;
+  right: 4% !important;
+  bottom: -6% !important;
+}
+@media (max-width: 760px) {
+  .contact-grid article.whatsapp-only .contact-card-art {
+    width: 40% !important;
+    right: -2% !important;
+    bottom: -6% !important;
+  }
+}
