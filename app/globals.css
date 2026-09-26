@@ -8734,3 +8734,16 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .member-editor-dialog .wizard-progress button.active,.team-editor-dialog .wizard-progress button.active{background:var(--pink,#ef3f98)!important;color:#fff!important}
 .member-editor-dialog .wizard-progress button.complete,.team-editor-dialog .wizard-progress button.complete{color:var(--pink,#ef3f98)!important}
 @media(max-width:700px){.member-editor-dialog .wizard-progress,.team-editor-dialog .wizard-progress{gap:2px!important}.member-editor-dialog .wizard-progress button,.team-editor-dialog .wizard-progress button{padding:0 9px!important;font-size:.8rem!important}}
+
+
+/* New wizard UI from scratch */
+.wizard-topbar{display:flex!important;flex-direction:row!important;align-items:center!important;gap:8px!important;width:100%!important;min-height:54px!important;overflow-x:auto!important;overflow-y:hidden!important;padding:0 0 16px!important;margin:0 0 28px!important;border:0!important;border-bottom:1px solid var(--border,#3b3443)!important;background:transparent!important;scrollbar-width:none!important}
+.wizard-topbar::-webkit-scrollbar{display:none}
+.wizard-topbar button{all:unset!important;box-sizing:border-box!important;display:flex!important;align-items:center!important;gap:8px!important;flex:0 0 auto!important;min-height:38px!important;padding:0 14px!important;border-radius:999px!important;color:var(--muted,#aaa0b3)!important;font:inherit!important;font-size:.82rem!important;white-space:nowrap!important;cursor:pointer!important}
+.wizard-topbar button span{all:unset!important;display:grid!important;place-items:center!important;width:28px!important;height:28px!important;border:1px solid currentColor!important;border-radius:50%!important}
+.wizard-topbar button.active{background:var(--pink,#ef3f98)!important;color:#fff!important}
+.wizard-topbar button.complete{color:var(--pink,#ef3f98)!important}
+.wizard-topbar button:disabled{opacity:.42!important;cursor:not-allowed!important}
+.member-editor-dialog .wizard-form,.team-editor-dialog .wizard-form{display:flex!important;flex-direction:column!important;width:100%!important;padding-left:0!important;height:min(650px,calc(100vh - 170px))!important;min-height:0!important;overflow:auto!important}
+.member-editor-dialog .wizard-footer,.team-editor-dialog .wizard-footer{margin-top:auto!important;position:sticky!important;bottom:0!important;background:var(--background,#28232d)!important;padding-top:20px!important;padding-bottom:4px!important;z-index:3!important}
+@media(max-width:700px){.member-editor-dialog .wizard-form,.team-editor-dialog .wizard-form{height:calc(100vh - 145px)!important;min-height:460px!important}.wizard-topbar button{font-size:.75rem!important;padding-inline:10px!important}}
