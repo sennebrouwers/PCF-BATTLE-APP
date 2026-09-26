@@ -8328,3 +8328,18 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     bottom: -6% !important;
   }
 }
+
+
+/* Fine-tune WhatsApp artwork scale after visual comparison. */
+.contact-grid article.whatsapp-only .contact-card-art {
+  width: 39% !important;
+  right: 1% !important;
+  bottom: -8% !important;
+}
+@media (max-width: 760px) {
+  .contact-grid article.whatsapp-only .contact-card-art {
+    width: 45% !important;
+    right: -7% !important;
+    bottom: -8% !important;
+  }
+}
