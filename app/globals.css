@@ -9335,3 +9335,38 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   margin-right:auto!important;
   transform:none!important;
 }
+
+
+/* Final horizontal reset: remove legacy wizard columns/offsets */
+.member-editor-dialog .wizard-form,
+.team-editor-dialog .wizard-form{
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-column:1 / -1!important;
+  justify-self:stretch!important;
+  margin-inline:0!important;
+}
+.member-editor-dialog .wizard-subtitle,
+.team-editor-dialog .wizard-subtitle,
+.member-editor-dialog .wizard-topbar,
+.team-editor-dialog .wizard-topbar,
+.member-editor-dialog .wizard-content,
+.team-editor-dialog .wizard-content,
+.member-editor-dialog .wizard-footer,
+.team-editor-dialog .wizard-footer{
+  grid-column:1 / -1!important;
+  justify-self:stretch!important;
+  inset-inline-start:auto!important;
+  left:auto!important;
+  right:auto!important;
+  transform:none!important;
+}
+.member-editor-dialog .wizard-content,
+.team-editor-dialog .wizard-content{
+  margin-inline:0!important;
+  width:100%!important;
+  max-width:none!important;
+}
+.member-editor-dialog .wizard-content > *,
+.team-editor-dialog .wizard-content > *{
+  margin-inline:auto!important;
+}
