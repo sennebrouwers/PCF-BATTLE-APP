@@ -1997,8 +1997,7 @@ function OperationsHub({
             <small>Control the active match from one focused workspace</small>
           </div>
           {checks.data?.issues && (
-            <Badge>              {checks.data.ready                ? "Ready"                : `${checks.data.issues.length} checks`}
-            </Badge>
+            <Badge>              {checks.data.ready                ? "Ready"                : `${checks.data.issues.length} checks`}            </Badge>
           )}
         </div>
         {live ? (
@@ -3997,8 +3996,7 @@ export function MatchCard({
               </button>              <button
                 disabled={busy}                aria-label="Record home goal"
                 onClick={() => openGoal(match.home_team_id)}              >
-                <Plus />
-              </button>
+                <Plus />              </button>
               <small>HOME</small>
               <button
                 disabled={busy || match.away_score < 1}
@@ -4274,18 +4272,15 @@ function Delegation({
     const form = memberFormRef.current;
     if (!form) return;
     const value = (name: string) => String(new FormData(form).get(name) || "").trim();
+    const effectiveStep = admin ? memberStep : memberStep;
     let valid = true;
-    const effectiveStep = admin ? memberStep : memberStep + 1;
-    if (effectiveStep === 1 && admin) valid = Boolean(value("team_id"));
-    if (effectiveStep === 2) valid = Boolean(value("name"));
-    if (effectiveStep === 3) valid = Boolean(value("dob"));
-    if (effectiveStep === 4) valid = Boolean(value("role"));
-    if (effectiveStep === 5 && memberType === "PLAYER") valid = Boolean(value("player_role"));
-    if (effectiveStep === 6 && memberType === "PLAYER") valid = Boolean(value("number"));
-    if (effectiveStep === 7 && memberType === "ASSISTANT") valid = Boolean(value("assistant_player_id"));
-    if (effectiveStep === 8) valid = true;
-    if (effectiveStep === 9) valid = true;
-    if (effectiveStep === 10) valid = true;
+    if (effectiveStep === 1) valid = Boolean(value("role"));
+    if (effectiveStep === 2 && admin) valid = Boolean(value("team_id"));
+    if (effectiveStep === (admin ? 3 : 2)) valid = Boolean(value("name"));
+    if (effectiveStep === (admin ? 4 : 3)) valid = Boolean(value("dob"));
+    if (effectiveStep === (admin ? 5 : 4) && memberType === "PLAYER") valid = Boolean(value("player_role"));
+    if (effectiveStep === (admin ? 6 : 5) && memberType === "PLAYER") valid = Boolean(value("number"));
+    if (effectiveStep === (admin ? 7 : 6) && memberType === "ASSISTANT") valid = Boolean(value("assistant_player_id"));
     setMemberStepValid(valid);
   }
   useEffect(() => { readMemberStepValidity(); }, [memberStep, memberType, editing, memberRevision]);
@@ -4483,17 +4478,17 @@ function Delegation({
       >
         <form ref={memberFormRef} className="portal-form wizard-form" onInput={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onChange={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
           <div className="wizard-progress wizard-progress-bar" aria-label="Delegation member progress">
-            {(admin ? ["Team","Full name","Date of birth","Member type","Playing role","Shirt number","Linked player","Classification","Photo","Notes & save"] : ["Full name","Date of birth","Member type","Playing role","Shirt number","Linked player","Classification","Photo","Notes & save"]).map((label, index) => (
+            {(admin ? ["Member type","Team","Full name","Date of birth","Playing role","Shirt number","Linked player","Classification","Photo","Notes & save"] : ["Member type","Full name","Date of birth","Playing role","Shirt number","Linked player","Classification","Photo","Notes & save"]).map((label, index) => (
               <button type="button" key={label} disabled={index + 1 > memberStep + 1 || (index + 1 === memberStep + 1 && !memberStepValid)} className={memberStep === index + 1 ? "active" : memberStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= memberStep + 1 && (index + 1 !== 1 || admin) && (index + 1 <= memberStep || memberStepValid)) setMemberStep(index + 1); }}>
                 <span>{index + 1}</span>{label}
               </button>
             ))}
           </div>
           {!memberStepValid && <p className="wizard-validation" role="alert">Complete this required field to continue.</p>}
-          {admin && <div hidden={memberStep !== 1}><Field label="Team" name="team_id" children={<select name="team_id" defaultValue={editing?.team_id || (team === "all" ? "" : team)} required><option value="">Choose team</option>{teams.data.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select>} /></div>}
-          <div hidden={memberStep !== (admin ? 2 : 1)}><Field label="Full name" name="name" defaultValue={editing?.name} required /></div>
-          <div hidden={memberStep !== (admin ? 3 : 2)}><Field label="Date of birth" name="dob" type="date" defaultValue={editing?.dob} required /></div>
-          <div hidden={memberStep !== (admin ? 4 : 3)}>
+          {admin && <div hidden={memberStep !== 2}><Field label="Team" name="team_id" children={<select name="team_id" defaultValue={editing?.team_id || (team === "all" ? "" : team)} required><option value="">Choose team</option>{teams.data.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select>} /></div>}
+          <div hidden={memberStep !== (admin ? 3 : 2)}><Field label="Full name" name="name" defaultValue={editing?.name} required /></div>
+          <div hidden={memberStep !== (admin ? 4 : 3)}><Field label="Date of birth" name="dob" type="date" defaultValue={editing?.dob} required /></div>
+          <div hidden={memberStep !== 1}>
             <label className="portal-field"><span>Member type<i className="required-mark" aria-hidden="true">*</i></span><select name="role" value={memberType} required onChange={(event) => { const next = event.target.value as typeof memberType; setMemberType(next); setMemberStepValid(false); setMemberRevision((value) => value + 1); }}><option value="PLAYER">Player</option><option value="COACH">Coach</option><option value="STAFF">Staff</option><option value="TEAM_MANAGER">Team Manager</option><option value="ASSISTANT">Assistant</option><option value="REFEREE">Referee</option></select></label>
           </div>
           <input type="hidden" name="member_type" value={memberType} />
@@ -5997,8 +5992,7 @@ function AdminFinanceSimple({ refresh }: { refresh: number }) {
           onOpenChange={() => setEditing(null)}        >
           <form className="portal-form" onSubmit={record}>            <input type="hidden" name="invoice_id" value={editing.invoice_id} />
             <Field
-              label="Amount"
-              name="amount"
+              label="Amount"              name="amount"
               type="number"
               defaultValue={editing.outstanding}
               required
@@ -7997,8 +7991,7 @@ function TeamOnboardingProgress({
             : reviewStatus === "approved_payment_open"              ? "Payment is being prepared"
               : "Review and confirm your tournament information";
   const displayAction = depositOpen
-    ? `Pay the deposit of ${fmtMoney(Number(data.payment.deposit))}`
-    : !current || (current.key === "setup" && !setupStage?.done)
+    ? `Pay the deposit of ${fmtMoney(Number(data.payment.deposit))}`    : !current || (current.key === "setup" && !setupStage?.done)
       ? localAction
       : data.action || localAction;
   const actionPage = depositOpen
