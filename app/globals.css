@@ -8776,3 +8776,275 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .member-editor-dialog .wizard-form>div[hidden]{display:none!important}
 .member-editor-dialog .wizard-form>.portal-field{max-width:720px!important;margin-left:auto!important;margin-right:auto!important}
 .member-editor-dialog .wizard-footer{border-top:1px solid var(--border,#3b3443)!important;padding-top:20px!important}
+
+
+/* Final reference-style wizard layout */
+.member-editor-dialog,
+.team-editor-dialog {
+  width: min(920px, calc(100vw - 32px)) !important;
+  max-width: 920px !important;
+  max-height: min(820px, calc(100vh - 32px)) !important;
+  margin: auto !important;
+  border: 1px solid var(--border, #403746) !important;
+  border-radius: 24px !important;
+  background: var(--surface, #2a2530) !important;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, .48) !important;
+  overflow: hidden !important;
+}
+
+.member-editor-dialog .modal-header,
+.team-editor-dialog .modal-header {
+  padding: 28px 34px 0 !important;
+  border: 0 !important;
+}
+
+.member-editor-dialog .modal-header h2,
+.team-editor-dialog .modal-header h2 {
+  margin: 0 !important;
+  font-size: clamp(1.45rem, 2vw, 1.9rem) !important;
+  letter-spacing: -.02em !important;
+}
+
+.member-editor-dialog .modal-body,
+.team-editor-dialog .modal-body {
+  padding: 0 34px 28px !important;
+}
+
+.member-editor-dialog .wizard-form,
+.team-editor-dialog .wizard-form {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  height: min(690px, calc(100vh - 150px)) !important;
+  min-height: 520px !important;
+  max-height: none !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  gap: 0 !important;
+}
+
+.member-editor-dialog .wizard-topbar,
+.team-editor-dialog .wizard-topbar {
+  position: relative !important;
+  flex: 0 0 auto !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 0 !important;
+  width: 100% !important;
+  min-height: 82px !important;
+  margin: 20px 0 0 !important;
+  padding: 0 0 22px !important;
+  overflow-x: auto !important;
+  border-bottom: 1px solid var(--border, #403746) !important;
+  scrollbar-width: none !important;
+}
+
+.member-editor-dialog .wizard-topbar::-webkit-scrollbar,
+.team-editor-dialog .wizard-topbar::-webkit-scrollbar {
+  display: none !important;
+}
+
+.member-editor-dialog .wizard-topbar button,
+.team-editor-dialog .wizard-topbar button {
+  position: relative !important;
+  display: flex !important;
+  flex: 1 0 0 !important;
+  min-width: 112px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 4px 12px 16px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--muted, #a9a0b0) !important;
+  font-size: .8rem !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+}
+
+.member-editor-dialog .wizard-topbar button::after,
+.team-editor-dialog .wizard-topbar button::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: -1px !important;
+  height: 3px !important;
+  background: transparent !important;
+}
+
+.member-editor-dialog .wizard-topbar button span,
+.team-editor-dialog .wizard-topbar button span {
+  display: grid !important;
+  place-items: center !important;
+  width: 28px !important;
+  height: 28px !important;
+  flex: 0 0 28px !important;
+  border: 1px solid currentColor !important;
+  border-radius: 50% !important;
+  font-size: .75rem !important;
+}
+
+.member-editor-dialog .wizard-topbar button.active,
+.team-editor-dialog .wizard-topbar button.active {
+  background: transparent !important;
+  color: var(--pink, #ff2992) !important;
+}
+
+.member-editor-dialog .wizard-topbar button.active::after,
+.team-editor-dialog .wizard-topbar button.active::after {
+  background: var(--pink, #ff2992) !important;
+}
+
+.member-editor-dialog .wizard-topbar button.complete,
+.team-editor-dialog .wizard-topbar button.complete {
+  color: #36c98f !important;
+}
+
+.member-editor-dialog .wizard-topbar button.complete span,
+.team-editor-dialog .wizard-topbar button.complete span {
+  border-color: #36c98f !important;
+  background: #36c98f !important;
+  color: #17131a !important;
+}
+
+.member-editor-dialog .wizard-subtitle,
+.team-editor-dialog .wizard-subtitle {
+  flex: 0 0 auto !important;
+  margin: 20px 0 0 !important;
+  color: var(--muted, #a9a0b0) !important;
+  text-align: center !important;
+}
+
+.member-editor-dialog .wizard-question,
+.team-editor-dialog .wizard-question {
+  flex: 0 0 auto !important;
+  width: min(620px, 100%) !important;
+  margin: 30px auto 22px !important;
+  text-align: center !important;
+}
+
+.member-editor-dialog .wizard-question-icon,
+.team-editor-dialog .wizard-question-icon {
+  display: grid !important;
+  place-items: center !important;
+  width: 64px !important;
+  height: 64px !important;
+  margin: 0 auto 16px !important;
+  border-radius: 50% !important;
+  background: color-mix(in srgb, var(--pink, #ff2992) 14%, transparent) !important;
+  color: var(--pink, #ff2992) !important;
+}
+
+.member-editor-dialog .wizard-question h3,
+.team-editor-dialog .wizard-question h3 {
+  margin: 0 !important;
+  color: var(--text, #f7f1f8) !important;
+  font-size: clamp(1.25rem, 2vw, 1.55rem) !important;
+}
+
+.member-editor-dialog .wizard-question p,
+.team-editor-dialog .wizard-question p {
+  margin: 8px 0 0 !important;
+  color: var(--muted, #a9a0b0) !important;
+}
+
+.member-editor-dialog .wizard-form > div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer),
+.team-editor-dialog .wizard-form > div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer) {
+  width: min(620px, 100%) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.member-editor-dialog .wizard-form > div[hidden],
+.team-editor-dialog .wizard-form > div[hidden] {
+  display: none !important;
+}
+
+.member-editor-dialog .wizard-form > .portal-field,
+.team-editor-dialog .wizard-form > .portal-field {
+  width: min(620px, 100%) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.member-editor-dialog .wizard-validation,
+.team-editor-dialog .wizard-validation {
+  flex: 0 0 24px !important;
+  width: min(620px, 100%) !important;
+  min-height: 24px !important;
+  margin: 0 auto !important;
+  color: #ff8ca9 !important;
+  text-align: center !important;
+}
+
+.member-editor-dialog .wizard-footer,
+.team-editor-dialog .wizard-footer {
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  min-height: 76px !important;
+  margin-top: auto !important;
+  padding: 20px 0 0 !important;
+  border-top: 1px solid var(--border, #403746) !important;
+  background: var(--surface, #2a2530) !important;
+}
+
+.member-editor-dialog .wizard-actions,
+.team-editor-dialog .wizard-actions {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+}
+
+.member-editor-dialog .wizard-actions .btn,
+.team-editor-dialog .wizard-actions .btn {
+  min-width: 112px !important;
+}
+
+@media (max-width: 700px) {
+  .member-editor-dialog,
+  .team-editor-dialog {
+    width: calc(100vw - 16px) !important;
+    max-height: calc(100vh - 16px) !important;
+    border-radius: 18px !important;
+  }
+
+  .member-editor-dialog .modal-header,
+  .team-editor-dialog .modal-header {
+    padding: 22px 18px 0 !important;
+  }
+
+  .member-editor-dialog .modal-body,
+  .team-editor-dialog .modal-body {
+    padding: 0 18px 18px !important;
+  }
+
+  .member-editor-dialog .wizard-form,
+  .team-editor-dialog .wizard-form {
+    min-height: 480px !important;
+    height: calc(100vh - 130px) !important;
+  }
+
+  .member-editor-dialog .wizard-topbar,
+  .team-editor-dialog .wizard-topbar {
+    min-height: 70px !important;
+    margin-top: 14px !important;
+  }
+
+  .member-editor-dialog .wizard-topbar button,
+  .team-editor-dialog .wizard-topbar button {
+    flex: 0 0 auto !important;
+    min-width: 118px !important;
+    font-size: .75rem !important;
+  }
+
+  .member-editor-dialog .wizard-question,
+  .team-editor-dialog .wizard-question {
+    margin-top: 24px !important;
+  }
+}
