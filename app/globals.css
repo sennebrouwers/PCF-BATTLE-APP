@@ -8226,3 +8226,55 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .contact-grid .contact-detail-line a {
   display: inline-flex !important;
 }
+
+
+/* Light-mode contact cards. */
+:root:not([data-theme="dark"]) .contact-grid article {
+  background:
+    radial-gradient(circle at 94% 34%, rgba(236,72,153,.12), transparent 34%),
+    #fff !important;
+  border-color: #ead7e4 !important;
+  color: #241c28 !important;
+  box-shadow: 0 10px 28px rgba(54, 25, 48, .1) !important;
+}
+:root:not([data-theme="dark"]) .contact-grid article::after {
+  background: linear-gradient(135deg, rgba(236,72,153,.12), rgba(236,72,153,.02));
+}
+:root:not([data-theme="dark"]) .contact-grid article h4 {
+  color: #241c28 !important;
+}
+:root:not([data-theme="dark"]) .contact-grid article > div:nth-child(2) > a {
+  color: #c02678 !important;
+}
+:root:not([data-theme="dark"]) .contact-grid article > div:nth-child(2) small {
+  color: #c02678 !important;
+}
+:root:not([data-theme="dark"]) .contact-grid article .row-actions button {
+  background: #fff !important;
+  color: #3c3040 !important;
+  border-color: #e2d6e4 !important;
+}
+:root:not([data-theme="dark"]) .contact-grid article .row-actions .danger-link {
+  color: #db2777 !important;
+  border-color: #f3b4d3 !important;
+}
+:root:not([data-theme="dark"]) .contact-grid article.whatsapp-only {
+  background:
+    radial-gradient(circle at 94% 34%, rgba(34,197,94,.14), transparent 34%),
+    #fff !important;
+  border-color: #b7e8c8 !important;
+  color: #173b26 !important;
+  box-shadow: 0 10px 28px rgba(22,163,74,.12) !important;
+}
+:root:not([data-theme="dark"]) .contact-grid article.whatsapp-only::after {
+  background: linear-gradient(135deg, rgba(34,197,94,.14), rgba(34,197,94,.02));
+}
+:root:not([data-theme="dark"]) .contact-grid article.whatsapp-only h4 {
+  color: #173b26 !important;
+}
+:root:not([data-theme="dark"]) .contact-grid article.whatsapp-only > div:nth-child(2) small {
+  color: #15803d !important;
+}
+:root:not([data-theme="dark"]) .contact-grid article.whatsapp-only > div:nth-child(2) > a {
+  color: #15803d !important;
+}
