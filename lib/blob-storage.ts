@@ -2,7 +2,7 @@ import { get, put } from "@vercel/blob";
 
 export async function readBlob(pathname: string) {
   try {
-    const result = await get(pathname, { access: "private", useCache: true });
+    const result = await get(pathname, { access: "public", useCache: true });
     if (!result || result.statusCode !== 200 || !result.stream) return null;
     return {
       body: result.stream,
