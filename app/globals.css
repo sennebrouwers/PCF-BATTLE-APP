@@ -9094,3 +9094,20 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .team-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer):not([hidden]),
 .member-editor-dialog .wizard-form>.portal-field:not([hidden]),
 .team-editor-dialog .wizard-form>.portal-field:not([hidden]){flex:0 0 auto!important;margin-top:0!important;margin-bottom:0!important}
+
+
+/* Prevent unused step containers from reserving vertical space */
+.member-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer),
+.team-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer){
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  margin-top:0!important;
+  margin-bottom:0!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+}
+.member-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer)[hidden],
+.team-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer)[hidden]{display:none!important}
+.member-editor-dialog .wizard-form>.portal-field,
+.team-editor-dialog .wizard-form>.portal-field{height:auto!important;min-height:0!important}
