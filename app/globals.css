@@ -9177,3 +9177,40 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .team-editor-dialog .wizard-topbar button::after{
   z-index:1!important;
 }
+
+
+/* Explicit content zone: active fields stay above the footer */
+.member-editor-dialog .wizard-form,
+.team-editor-dialog .wizard-form{
+  display:grid!important;
+  grid-template-rows:auto auto minmax(0,1fr) auto!important;
+  align-content:start!important;
+  overflow:hidden!important;
+}
+.member-editor-dialog .wizard-subtitle,
+.team-editor-dialog .wizard-subtitle{grid-row:1!important}
+.member-editor-dialog .wizard-topbar,
+.team-editor-dialog .wizard-topbar{grid-row:2!important}
+.member-editor-dialog .wizard-question,
+.team-editor-dialog .wizard-question{grid-row:3!important;align-self:start!important}
+.member-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer):not([hidden]),
+.team-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer):not([hidden]){
+  grid-row:3!important;
+  align-self:start!important;
+  position:relative!important;
+  top:-150px!important;
+  z-index:3!important;
+}
+.member-editor-dialog .wizard-footer,
+.team-editor-dialog .wizard-footer{
+  grid-row:4!important;
+  position:static!important;
+  align-self:end!important;
+  margin-top:0!important;
+  padding-top:18px!important;
+  background:var(--surface,#2a2530)!important;
+}
+@media(max-width:700px){
+ .member-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer):not([hidden]),
+ .team-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer):not([hidden]){top:-90px!important}
+}
