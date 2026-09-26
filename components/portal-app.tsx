@@ -1997,8 +1997,7 @@ function OperationsHub({
             <small>Control the active match from one focused workspace</small>
           </div>
           {checks.data?.issues && (
-            <Badge>              {checks.data.ready                ? "Ready"                : `${checks.data.issues.length} checks`}            </Badge>          )}        </div>        {live ? (          <MatchCard            match={live}            teams={teams.data}
-            editable
+            <Badge>              {checks.data.ready                ? "Ready"                : `${checks.data.issues.length} checks`}            </Badge>          )}        </div>        {live ? (          <MatchCard            match={live}            teams={teams.data}            editable
             onChanged={matches.load}
           />
         ) : (
@@ -3997,8 +3996,7 @@ export function MatchCard({
                 <Minus />              </button>
               <button                disabled={busy}
                 aria-label="Record away goal"                onClick={() => openGoal(match.away_team_id)}
-              >
-                <Plus />
+              >                <Plus />
               </button>
               {onEdit && (
                 <button className="text-action" onClick={onEdit}>
@@ -4464,7 +4462,13 @@ function Delegation({
         onOpenChange={(v) => !v && setEditing(undefined)}
         className="member-editor-dialog"
       >
-        <form ref={memberFormRef} className="portal-form wizard-form" onInput={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onChange={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
+        <form ref={memberFormRef} className="portal-form wizard-form" onInput={() =>
+          <p className="wizard-subtitle">Add a new member to your team delegation.</p>
+          <div className="wizard-question">
+            <div className="wizard-question-icon"><UserRoundCog /></div>
+            <h3>{memberStep === (admin ? 1 : 1) ? (admin ? "Which team is this member joining?" : "What is their full name?") : memberStep === (admin ? 2 : 1) ? "What is their full name?" : memberStep === (admin ? 3 : 2) ? "What is their date of birth?" : memberStep === (admin ? 4 : 3) ? "What is their member type?" : "Add the relevant details"}</h3>
+            <p>Enter the information for this team member.</p>
+          </div> { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onChange={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
           <div className="wizard-topbar wizard-progress-bar" aria-label="Delegation member progress">
             {(admin ? ["Team","Full name","Date of birth",...(memberType ? ["Member type","Playing role","Shirt number","Linked player","Classification"] : ["Member type"]),"Photo","Notes & save"] : ["Full name","Date of birth",...(memberType ? ["Member type","Playing role","Shirt number","Linked player","Classification"] : ["Member type"]),"Photo","Notes & save"]).map((label, index) => { if ((!memberType && ["Playing role","Shirt number","Linked player","Classification"].includes(label)) || (memberType !== "PLAYER" && ["Playing role","Shirt number","Classification"].includes(label)) || (memberType !== "ASSISTANT" && label === "Linked player")) return null; return (
               <button type="button" key={label} disabled={index + 1 > memberStep + 1 || (index + 1 === memberStep + 1 && !memberStepValid)} className={memberStep === index + 1 ? "active" : memberStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= memberStep + 1 && (index + 1 !== 1 || admin) && (index + 1 <= memberStep || memberStepValid)) setMemberStep(index + 1); }}>
@@ -5997,8 +6001,7 @@ function AdminFinanceSimple({ refresh }: { refresh: number }) {
               name="received_at"
               type="date"              required
             />
-            <Field label="Internal note" name="note" />
-            <FormButtons busy={false} onCancel={() => setEditing(null)} />
+            <Field label="Internal note" name="note" />            <FormButtons busy={false} onCancel={() => setEditing(null)} />
           </form>
         </Modal>
       )}
@@ -7997,8 +8000,7 @@ function TeamOnboardingProgress({
           onNavigate(actionPage);        }
       }}
       role={actionPage ? "button" : undefined}
-      tabIndex={actionPage ? 0 : undefined}
-    >
+      tabIndex={actionPage ? 0 : undefined}    >
       <div className="onboarding-heading">
         <div>
           <span className="eyebrow">Team onboarding</span>
