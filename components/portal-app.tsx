@@ -7776,7 +7776,13 @@ function ContactsPanel({
         )}
       </div>
       <div className="contact-grid">
-        {contacts.data.map((c: Row) => (
+        {[...contacts.data]
+          .sort((a: Row, b: Row) => {
+            const aWhatsAppOnly = Boolean(a.whatsapp && !a.phone && !a.email);
+            const bWhatsAppOnly = Boolean(b.whatsapp && !b.phone && !b.email);
+            return Number(aWhatsAppOnly) - Number(bWhatsAppOnly);
+          })
+          .map((c: Row) => (
           <article key={c.id} className={`${c.emergency ? "emergency" : ""}${c.whatsapp && !c.phone && !c.email ? " whatsapp-only" : ""}`}>
             <span className="contact-icon">
               {c.whatsapp && !c.phone && !c.email ? <WhatsAppIcon /> : <Phone />}
