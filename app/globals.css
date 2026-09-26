@@ -8757,3 +8757,10 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .team-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-footer){width:min(100%,720px)!important;margin-left:auto!important;margin-right:auto!important}
 .member-editor-dialog .wizard-form>.portal-field,
 .team-editor-dialog .wizard-form>.portal-field{width:min(100%,720px)!important;margin-left:auto!important;margin-right:auto!important}
+
+
+/* Center the complete wizard form inside the dialog */
+.member-editor-dialog .wizard-form,.team-editor-dialog .wizard-form{width:min(100%,760px)!important;max-width:760px!important;margin-left:auto!important;margin-right:auto!important;align-self:center!important}
+.member-editor-dialog .wizard-topbar,.team-editor-dialog .wizard-topbar,
+.member-editor-dialog .wizard-footer,.team-editor-dialog .wizard-footer{width:100%!important;max-width:none!important}
+@media(max-width:820px){.member-editor-dialog .wizard-form,.team-editor-dialog .wizard-form{width:100%!important;max-width:none!important}}
