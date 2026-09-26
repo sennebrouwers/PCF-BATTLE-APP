@@ -4489,7 +4489,7 @@ function Delegation({
           <div hidden={memberStep !== (admin ? 5 : 4)}><Field label="Portrait photo (optional)" name="photo_file" type="file" /></div>
           <div hidden={memberStep !== (admin ? 6 : 5)} className="wizard-final-fields"><Field label="Dietary requirements (optional)" name="dietary" defaultValue={editing?.dietary} /><Field label="Notes (optional)" name="notes" defaultValue={editing?.notes} /><VisibilityField label="Privacy consent" name="privacy_consent" defaultValue={editing?.privacy_consent ?? 0} onLabel="Recorded" offLabel="Missing" /><VisibilityField label="Photo publication consent" name="photo_consent" defaultValue={editing?.photo_consent ?? 0} onLabel="Granted" offLabel="Not granted" /></div>
           </div>
-          <div className="wizard-footer"><div className="wizard-actions">{memberStep > 1 && <button type="button" className="btn" onClick={() => setMemberStep((step) => step - 1)}>Back</button>}{memberStep < (admin ? 6 : 5) && <button type="button" className="btn primary" disabled={!memberStepValid} onClick={() => setMemberStep((step) => step + 1)}>Next</button>}</div>{memberStep === (admin ? 6 : 5) && <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}</div>
+          <div className="wizard-footer"><div className="wizard-actions">{memberStep > 1 && <button type="button" className="btn" onClick={() => setMemberStep((step) => step - 1)}>Back</button>}{memberStep < (admin ? 6 : 5) ? <button type="button" className="btn primary" disabled={!memberStepValid} onClick={() => setMemberStep((step) => setMemberStep((step) => step + 1))}>Next</button> : <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}</div></div>
         </form>
       </Modal>
     </section>
