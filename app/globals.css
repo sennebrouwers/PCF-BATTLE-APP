@@ -8195,3 +8195,24 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     transform: scale(1.12);
   }
 }
+
+
+/* Exact alignment for both contact-card illustrations and contact details. */
+.contact-grid article .contact-card-art,
+.contact-grid article.whatsapp-only .contact-card-art {
+  right: 0 !important;
+  bottom: -10% !important;
+  width: 42% !important;
+  height: 125% !important;
+  transform: none !important;
+  object-fit: contain !important;
+  object-position: center !important;
+}
+.contact-grid article > div:nth-child(2) > a,
+.contact-grid article > div:nth-child(2) > a + a {
+  display: block !important;
+  width: max-content;
+  max-width: 100%;
+  margin-top: 6px !important;
+  line-height: 1.35;
+}
