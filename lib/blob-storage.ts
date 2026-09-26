@@ -22,7 +22,7 @@ export async function writeBlob(
   owner: string,
 ) {
   return put(pathname, body, {
-    access: "private",
+    access: "public",
     contentType,
     addRandomSuffix: false,
     multipart: true,
