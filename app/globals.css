@@ -8216,3 +8216,13 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   margin-top: 6px !important;
   line-height: 1.35;
 }
+
+
+.contact-grid .contact-detail-line {
+  display: block !important;
+  width: 100%;
+  min-height: 1.35em;
+}
+.contact-grid .contact-detail-line a {
+  display: inline-flex !important;
+}
