@@ -8134,3 +8134,31 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     margin-top: 12px;
   }
 }
+
+
+.contact-grid article .contact-card-art {
+  position: absolute;
+  z-index: -1;
+  right: -2%;
+  bottom: -18%;
+  width: 42%;
+  max-width: 360px;
+  height: 125%;
+  object-fit: contain;
+  object-position: center;
+  opacity: .92;
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,.28));
+  pointer-events: none;
+}
+.contact-grid article.whatsapp-only .contact-card-art {
+  width: 39%;
+  right: 0;
+  bottom: -10%;
+}
+@media (max-width: 760px) {
+  .contact-grid article .contact-card-art {
+    right: -10%;
+    width: 48%;
+    opacity: .55;
+  }
+}
