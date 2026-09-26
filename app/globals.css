@@ -9048,3 +9048,40 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     margin-top: 24px !important;
   }
 }
+
+
+/* Reference composition: header, stepper, question, field, fixed footer */
+.member-editor-dialog .modal-header,
+.team-editor-dialog .modal-header{padding-bottom:0!important}
+.member-editor-dialog .modal-header .wizard-subtitle,
+.team-editor-dialog .modal-header .wizard-subtitle{display:none!important}
+.member-editor-dialog .wizard-form,
+.team-editor-dialog .wizard-form{position:relative!important}
+.member-editor-dialog .wizard-subtitle,
+.team-editor-dialog .wizard-subtitle{order:1!important;text-align:left!important;margin:4px 0 0!important}
+.member-editor-dialog .wizard-topbar,
+.team-editor-dialog .wizard-topbar{order:2!important;margin:24px 0 0!important;padding-bottom:18px!important}
+.member-editor-dialog .wizard-question,
+.team-editor-dialog .wizard-question{order:3!important;margin:44px auto 28px!important}
+.member-editor-dialog .wizard-validation,
+.team-editor-dialog .wizard-validation{order:4!important}
+.member-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer):not([hidden]),
+.team-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer):not([hidden]){order:5!important}
+.member-editor-dialog .wizard-form>.portal-field:not([hidden]),
+.team-editor-dialog .wizard-form>.portal-field:not([hidden]){order:5!important}
+.member-editor-dialog .wizard-footer,
+.team-editor-dialog .wizard-footer{order:6!important;margin-top:auto!important}
+.member-editor-dialog .wizard-form{padding-bottom:0!important}
+.member-editor-dialog .wizard-question h3,
+.team-editor-dialog .wizard-question h3{font-size:1.55rem!important}
+.member-editor-dialog .wizard-question p,
+.team-editor-dialog .wizard-question p{font-size:.98rem!important}
+.member-editor-dialog .wizard-form .wizard-validation{border:0!important;background:transparent!important}
+.member-editor-dialog .wizard-footer .wizard-actions,
+.team-editor-dialog .wizard-footer .wizard-actions{justify-content:space-between!important}
+.member-editor-dialog .wizard-footer .wizard-actions:has(> .btn:first-child:only-child),
+.team-editor-dialog .wizard-footer .wizard-actions:has(> .btn:first-child:only-child){justify-content:flex-end!important}
+@media(max-width:700px){
+ .member-editor-dialog .wizard-question,.team-editor-dialog .wizard-question{margin-top:28px!important}
+ .member-editor-dialog .wizard-topbar,.team-editor-dialog .wizard-topbar{margin-top:18px!important}
+}
