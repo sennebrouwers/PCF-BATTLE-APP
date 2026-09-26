@@ -8343,3 +8343,18 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     bottom: -8% !important;
   }
 }
+
+
+/* Match the visible artwork size despite the WhatsApp asset's different internal crop. */
+.contact-grid article.whatsapp-only .contact-card-art {
+  width: 48% !important;
+  right: -4% !important;
+  bottom: -10% !important;
+}
+@media (max-width: 760px) {
+  .contact-grid article.whatsapp-only .contact-card-art {
+    width: 54% !important;
+    right: -12% !important;
+    bottom: -10% !important;
+  }
+}
