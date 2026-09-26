@@ -1997,8 +1997,7 @@ function OperationsHub({
             <small>Control the active match from one focused workspace</small>
           </div>
           {checks.data?.issues && (
-            <Badge>              {checks.data.ready                ? "Ready"                : `${checks.data.issues.length} checks`}            </Badge>          )}        </div>        {live ? (          <MatchCard            match={live}
-            teams={teams.data}
+            <Badge>              {checks.data.ready                ? "Ready"                : `${checks.data.issues.length} checks`}            </Badge>          )}        </div>        {live ? (          <MatchCard            match={live}            teams={teams.data}
             editable
             onChanged={matches.load}
           />
@@ -3997,8 +3996,7 @@ export function MatchCard({
                 onClick={() => removeGoal(match.away_team_id)}              >
                 <Minus />              </button>
               <button                disabled={busy}
-                aria-label="Record away goal"
-                onClick={() => openGoal(match.away_team_id)}
+                aria-label="Record away goal"                onClick={() => openGoal(match.away_team_id)}
               >
                 <Plus />
               </button>
@@ -4467,12 +4465,9 @@ function Delegation({
         className="member-editor-dialog"
       >
         <form ref={memberFormRef} className="portal-form wizard-form" onInput={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onChange={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
-          <div className="wizard-progress wizard-progress-bar" aria-label="Delegation member progress">
-            {(admin ? ["Team","Full name","Date of birth",...(memberType ? ["Member type","Playing role","Shirt number","Linked player","Classification"] : ["Member type"]),"Photo","Notes & save"] : ["Full name","Date of birth",...(memberType ? ["Member type","Playing role","Shirt number","Linked player","Classification"] : ["Member type"]),"Photo","Notes & save"]).map((label, index) => { if ((!memberType && ["Playing role","Shirt number","Linked player","Classification"].includes(label)) || (memberType !== "PLAYER" && ["Playing role","Shirt number","Classification"].includes(label)) || (memberType !== "ASSISTANT" && label === "Linked player")) return null; return (
-              <button type="button" key={label} disabled={index + 1 > memberStep + 1 || (index + 1 === memberStep + 1 && !memberStepValid)} className={memberStep === index + 1 ? "active" : memberStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= memberStep + 1 && (index + 1 !== 1 || admin) && (index + 1 <= memberStep || memberStepValid)) setMemberStep(index + 1); }}>
-                <span>{index + 1}</span>{label}
-              </button>
-            ); })}
+          <div className="wizard-progress-line" aria-label="Delegation member progress">
+            <progress value={memberStep} max={(admin ? 10 : 9)} />
+            <span>Step {memberStep} of {(admin ? 10 : 9)}</span>
           </div>
           {!memberStepValid && <p className="wizard-validation" role="alert">Complete this required field to continue.</p>}
           {admin && <div hidden={memberStep !== 1}><Field label="Team" name="team_id" children={<select name="team_id" defaultValue={editing?.team_id || (team === "all" ? "" : team)} required><option value="">Choose team</option>{teams.data.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select>} /></div>}
@@ -5997,8 +5992,7 @@ function AdminFinanceSimple({ refresh }: { refresh: number }) {
             <Field label="Payment reference" name="reference" />
             <Field              label="Date received"
               name="received_at"
-              type="date"
-              required
+              type="date"              required
             />
             <Field label="Internal note" name="note" />
             <FormButtons busy={false} onCancel={() => setEditing(null)} />
@@ -6803,13 +6797,10 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
               className="team-editor-dialog"
             >
               <form ref={wizardFormRef} className="portal-form team-wizard wizard-form" onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
-                <div className="wizard-progress wizard-progress-bar" aria-label="Team creation progress">
-                  {["Team name","Country","Team logo","Team photo","Team color","Group","Contact name","Email","Phone","Delegation size","Invoice option","Billing name","Billing address","Postal code","City","Billing country","Login email","Password","Review"].map((label, index) => (
-                    <button type="button" key={label} disabled={index + 1 > teamStep + 1 || index + 1 === teamStep + 1 && !stepValid} className={teamStep === index + 1 ? "active" : teamStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= teamStep + 1 && (index + 1 <= teamStep || stepValid)) setTeamStep(index + 1); }}>
-                      <span>{index + 1}</span>{label}
-                    </button>
-                  ))}
-                </div>
+          <div className="wizard-progress-line" aria-label="Team creation progress">
+            <progress value={teamStep} max={19} />
+            <span>Step {teamStep} of {19}</span>
+          </div>
                 {!stepValid && <p className="wizard-validation" role="alert">Complete this required field to continue.</p>}
                 <div hidden={teamStep !== 1}><Field label="Team name" name="name" defaultValue={editing?.name} required /></div>
                 <div hidden={teamStep !== 2}><Field label="Country" name="address_country" defaultValue={editing?.address_country} required /></div>
@@ -7997,8 +7988,7 @@ function TeamOnboardingProgress({
       onClick={() => actionPage && onNavigate(actionPage)}      onKeyDown={(event) => {
         if (actionPage && (event.key === "Enter" || event.key === " ")) {
           event.preventDefault();
-          onNavigate(actionPage);
-        }
+          onNavigate(actionPage);        }
       }}
       role={actionPage ? "button" : undefined}
       tabIndex={actionPage ? 0 : undefined}
