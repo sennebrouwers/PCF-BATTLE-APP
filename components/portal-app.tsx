@@ -1997,8 +1997,7 @@ function OperationsHub({
             <small>Control the active match from one focused workspace</small>
           </div>
           {checks.data?.issues && (
-            <Badge>              {checks.data.ready                ? "Ready"                : `${checks.data.issues.length} checks`}            </Badge>
-          )}
+            <Badge>              {checks.data.ready                ? "Ready"                : `${checks.data.issues.length} checks`}            </Badge>          )}
         </div>
         {live ? (
           <MatchCard
@@ -3997,8 +3996,7 @@ export function MatchCard({
                 disabled={busy}                aria-label="Record home goal"
                 onClick={() => openGoal(match.home_team_id)}              >
                 <Plus />              </button>
-              <small>HOME</small>
-              <button
+              <small>HOME</small>              <button
                 disabled={busy || match.away_score < 1}
                 aria-label="Remove latest away goal"
                 onClick={() => removeGoal(match.away_team_id)}
@@ -4260,8 +4258,8 @@ function Delegation({
     [editing, setEditing] = useState<Row | null | undefined>(undefined),
     [team, setTeam] = useState("all"),
     [memberType, setMemberType] = useState<
-      "PLAYER" | "COACH" | "STAFF" | "REFEREE" | "TEAM_MANAGER" | "ASSISTANT"
-    >("PLAYER"),
+      "PLAYER" | "COACH" | "STAFF" | "REFEREE" | "TEAM_MANAGER" | "ASSISTANT" | ""
+    >(""),
     [memberStep, setMemberStep] = useState(1),
     [busy, setBusy] = useState(false),
     [memberStepValid, setMemberStepValid] = useState(false),
@@ -4343,7 +4341,7 @@ function Delegation({
         <button
           className="btn primary"
           onClick={() => {
-            setMemberType("PLAYER");
+            setMemberType("");
             setMemberStep(1);
             setEditing(null);
           }}
@@ -4478,7 +4476,7 @@ function Delegation({
       >
         <form ref={memberFormRef} className="portal-form wizard-form" onInput={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onChange={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
           <div className="wizard-progress wizard-progress-bar" aria-label="Delegation member progress">
-            {(admin ? ["Member type","Team","Full name","Date of birth","Playing role","Shirt number","Linked player","Classification","Photo","Notes & save"] : ["Member type","Full name","Date of birth","Playing role","Shirt number","Linked player","Classification","Photo","Notes & save"]).map((label, index) => (
+            {(admin ? ["Member type","Team","Full name","Date of birth",...(memberType ? ["Playing role","Shirt number","Linked player","Classification"] : []),"Photo","Notes & save"] : ["Member type","Full name","Date of birth",...(memberType ? ["Playing role","Shirt number","Linked player","Classification"] : []),"Photo","Notes & save"]).map((label, index) => (
               <button type="button" key={label} disabled={index + 1 > memberStep + 1 || (index + 1 === memberStep + 1 && !memberStepValid)} className={memberStep === index + 1 ? "active" : memberStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= memberStep + 1 && (index + 1 !== 1 || admin) && (index + 1 <= memberStep || memberStepValid)) setMemberStep(index + 1); }}>
                 <span>{index + 1}</span>{label}
               </button>
@@ -4489,7 +4487,7 @@ function Delegation({
           <div hidden={memberStep !== (admin ? 3 : 2)}><Field label="Full name" name="name" defaultValue={editing?.name} required /></div>
           <div hidden={memberStep !== (admin ? 4 : 3)}><Field label="Date of birth" name="dob" type="date" defaultValue={editing?.dob} required /></div>
           <div hidden={memberStep !== 1}>
-            <label className="portal-field"><span>Member type<i className="required-mark" aria-hidden="true">*</i></span><select name="role" value={memberType} required onChange={(event) => { const next = event.target.value as typeof memberType; setMemberType(next); setMemberStepValid(false); setMemberRevision((value) => value + 1); }}><option value="PLAYER">Player</option><option value="COACH">Coach</option><option value="STAFF">Staff</option><option value="TEAM_MANAGER">Team Manager</option><option value="ASSISTANT">Assistant</option><option value="REFEREE">Referee</option></select></label>
+            <label className="portal-field"><span>Member type<i className="required-mark" aria-hidden="true">*</i></span><select name="role" value={memberType} required onChange={(event) => { const next = event.target.value as typeof memberType; setMemberType(next); setMemberStepValid(false); setMemberRevision((value) => value + 1); }}><option value="">Choose member type</option><option value="PLAYER">Player</option><option value="COACH">Coach</option><option value="STAFF">Staff</option><option value="TEAM_MANAGER">Team Manager</option><option value="ASSISTANT">Assistant</option><option value="REFEREE">Referee</option></select></label>
           </div>
           <input type="hidden" name="member_type" value={memberType} />
           {memberType === "PLAYER" && <div hidden={memberStep !== (admin ? 5 : 4)}><Field label="Playing role" name="player_role" children={<select name="player_role" defaultValue={editing?.player_role || "KEEPER"}><option value="KEEPER">Goalkeeper</option><option value="T_STICK">T-stick</option><option value="HANDSTICK">Handstick</option></select>} /></div>}
@@ -5997,8 +5995,7 @@ function AdminFinanceSimple({ refresh }: { refresh: number }) {
               defaultValue={editing.outstanding}
               required
             />
-            <Field
-              label="Method"
+            <Field              label="Method"
               name="method"
               children={
                 <select name="method">
@@ -7997,8 +7994,7 @@ function TeamOnboardingProgress({
   const actionPage = depositOpen
     ? "finance"
     : current?.key === "setup"
-      ? "info"
-      : current?.key === "delegation"
+      ? "info"      : current?.key === "delegation"
         ? "delegation"
         : current?.key === "rooms"
           ? "rooms"
