@@ -8671,3 +8671,24 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     padding-right: 0;
   }
 }
+
+
+/* Per-field wizard workspace: stable layout, responsive progress, readable in both themes. */
+.wizard-form{display:flex!important;flex-direction:column;min-height:560px;gap:0}
+.wizard-progress-bar{display:flex!important;gap:8px;overflow-x:auto;padding:4px 2px 18px;margin:0 0 18px;border-bottom:1px solid var(--border,#3b3443);scrollbar-width:thin}
+.wizard-progress-bar button{display:flex;align-items:center;gap:7px;flex:0 0 auto;border:0;background:transparent;color:var(--muted,#aaa0b3);font:inherit;font-size:.78rem;white-space:nowrap;padding:8px 10px;border-radius:999px;cursor:pointer}
+.wizard-progress-bar button span{display:grid;place-items:center;width:25px;height:25px;border-radius:50%;border:1px solid currentColor;font-size:.72rem}
+.wizard-progress-bar button.active{background:var(--pink,#ef3f98);color:#fff}
+.wizard-progress-bar button.complete{color:var(--pink,#ef3f98)}
+.wizard-progress-bar button.complete span{background:var(--pink,#ef3f98);color:#fff;border-color:var(--pink,#ef3f98)}
+.wizard-progress-bar button:disabled{opacity:.45;cursor:not-allowed}
+.wizard-form>.portal-field,.wizard-form>div[hidden]{min-height:96px}
+.wizard-form>.portal-field:not([hidden]),.wizard-form>div:not([hidden]){animation:wizard-field-in .18s ease-out}
+.wizard-form>.portal-field,.wizard-form>div:not([hidden])>.portal-field{width:100%;max-width:none}
+.wizard-form>.wizard-final-fields:not([hidden]){display:grid;gap:14px}
+.wizard-footer{margin-top:auto;padding-top:24px;border-top:1px solid var(--border,#3b3443);display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:72px}
+.wizard-actions{display:flex;align-items:center;gap:10px}
+.wizard-validation{min-height:24px;margin:0 0 14px;color:#ff8aa8;font-size:.9rem}
+@keyframes wizard-field-in{from{opacity:.35;transform:translateY(3px)}to{opacity:1;transform:none}}
+@media (min-width:1100px){.team-editor-dialog{width:min(1080px,calc(100vw - 80px))}.member-editor-dialog{width:min(980px,calc(100vw - 80px))}}
+@media (max-width:700px){.wizard-form{min-height:520px}.wizard-progress-bar{margin-inline:-4px;padding-inline:4px}.wizard-footer{align-items:stretch;flex-direction:column}.wizard-footer .form-actions,.wizard-footer .wizard-actions{width:100%;justify-content:space-between}.wizard-footer .btn{min-height:44px}.wizard-progress-bar button{font-size:.72rem}}
