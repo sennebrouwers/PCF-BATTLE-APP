@@ -8238,7 +8238,27 @@ function TeamInfoV2({
       delete b.team_photo_file;
       if (/^#[0-9a-fA-F]{6}$/.test(String(b.color_hex || ""))) b.color = b.color_hex;
       delete b.color_hex;
-      if (!b.invoice_requested) b.billing_address = "";
+      b.invoice_requested = b.invoice_requested ? 1 : 0;
+      for (const key of ["contact_email", "whatsapp", "website", "billing_address", "billing_name", "vat_number", "billing_postal_code", "billing_city", "billing_country"]) {
+        if (b[key] === undefined || b[key] === null) b[key] = "";
+      }
+      if (!b.invoice_requested) {
+        b.billing_address = "";
+        b.billing_name = "";
+        b.vat_number = "";
+        b.billing_postal_code = "";
+        b.billing_city = "";
+        b.billing_country = "";
+      }
+      const allowedTeamFields = new Set([
+        "name", "contact_person", "contact_email", "phone", "phone_country_code",
+        "whatsapp", "expected_delegation_size", "website", "address",
+        "address_street", "address_number", "address_postal_code", "address_city",
+        "address_country", "color", "logo", "team_photo", "invoice_requested",
+        "billing_address", "billing_name", "vat_number", "billing_postal_code",
+        "billing_city", "billing_country",
+      ]);
+      for (const key of Object.keys(b)) if (!allowedTeamFields.has(key)) delete b[key];
       await api(`/teams/${team.id}`, {
         method: "PUT",
         body: JSON.stringify(b),
