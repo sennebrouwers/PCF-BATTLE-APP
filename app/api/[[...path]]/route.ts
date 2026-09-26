@@ -60,12 +60,16 @@ function parseSessionUser(value: unknown): SessionUser | null {
 const out = (data: unknown, status = 200) =>
   NextResponse.json(data, { status, headers: securityHeaders });
 function logServerError(request: NextRequest, error: unknown) {
+  const requestId = request.headers.get("cf-ray") || crypto.randomUUID();
+  const message = error instanceof Error ? error.message : String(error);
   console.error(JSON.stringify({
     event: "api_error",
-    requestId: request.headers.get("cf-ray") || crypto.randomUUID(),
+    requestId,
     path: new URL(request.url).pathname,
     error: error instanceof Error ? error.name : "UnknownError",
+    message,
   }));
+  return requestId;
 }
 
 async function hasAllowedFileSignature(file: File) {
@@ -3210,8 +3214,15 @@ export async function POST(
     await log(u, "CREATE", table, rid, auditBody);
     return out({ id: rid, ...body, emailSent }, 201);
   } catch (error: unknown) {
-    logServerError(req, error);
-    return out({ error: "We could not complete that change. Please check the values and try again." }, 500);
+    const requestId = logServerError(req, error);
+    const message = error instanceof Error ? error.message : String(error);
+    const safeMessage = /SQLITE|Libsql|column|table|constraint|unique|not null|foreign key/i.test(message)
+      ? message
+      : "We could not complete that change. Please check the values and try again.";
+    return new NextResponse(JSON.stringify({ error: safeMessage, requestId }), {
+      status: 500,
+      headers: { ...securityHeaders, "Content-Type": "application/json", "X-Request-ID": requestId },
+    });
   }
 }
 
