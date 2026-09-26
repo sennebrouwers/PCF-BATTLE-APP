@@ -1997,7 +1997,9 @@ function OperationsHub({
             <small>Control the active match from one focused workspace</small>
           </div>
           {checks.data?.issues && (
-            <Badge>              {checks.data.ready                ? "Ready"                : `${checks.data.issues.length} checks`}            </Badge>          )}        </div>        {live ? (          <MatchCard            match={live}            teams={teams.data}            editable
+            <Badge>              {checks.data.ready                ? "Ready"                : `${checks.data.issues.length} checks`}            </Badge>          )}        </div>        {live ? (          <MatchCard            match={live}
+            teams={teams.data}
+            editable
             onChanged={matches.load}
           />
         ) : (
@@ -3995,8 +3997,10 @@ export function MatchCard({
                 onClick={() => removeGoal(match.away_team_id)}              >
                 <Minus />              </button>
               <button                disabled={busy}
-                aria-label="Record away goal"                onClick={() => openGoal(match.away_team_id)}
-              >                <Plus />
+                aria-label="Record away goal"
+                onClick={() => openGoal(match.away_team_id)}
+              >
+                <Plus />
               </button>
               {onEdit && (
                 <button className="text-action" onClick={onEdit}>
@@ -4463,9 +4467,12 @@ function Delegation({
         className="member-editor-dialog"
       >
         <form ref={memberFormRef} className="portal-form wizard-form" onInput={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onChange={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
-          <div className="wizard-progress-line" aria-label="Delegation member progress">
-            <div className="wizard-progress-copy"><strong>{memberStep === 1 && admin ? "Team" : memberStep === (admin ? 2 : 1) ? "Full name" : memberStep === (admin ? 3 : 2) ? "Date of birth" : memberStep === (admin ? 4 : 3) ? "Member type" : memberType === "PLAYER" && memberStep === (admin ? 5 : 4) ? "Playing role" : memberType === "PLAYER" && memberStep === (admin ? 6 : 5) ? "Shirt number" : memberType === "ASSISTANT" && memberStep === (admin ? 7 : 6) ? "Linked player" : memberType === "PLAYER" && memberStep === (admin ? 8 : 7) ? "Classification" : memberStep === (admin ? 9 : 8) ? "Photo" : "Notes & save"}</strong><span>Step {memberStep} of {(admin ? 10 : 9)}</span></div>
-            <progress value={memberStep} max={(admin ? 10 : 9)} />
+          <div className="wizard-progress wizard-progress-bar" aria-label="Delegation member progress">
+            {(admin ? ["Team","Full name","Date of birth",...(memberType ? ["Member type","Playing role","Shirt number","Linked player","Classification"] : ["Member type"]),"Photo","Notes & save"] : ["Full name","Date of birth",...(memberType ? ["Member type","Playing role","Shirt number","Linked player","Classification"] : ["Member type"]),"Photo","Notes & save"]).map((label, index) => { if ((!memberType && ["Playing role","Shirt number","Linked player","Classification"].includes(label)) || (memberType !== "PLAYER" && ["Playing role","Shirt number","Classification"].includes(label)) || (memberType !== "ASSISTANT" && label === "Linked player")) return null; return (
+              <button type="button" key={label} disabled={index + 1 > memberStep + 1 || (index + 1 === memberStep + 1 && !memberStepValid)} className={memberStep === index + 1 ? "active" : memberStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= memberStep + 1 && (index + 1 !== 1 || admin) && (index + 1 <= memberStep || memberStepValid)) setMemberStep(index + 1); }}>
+                <span>{index + 1}</span>{label}
+              </button>
+            ); })}
           </div>
           {!memberStepValid && <p className="wizard-validation" role="alert">Complete this required field to continue.</p>}
           {admin && <div hidden={memberStep !== 1}><Field label="Team" name="team_id" children={<select name="team_id" defaultValue={editing?.team_id || (team === "all" ? "" : team)} required><option value="">Choose team</option>{teams.data.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select>} /></div>}
@@ -5990,12 +5997,14 @@ function AdminFinanceSimple({ refresh }: { refresh: number }) {
             <Field label="Payment reference" name="reference" />
             <Field              label="Date received"
               name="received_at"
-              type="date"              required
+              type="date"
+              required
             />
             <Field label="Internal note" name="note" />
             <FormButtons busy={false} onCancel={() => setEditing(null)} />
           </form>
-        </Modal>      )}
+        </Modal>
+      )}
     </section>
   );
 }
@@ -6794,9 +6803,12 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
               className="team-editor-dialog"
             >
               <form ref={wizardFormRef} className="portal-form team-wizard wizard-form" onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
-          <div className="wizard-progress-line" aria-label="Team creation progress">
-                  <div className="wizard-progress-copy"><strong>{["Team name","Country","Team logo","Team photo","Team color","Group","Contact name","Email","Phone","Delegation size","Invoice option","Billing name","Billing address","Postal code","City","Billing country","Login email","Password","Review"][teamStep - 1]}</strong><span>Step {teamStep} of 19</span></div>
-                  <progress value={teamStep} max={19} />
+                <div className="wizard-progress wizard-progress-bar" aria-label="Team creation progress">
+                  {["Team name","Country","Team logo","Team photo","Team color","Group","Contact name","Email","Phone","Delegation size","Invoice option","Billing name","Billing address","Postal code","City","Billing country","Login email","Password","Review"].map((label, index) => (
+                    <button type="button" key={label} disabled={index + 1 > teamStep + 1 || index + 1 === teamStep + 1 && !stepValid} className={teamStep === index + 1 ? "active" : teamStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= teamStep + 1 && (index + 1 <= teamStep || stepValid)) setTeamStep(index + 1); }}>
+                      <span>{index + 1}</span>{label}
+                    </button>
+                  ))}
                 </div>
                 {!stepValid && <p className="wizard-validation" role="alert">Complete this required field to continue.</p>}
                 <div hidden={teamStep !== 1}><Field label="Team name" name="name" defaultValue={editing?.name} required /></div>
@@ -7985,7 +7997,8 @@ function TeamOnboardingProgress({
       onClick={() => actionPage && onNavigate(actionPage)}      onKeyDown={(event) => {
         if (actionPage && (event.key === "Enter" || event.key === " ")) {
           event.preventDefault();
-          onNavigate(actionPage);        }
+          onNavigate(actionPage);
+        }
       }}
       role={actionPage ? "button" : undefined}
       tabIndex={actionPage ? 0 : undefined}
@@ -7994,7 +8007,8 @@ function TeamOnboardingProgress({
         <div>
           <span className="eyebrow">Team onboarding</span>
           <h2>
-            {data.team?.name || teamData?.team?.name || "Tournament setup"}          </h2>
+            {data.team?.name || teamData?.team?.name || "Tournament setup"}
+          </h2>
           <p>
             Complete your tournament information through to Tournament Ready.
           </p>
