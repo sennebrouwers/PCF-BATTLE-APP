@@ -4468,6 +4468,7 @@ function Delegation({
               </button>
             ); })}
           </div>
+          <div className="wizard-content">
           <div className="wizard-question">
             <div className="wizard-question-icon"><UserRoundCog /></div>
             <h3>{memberStep === (admin ? 1 : 1) ? (admin ? "Which team is this member joining?" : "What is their full name?") : memberStep === (admin ? 2 : 1) ? "What is their full name?" : memberStep === (admin ? 3 : 2) ? "What is their date of birth?" : memberStep === (admin ? 4 : 3) ? "What is their member type?" : "Add the relevant details"}</h3>
@@ -4487,6 +4488,7 @@ function Delegation({
           {memberType === "REFEREE" && <div hidden={memberStep !== (admin ? 4 : 3)}><label className="portal-field wide checkbox-field"><input type="hidden" name="wheelchair_user" value="0" /><input name="wheelchair_user" type="checkbox" value="1" defaultChecked={Boolean(editing?.wheelchair_user)} /><span>This referee uses a wheelchair</span></label></div>}
           <div hidden={memberStep !== (admin ? 5 : 4)}><Field label="Portrait photo (optional)" name="photo_file" type="file" /></div>
           <div hidden={memberStep !== (admin ? 6 : 5)} className="wizard-final-fields"><Field label="Dietary requirements (optional)" name="dietary" defaultValue={editing?.dietary} /><Field label="Notes (optional)" name="notes" defaultValue={editing?.notes} /><VisibilityField label="Privacy consent" name="privacy_consent" defaultValue={editing?.privacy_consent ?? 0} onLabel="Recorded" offLabel="Missing" /><VisibilityField label="Photo publication consent" name="photo_consent" defaultValue={editing?.photo_consent ?? 0} onLabel="Granted" offLabel="Not granted" /></div>
+          </div>
           <div className="wizard-footer"><div className="wizard-actions">{memberStep > 1 && <button type="button" className="btn" onClick={() => setMemberStep((step) => step - 1)}>Back</button>}{memberStep < (admin ? 6 : 5) && <button type="button" className="btn primary" disabled={!memberStepValid} onClick={() => setMemberStep((step) => step + 1)}>Next</button>}</div>{memberStep === (admin ? 6 : 5) && <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}</div>
         </form>
       </Modal>
