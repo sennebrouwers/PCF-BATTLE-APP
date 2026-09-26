@@ -8747,3 +8747,13 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .member-editor-dialog .wizard-form,.team-editor-dialog .wizard-form{display:flex!important;flex-direction:column!important;width:100%!important;padding-left:0!important;height:min(650px,calc(100vh - 170px))!important;min-height:0!important;overflow:auto!important}
 .member-editor-dialog .wizard-footer,.team-editor-dialog .wizard-footer{margin-top:auto!important;position:sticky!important;bottom:0!important;background:var(--background,#28232d)!important;padding-top:20px!important;padding-bottom:4px!important;z-index:3!important}
 @media(max-width:700px){.member-editor-dialog .wizard-form,.team-editor-dialog .wizard-form{height:calc(100vh - 145px)!important;min-height:460px!important}.wizard-topbar button{font-size:.75rem!important;padding-inline:10px!important}}
+
+
+/* Center wizard content while keeping progress and footer full width */
+.member-editor-dialog .wizard-form,.team-editor-dialog .wizard-form{align-items:center!important}
+.member-editor-dialog .wizard-topbar,.team-editor-dialog .wizard-topbar,
+.member-editor-dialog .wizard-footer,.team-editor-dialog .wizard-footer{width:100%!important;align-self:stretch!important}
+.member-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-footer),
+.team-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-footer){width:min(100%,720px)!important;margin-left:auto!important;margin-right:auto!important}
+.member-editor-dialog .wizard-form>.portal-field,
+.team-editor-dialog .wizard-form>.portal-field{width:min(100%,720px)!important;margin-left:auto!important;margin-right:auto!important}
