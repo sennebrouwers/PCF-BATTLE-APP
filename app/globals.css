@@ -8715,3 +8715,12 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .member-editor-dialog .wizard-footer,.team-editor-dialog .wizard-footer{position:sticky;bottom:0;background:var(--background,#28232d);padding-bottom:8px;z-index:2}
 .member-editor-dialog .wizard-form:before,.team-editor-dialog .wizard-form:before{content:"PCF BATTLE";position:fixed;left:7%;top:50%;transform:translateY(-50%) rotate(-8deg);color:rgba(255,255,255,.9);font-weight:900;font-size:clamp(2rem,5vw,5rem);line-height:.9;max-width:220px;pointer-events:none}
 @media(max-width:700px){.member-editor-dialog,.team-editor-dialog{width:calc(100vw - 24px)!important;background:var(--background,#28232d)!important}.member-editor-dialog .wizard-form,.team-editor-dialog .wizard-form{height:calc(100vh - 150px);padding-left:0}.member-editor-dialog .wizard-form:before,.team-editor-dialog .wizard-form:before{display:none}}
+
+
+/* Final wizard layout: no visual side panel, horizontal steps on top */
+.member-editor-dialog,.team-editor-dialog{background:var(--background,#28232d)!important}
+.member-editor-dialog .wizard-form,.team-editor-dialog .wizard-form{padding-left:0!important;width:100%!important;height:min(680px,calc(100vh - 150px));min-height:0;overflow:auto}
+.member-editor-dialog .wizard-form:before,.team-editor-dialog .wizard-form:before{display:none!important}
+.member-editor-dialog .wizard-progress-bar,.team-editor-dialog .wizard-progress-bar{display:flex!important;flex-direction:row!important;position:static!important;inset:auto!important;width:100%!important;height:auto!important;max-height:none!important;overflow-x:auto!important;overflow-y:hidden!important;align-items:center!important;gap:8px!important;padding:0 0 16px!important;margin:0 0 24px!important;border:0!important;border-bottom:1px solid var(--border,#3b3443)!important;background:transparent!important}
+.member-editor-dialog .wizard-progress-bar button,.team-editor-dialog .wizard-progress-bar button{display:flex!important;position:static!important;flex:0 0 auto!important;min-width:max-content!important;align-items:center!important;justify-content:center!important}
+@media(max-width:700px){.member-editor-dialog,.team-editor-dialog{background:var(--background,#28232d)!important}.member-editor-dialog .wizard-form,.team-editor-dialog .wizard-form{height:calc(100vh - 150px);min-height:480px}}
