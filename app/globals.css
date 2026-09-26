@@ -8185,3 +8185,13 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .contact-grid article > div:nth-child(2) > a + a {
   margin-top: 7px;
 }
+
+
+.contact-grid article.whatsapp-only .contact-card-art {
+  transform: scale(1.22);
+}
+@media (max-width: 760px) {
+  .contact-grid article.whatsapp-only .contact-card-art {
+    transform: scale(1.12);
+  }
+}
