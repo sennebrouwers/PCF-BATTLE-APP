@@ -7778,12 +7778,6 @@ function ContactsPanel({
       <div className="contact-grid">
         {contacts.data.map((c: Row) => (
           <article key={c.id} className={`${c.emergency ? "emergency" : ""}${c.whatsapp && !c.phone && !c.email ? " whatsapp-only" : ""}`}>
-            <img
-              className="contact-card-art"
-              src={c.whatsapp && !c.phone && !c.email ? contactCardArt.whatsapp : contactCardArt.phone}
-              alt=""
-              aria-hidden="true"
-            />
             <span className="contact-icon">
               {c.whatsapp && !c.phone && !c.email ? <WhatsAppIcon /> : <Phone />}
             </span>
