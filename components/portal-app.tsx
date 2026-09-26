@@ -1997,8 +1997,7 @@ function OperationsHub({
             <small>Control the active match from one focused workspace</small>
           </div>
           {checks.data?.issues && (
-            <Badge>              {checks.data.ready                ? "Ready"                : `${checks.data.issues.length} checks`}            </Badge>          )}
-        </div>
+            <Badge>              {checks.data.ready                ? "Ready"                : `${checks.data.issues.length} checks`}            </Badge>          )}        </div>
         {live ? (
           <MatchCard
             match={live}
@@ -3997,8 +3996,7 @@ export function MatchCard({
                 onClick={() => openGoal(match.home_team_id)}              >
                 <Plus />              </button>
               <small>HOME</small>              <button
-                disabled={busy || match.away_score < 1}
-                aria-label="Remove latest away goal"
+                disabled={busy || match.away_score < 1}                aria-label="Remove latest away goal"
                 onClick={() => removeGoal(match.away_team_id)}
               >
                 <Minus />
@@ -4272,10 +4270,10 @@ function Delegation({
     const value = (name: string) => String(new FormData(form).get(name) || "").trim();
     const effectiveStep = admin ? memberStep : memberStep;
     let valid = true;
-    if (effectiveStep === 1) valid = Boolean(value("role"));
-    if (effectiveStep === 2 && admin) valid = Boolean(value("team_id"));
-    if (effectiveStep === (admin ? 3 : 2)) valid = Boolean(value("name"));
-    if (effectiveStep === (admin ? 4 : 3)) valid = Boolean(value("dob"));
+    if (effectiveStep === 1 && admin) valid = Boolean(value("team_id"));
+    if (effectiveStep === (admin ? 2 : 1)) valid = Boolean(value("name"));
+    if (effectiveStep === (admin ? 3 : 2)) valid = Boolean(value("dob"));
+    if (effectiveStep === (admin ? 4 : 3)) valid = Boolean(value("role"));
     if (effectiveStep === (admin ? 5 : 4) && memberType === "PLAYER") valid = Boolean(value("player_role"));
     if (effectiveStep === (admin ? 6 : 5) && memberType === "PLAYER") valid = Boolean(value("number"));
     if (effectiveStep === (admin ? 7 : 6) && memberType === "ASSISTANT") valid = Boolean(value("assistant_player_id"));
@@ -4476,17 +4474,17 @@ function Delegation({
       >
         <form ref={memberFormRef} className="portal-form wizard-form" onInput={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onChange={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
           <div className="wizard-progress wizard-progress-bar" aria-label="Delegation member progress">
-            {(admin ? ["Member type","Team","Full name","Date of birth",...(memberType ? ["Playing role","Shirt number","Linked player","Classification"] : []),"Photo","Notes & save"] : ["Member type","Full name","Date of birth",...(memberType ? ["Playing role","Shirt number","Linked player","Classification"] : []),"Photo","Notes & save"]).map((label, index) => (
+            {(admin ? ["Team","Full name","Date of birth",...(memberType ? ["Member type","Playing role","Shirt number","Linked player","Classification"] : ["Member type"]),"Photo","Notes & save"] : ["Full name","Date of birth",...(memberType ? ["Member type","Playing role","Shirt number","Linked player","Classification"] : ["Member type"]),"Photo","Notes & save"]).map((label, index) => (
               <button type="button" key={label} disabled={index + 1 > memberStep + 1 || (index + 1 === memberStep + 1 && !memberStepValid)} className={memberStep === index + 1 ? "active" : memberStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= memberStep + 1 && (index + 1 !== 1 || admin) && (index + 1 <= memberStep || memberStepValid)) setMemberStep(index + 1); }}>
                 <span>{index + 1}</span>{label}
               </button>
             ))}
           </div>
           {!memberStepValid && <p className="wizard-validation" role="alert">Complete this required field to continue.</p>}
-          {admin && <div hidden={memberStep !== 2}><Field label="Team" name="team_id" children={<select name="team_id" defaultValue={editing?.team_id || (team === "all" ? "" : team)} required><option value="">Choose team</option>{teams.data.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select>} /></div>}
-          <div hidden={memberStep !== (admin ? 3 : 2)}><Field label="Full name" name="name" defaultValue={editing?.name} required /></div>
-          <div hidden={memberStep !== (admin ? 4 : 3)}><Field label="Date of birth" name="dob" type="date" defaultValue={editing?.dob} required /></div>
-          <div hidden={memberStep !== 1}>
+          {admin && <div hidden={memberStep !== 1}><Field label="Team" name="team_id" children={<select name="team_id" defaultValue={editing?.team_id || (team === "all" ? "" : team)} required><option value="">Choose team</option>{teams.data.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select>} /></div>}
+          <div hidden={memberStep !== (admin ? 2 : 1)}><Field label="Full name" name="name" defaultValue={editing?.name} required /></div>
+          <div hidden={memberStep !== (admin ? 3 : 2)}><Field label="Date of birth" name="dob" type="date" defaultValue={editing?.dob} required /></div>
+          <div hidden={memberStep !== (admin ? 4 : 3)}>
             <label className="portal-field"><span>Member type<i className="required-mark" aria-hidden="true">*</i></span><select name="role" value={memberType} required onChange={(event) => { const next = event.target.value as typeof memberType; setMemberType(next); setMemberStepValid(false); setMemberRevision((value) => value + 1); }}><option value="">Choose member type</option><option value="PLAYER">Player</option><option value="COACH">Coach</option><option value="STAFF">Staff</option><option value="TEAM_MANAGER">Team Manager</option><option value="ASSISTANT">Assistant</option><option value="REFEREE">Referee</option></select></label>
           </div>
           <input type="hidden" name="member_type" value={memberType} />
@@ -5997,8 +5995,7 @@ function AdminFinanceSimple({ refresh }: { refresh: number }) {
             />
             <Field              label="Method"
               name="method"
-              children={
-                <select name="method">
+              children={                <select name="method">
                   <option value="BANK_TRANSFER">Bank transfer</option>
                   <option value="ONLINE">Online</option>
                   <option value="CASH">Cash</option>
@@ -7997,8 +7994,7 @@ function TeamOnboardingProgress({
       ? "info"      : current?.key === "delegation"
         ? "delegation"
         : current?.key === "rooms"
-          ? "rooms"
-          : current?.key === "review" ||
+          ? "rooms"          : current?.key === "review" ||
               current?.key === "confirmation" ||
               current?.key === "registration_review"
             ? "review"
