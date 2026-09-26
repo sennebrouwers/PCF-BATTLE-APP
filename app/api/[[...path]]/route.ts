@@ -159,6 +159,8 @@ async function ensureScheduleSchema() {
     "ALTER TABLE tournaments ADD COLUMN fixed_tournament_costs real DEFAULT 0",
     "ALTER TABLE rooms ADD COLUMN room_type text DEFAULT 'DOUBLE'",
     "ALTER TABLE rooms ADD COLUMN team_id text",
+    "ALTER TABLE users ADD COLUMN country text",
+    "ALTER TABLE users ADD COLUMN photo text",
     "ALTER TABLE tournaments ADD COLUMN single_room_supplement real DEFAULT 0",
     "ALTER TABLE tournaments ADD COLUMN emergency_message text",
     "ALTER TABLE teams ADD COLUMN delegation_confirmed integer DEFAULT 0",
