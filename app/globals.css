@@ -8162,3 +8162,26 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     opacity: .55;
   }
 }
+
+
+/* Keep contact artwork above the card background while content stays readable. */
+.contact-grid article .contact-card-art {
+  z-index: 0;
+}
+.contact-grid article > .contact-icon,
+.contact-grid article > div:nth-child(2),
+.contact-grid article > .row-actions,
+.contact-grid article > .portal-badge {
+  position: relative;
+  z-index: 1;
+}
+.contact-grid article > div:nth-child(2) > a {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  margin-top: 5px;
+}
+.contact-grid article > div:nth-child(2) > a + a {
+  margin-top: 7px;
+}
