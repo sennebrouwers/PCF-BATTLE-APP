@@ -7790,9 +7790,9 @@ function ContactsPanel({
             <div>
               <small>{c.role || "Organization"}</small>
               <h4>{c.name}</h4>
-              {c.phone && <a href={`tel:${c.phone}`}>{c.phone}</a>}
-              {c.email && <a href={`mailto:${c.email}`}>{c.email}</a>}
-              {c.whatsapp && <a className="whatsapp-link" href={`https://wa.me/${String(c.whatsapp).replace(/[^\d+]/g, "").replace(/^\+/, "")}`} target="_blank" rel="noreferrer"><WhatsAppIcon /> {c.whatsapp}</a>}
+              {c.phone && <div className="contact-detail-line"><a href={`tel:${c.phone}`}>{c.phone}</a></div>}
+              {c.email && <div className="contact-detail-line"><a href={`mailto:${c.email}`}>{c.email}</a></div>}
+              {c.whatsapp && <div className="contact-detail-line"><a className="whatsapp-link" href={`https://wa.me/${String(c.whatsapp).replace(/[^\\d+]/g, "").replace(/^\\+/, "")}`} target="_blank" rel="noreferrer"><WhatsAppIcon /> {c.whatsapp}</a></div>}
             </div>
             {c.emergency ? <Badge>Emergency</Badge> : null}
             {admin && (
