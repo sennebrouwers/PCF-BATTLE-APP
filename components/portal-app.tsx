@@ -4487,7 +4487,7 @@ function Delegation({
         <form ref={memberFormRef} className="portal-form wizard-form" onInput={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onChange={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
           <div className="wizard-progress wizard-progress-bar" aria-label="Delegation member progress">
             {["Team","Full name","Date of birth","Member type","Playing role","Shirt number","Linked player","Classification","Photo","Notes & save"].map((label, index) => (
-              <button type="button" key={label} disabled={index + 1 > memberStep || (index + 1 === memberStep + 1 && !memberStepValid)} className={memberStep === index + 1 ? "active" : memberStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= memberStep && (index + 1 !== 1 || admin)) setMemberStep(index + 1); }}>
+              <button type="button" key={label} disabled={index + 1 > memberStep + 1 || (index + 1 === memberStep + 1 && !memberStepValid)} className={memberStep === index + 1 ? "active" : memberStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= memberStep + 1 && (index + 1 !== 1 || admin) && (index + 1 <= memberStep || memberStepValid)) setMemberStep(index + 1); }}>
                 <span>{index + 1}</span>{label}
               </button>
             ))}
@@ -6831,7 +6831,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
               <form ref={wizardFormRef} className="portal-form team-wizard wizard-form" onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
                 <div className="wizard-progress wizard-progress-bar" aria-label="Team creation progress">
                   {["Team name","Country","Team logo","Team photo","Team color","Group","Contact name","Email","Phone","Delegation size","Invoice option","Billing name","Billing address","Postal code","City","Billing country","Login email","Password","Review"].map((label, index) => (
-                    <button type="button" key={label} disabled={index + 1 > teamStep || index + 1 === teamStep + 1 && !stepValid} className={teamStep === index + 1 ? "active" : teamStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= teamStep) setTeamStep(index + 1); }}>
+                    <button type="button" key={label} disabled={index + 1 > teamStep + 1 || index + 1 === teamStep + 1 && !stepValid} className={teamStep === index + 1 ? "active" : teamStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= teamStep + 1 && (index + 1 <= teamStep || stepValid)) setTeamStep(index + 1); }}>
                       <span>{index + 1}</span>{label}
                     </button>
                   ))}
