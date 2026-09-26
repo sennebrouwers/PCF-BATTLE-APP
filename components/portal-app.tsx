@@ -4297,6 +4297,9 @@ function Delegation({
     saveLock.current = true;
     setBusy(true);
     const b: any = Object.fromEntries(new FormData(e.currentTarget));
+    // Keep the controlled member-type selector as the single source of truth.
+    b.role = memberType;
+    b.member_type = memberType;
     const portraitFile = b.photo_file;
     delete b.photo_file;
     if (portraitFile instanceof File && portraitFile.size) {
@@ -4512,7 +4515,7 @@ function Delegation({
           <div hidden={memberStep !== 1}>
             <label className="portal-field">
               <span>Member type<i className="required-mark" aria-hidden="true">*</i></span>
-              <select name="role" value={memberType} required onChange={(event) => { setMemberType(event.target.value as typeof memberType); setMemberRevision((value) => value + 1); }}>
+              <select name="role" value={memberType} required onChange={(event) => { const next = event.target.value as typeof memberType; setMemberType(next); setMemberStepValid(false); setMemberRevision((value) => value + 1); }}>
                 <option value="PLAYER">Player</option>
                 <option value="COACH">Coach</option>
                 <option value="STAFF">Staff</option>
