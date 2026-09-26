@@ -7788,7 +7788,7 @@ function ContactsPanel({
               {c.whatsapp && !c.phone && !c.email ? <WhatsAppIcon /> : <Phone />}
             </span>
             <div>
-              <small>{c.role || "Organization"}</small>
+              <small>{c.whatsapp && !c.phone && !c.email ? "WhatsApp" : c.role || "Organization"}</small>
               <h4>{c.name}</h4>
               {c.phone && <div className="contact-detail-line"><a href={`tel:${c.phone}`}>{c.phone}</a></div>}
               {c.email && <div className="contact-detail-line"><a href={`mailto:${c.email}`}>{c.email}</a></div>}
