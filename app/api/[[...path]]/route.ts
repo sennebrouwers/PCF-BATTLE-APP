@@ -3259,7 +3259,9 @@ export async function PUT(
           : 0
         : k === "sort_order"
           ? Number(body[k])
-          : body[k] || null,
+          : k === "phone"
+            ? String(body[k] || "").trim()
+            : String(body[k] || "").trim() || null,
     );
     await db()
       .prepare(
