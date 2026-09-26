@@ -7832,6 +7832,12 @@ function ContactsPanel({
               defaultValue={editing?.role}
             />
             
+            <Field
+              label="Email address"
+              name="email"
+              type="email"
+              defaultValue={editing?.email}
+            />
             <fieldset className="contact-method-picker">
               <legend>Contact methods</legend>
               <small>Select only the ways people should contact this person.</small>
