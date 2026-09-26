@@ -1997,8 +1997,7 @@ function OperationsHub({
             <small>Control the active match from one focused workspace</small>
           </div>
           {checks.data?.issues && (
-            <Badge>              {checks.data.ready                ? "Ready"                : `${checks.data.issues.length} checks`}            </Badge>          )}        </div>        {live ? (
-          <MatchCard
+            <Badge>              {checks.data.ready                ? "Ready"                : `${checks.data.issues.length} checks`}            </Badge>          )}        </div>        {live ? (          <MatchCard
             match={live}
             teams={teams.data}
             editable
@@ -3997,8 +3996,7 @@ export function MatchCard({
               <small>HOME</small>              <button
                 disabled={busy || match.away_score < 1}                aria-label="Remove latest away goal"
                 onClick={() => removeGoal(match.away_team_id)}              >
-                <Minus />
-              </button>
+                <Minus />              </button>
               <button
                 disabled={busy}
                 aria-label="Record away goal"
@@ -4472,11 +4470,11 @@ function Delegation({
       >
         <form ref={memberFormRef} className="portal-form wizard-form" onInput={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onChange={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
           <div className="wizard-progress wizard-progress-bar" aria-label="Delegation member progress">
-            {(admin ? ["Team","Full name","Date of birth",...(memberType ? ["Member type","Playing role","Shirt number","Linked player","Classification"] : ["Member type"]),"Photo","Notes & save"] : ["Full name","Date of birth",...(memberType ? ["Member type","Playing role","Shirt number","Linked player","Classification"] : ["Member type"]),"Photo","Notes & save"]).map((label, index) => (
+            {(admin ? ["Team","Full name","Date of birth",...(memberType ? ["Member type","Playing role","Shirt number","Linked player","Classification"] : ["Member type"]),"Photo","Notes & save"] : ["Full name","Date of birth",...(memberType ? ["Member type","Playing role","Shirt number","Linked player","Classification"] : ["Member type"]),"Photo","Notes & save"]).map((label, index) => { if ((!memberType && ["Playing role","Shirt number","Linked player","Classification"].includes(label)) || (memberType !== "PLAYER" && ["Playing role","Shirt number","Classification"].includes(label)) || (memberType !== "ASSISTANT" && label === "Linked player")) return null; return (
               <button type="button" key={label} disabled={index + 1 > memberStep + 1 || (index + 1 === memberStep + 1 && !memberStepValid)} className={memberStep === index + 1 ? "active" : memberStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= memberStep + 1 && (index + 1 !== 1 || admin) && (index + 1 <= memberStep || memberStepValid)) setMemberStep(index + 1); }}>
                 <span>{index + 1}</span>{label}
               </button>
-            ))}
+            ); })}
           </div>
           {!memberStepValid && <p className="wizard-validation" role="alert">Complete this required field to continue.</p>}
           {admin && <div hidden={memberStep !== 1}><Field label="Team" name="team_id" children={<select name="team_id" defaultValue={editing?.team_id || (team === "all" ? "" : team)} required><option value="">Choose team</option>{teams.data.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select>} /></div>}
@@ -5997,8 +5995,7 @@ function AdminFinanceSimple({ refresh }: { refresh: number }) {
                   <option value="BANK_TRANSFER">Bank transfer</option>
                   <option value="ONLINE">Online</option>                  <option value="CASH">Cash</option>
                 </select>
-              }
-            />
+              }            />
             <Field label="Payment reference" name="reference" />
             <Field
               label="Date received"
@@ -7997,8 +7994,7 @@ function TeamOnboardingProgress({
             ? "review"            : current?.key === "deposit" || current?.key === "balance"
               ? "finance"
               : null;
-  return (
-    <section
+  return (    <section
       className={`onboarding-shell panel${actionPage ? " is-clickable" : ""}`}
       aria-label="Tournament onboarding progress"
       onClick={() => actionPage && onNavigate(actionPage)}
