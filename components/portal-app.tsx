@@ -1997,8 +1997,7 @@ function OperationsHub({
             <small>Control the active match from one focused workspace</small>
           </div>
           {checks.data?.issues && (
-            <Badge>              {checks.data.ready                ? "Ready"                : `${checks.data.issues.length} checks`}            </Badge>          )}        </div>        {live ? (          <MatchCard
-            match={live}
+            <Badge>              {checks.data.ready                ? "Ready"                : `${checks.data.issues.length} checks`}            </Badge>          )}        </div>        {live ? (          <MatchCard            match={live}
             teams={teams.data}
             editable
             onChanged={matches.load}
@@ -3997,8 +3996,7 @@ export function MatchCard({
                 disabled={busy || match.away_score < 1}                aria-label="Remove latest away goal"
                 onClick={() => removeGoal(match.away_team_id)}              >
                 <Minus />              </button>
-              <button
-                disabled={busy}
+              <button                disabled={busy}
                 aria-label="Record away goal"
                 onClick={() => openGoal(match.away_team_id)}
               >
@@ -4481,7 +4479,7 @@ function Delegation({
           <div hidden={memberStep !== (admin ? 2 : 1)}><Field label="Full name" name="name" defaultValue={editing?.name} required /></div>
           <div hidden={memberStep !== (admin ? 3 : 2)}><Field label="Date of birth" name="dob" type="date" defaultValue={editing?.dob} required /></div>
           <div hidden={memberStep !== (admin ? 4 : 3)}>
-            <label className="portal-field"><span>Member type<i className="required-mark" aria-hidden="true">*</i></span><select name="role" defaultValue={memberType} required onChange={(event) => { const next = event.target.value as typeof memberType; setMemberType(next); setMemberStepValid(false); setMemberRevision((value) => value + 1); }}><option value="">Choose member type</option><option value="PLAYER">Player</option><option value="COACH">Coach</option><option value="STAFF">Staff</option><option value="TEAM_MANAGER">Team Manager</option><option value="ASSISTANT">Assistant</option><option value="REFEREE">Referee</option></select></label>
+            <label className="portal-field"><span>Member type<i className="required-mark" aria-hidden="true">*</i></span><select name="role" defaultValue={memberType} required onChange={(event) => { const next = event.target.value as typeof memberType; setMemberType(next); setMemberStepValid(false); setMemberRevision((value) => value + 1); }}><option value="">Choose member type</option><option value="PLAYER">Player</option><option value="COACH">Coach</option><option value="TEAM_MANAGER">Team Manager</option><option value="ASSISTANT">Assistant</option><option value="REFEREE">Referee</option></select></label>
           </div>
           <input type="hidden" name="member_type" value={memberType} />
           {memberType === "PLAYER" && <div hidden={memberStep !== (admin ? 5 : 4)}><Field label="Playing role" name="player_role" children={<select name="player_role" defaultValue={editing?.player_role || "KEEPER"}><option value="KEEPER">Goalkeeper</option><option value="T_STICK">T-stick</option><option value="HANDSTICK">Handstick</option></select>} /></div>}
@@ -5997,8 +5995,7 @@ function AdminFinanceSimple({ refresh }: { refresh: number }) {
                 </select>
               }            />
             <Field label="Payment reference" name="reference" />
-            <Field
-              label="Date received"
+            <Field              label="Date received"
               name="received_at"
               type="date"
               required
@@ -7997,8 +7994,7 @@ function TeamOnboardingProgress({
   return (    <section
       className={`onboarding-shell panel${actionPage ? " is-clickable" : ""}`}
       aria-label="Tournament onboarding progress"
-      onClick={() => actionPage && onNavigate(actionPage)}
-      onKeyDown={(event) => {
+      onClick={() => actionPage && onNavigate(actionPage)}      onKeyDown={(event) => {
         if (actionPage && (event.key === "Enter" || event.key === " ")) {
           event.preventDefault();
           onNavigate(actionPage);
