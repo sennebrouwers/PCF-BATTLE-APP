@@ -7033,7 +7033,7 @@ function UsersPanel({ refresh }: { refresh: number }) {
   const users = useData("/users", refresh),
     teams = useData("/teams", refresh),
     [editing, setEditing] = useState<Row | null | undefined>(undefined),
-    [details, setDetails] = useState<Row | null>(null);
+
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const b: any = Object.fromEntries(new FormData(e.currentTarget));
@@ -7773,7 +7773,7 @@ function ContactsPanel({
       </div>
       <div className="contact-grid">
         {contacts.data.map((c: Row) => (
-          <article key={c.id} className={`${c.emergency ? "emergency" : ""}${c.whatsapp && !c.phone && !c.email ? " whatsapp-only" : ""}`} onClick={() => setDetails(c)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setDetails(c); }}>
+          <article key={c.id} className={`${c.emergency ? "emergency" : ""}${c.whatsapp && !c.phone && !c.email ? " whatsapp-only" : ""}`} >
             <span className="contact-icon">
               {c.whatsapp && !c.phone && !c.email ? <WhatsAppIcon /> : <Phone />}
             </span>
@@ -7878,18 +7878,7 @@ function ContactsPanel({
           </form>
         </Modal>
       )}
-      {admin && details && (
-        <Modal title={`${details.name} · Contact details`} open={Boolean(details)} onOpenChange={(open) => !open && setDetails(null)}>
-          <div className="contact-details">
-            <p><strong>Name</strong><span>{details.name}</span></p>
-            <p><strong>Role or department</strong><span>{details.role || "Organization"}</span></p>
-            <p><strong>Phone</strong><span>{details.phone ? <a href={`tel:${details.phone}`}>{details.phone}</a> : "—"}</span></p>
-            <p><strong>WhatsApp</strong><span>{details.whatsapp ? <a href={`https://wa.me/${String(details.whatsapp).replace(/[^\d+]/g, "").replace(/^\+/, "")}`} target="_blank" rel="noreferrer">{details.whatsapp}</a> : "—"}</span></p>
-            <p><strong>Email</strong><span>{details.email ? <a href={`mailto:${details.email}`}>{details.email}</a> : "—"}</span></p>
-            <p><strong>Contact type</strong><span>{details.emergency ? "Emergency contact" : "General contact"}</span></p>
-          </div>
-        </Modal>
-      )}
+
     </section>
   );
 }
