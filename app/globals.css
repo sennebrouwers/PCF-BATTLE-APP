@@ -9370,3 +9370,73 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .team-editor-dialog .wizard-content > *{
   margin-inline:auto!important;
 }
+
+
+/* Wizard vertical overflow: fixed header/steps and footer, scrollable content only */
+.member-editor-dialog,
+.team-editor-dialog{
+  display:flex!important;
+  flex-direction:column!important;
+  max-height:min(760px,calc(100vh - 48px))!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+.member-editor-dialog .modal-header,
+.team-editor-dialog .modal-header{
+  flex:0 0 auto!important;
+  min-height:0!important;
+}
+.member-editor-dialog .modal-body,
+.team-editor-dialog .modal-body{
+  display:flex!important;
+  flex:1 1 auto!important;
+  flex-direction:column!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+.member-editor-dialog .wizard-form,
+.team-editor-dialog .wizard-form{
+  display:flex!important;
+  flex:1 1 auto!important;
+  flex-direction:column!important;
+  min-height:0!important;
+  height:auto!important;
+  max-height:none!important;
+  overflow:hidden!important;
+}
+.member-editor-dialog .wizard-subtitle,
+.team-editor-dialog .wizard-subtitle,
+.member-editor-dialog .wizard-topbar,
+.team-editor-dialog .wizard-topbar{
+  flex:0 0 auto!important;
+}
+.member-editor-dialog .wizard-content,
+.team-editor-dialog .wizard-content{
+  display:flex!important;
+  flex:1 1 auto!important;
+  flex-direction:column!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding-bottom:40px!important;
+  scrollbar-width:thin!important;
+}
+.member-editor-dialog .wizard-content .wizard-question,
+.team-editor-dialog .wizard-content .wizard-question{
+  flex:0 0 auto!important;
+}
+.member-editor-dialog .wizard-content>div:not(.wizard-question):not([hidden]),
+.team-editor-dialog .wizard-content>div:not(.wizard-question):not([hidden]){
+  flex:0 0 auto!important;
+  min-height:max-content!important;
+}
+.member-editor-dialog .wizard-footer,
+.team-editor-dialog .wizard-footer{
+  flex:0 0 auto!important;
+  min-height:86px!important;
+  height:auto!important;
+  margin-top:0!important;
+  position:static!important;
+  z-index:2!important;
+}
