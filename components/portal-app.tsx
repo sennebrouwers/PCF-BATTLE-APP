@@ -4263,10 +4263,7 @@ function Delegation({
     if (effectiveStep === 1 && admin) valid = Boolean(value("team_id"));
     if (effectiveStep === (admin ? 2 : 1)) valid = Boolean(value("name"));
     if (effectiveStep === (admin ? 3 : 2)) valid = Boolean(value("dob"));
-    if (effectiveStep === (admin ? 4 : 3)) valid = Boolean(value("role"));
-    if (effectiveStep === (admin ? 5 : 4) && memberType === "PLAYER") valid = Boolean(value("player_role"));
-    if (effectiveStep === (admin ? 6 : 5) && memberType === "PLAYER") valid = Boolean(value("number"));
-    if (effectiveStep === (admin ? 7 : 6) && memberType === "ASSISTANT") valid = Boolean(value("assistant_player_id"));
+    if (effectiveStep === (admin ? 4 : 3)) valid = Boolean(value("role")) && (memberType !== "PLAYER" || Boolean(value("number")));
     setMemberStepValid(valid);
   }
   useEffect(() => { readMemberStepValidity(); }, [memberStep, memberType, editing, memberRevision]);
