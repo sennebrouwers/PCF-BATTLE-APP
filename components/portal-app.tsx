@@ -6789,11 +6789,24 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
       delete b.team_photo_file;
       if (/^#[0-9a-fA-F]{6}$/.test(String(b.color_hex || ""))) b.color = b.color_hex;
       delete b.color_hex;
+      b.invoice_requested = b.invoice_requested ? 1 : 0;
       if (!b.invoice_requested) {
         b.billing_name = "";
         b.billing_address = "";
         b.vat_number = "";
+        b.billing_postal_code = "";
+        b.billing_city = "";
+        b.billing_country = "";
       }
+      const allowedTeamFields = new Set([
+        "name", "contact_person", "contact_email", "phone", "phone_country_code",
+        "whatsapp", "address", "address_street", "address_number",
+        "address_postal_code", "address_city", "address_country", "website",
+        "group_id", "expected_delegation_size", "invoice_requested", "billing_address",
+        "billing_name", "vat_number", "billing_postal_code", "billing_city",
+        "billing_country", "color", "logo", "team_photo", "login_email", "login_password",
+      ]);
+      for (const key of Object.keys(b)) if (!allowedTeamFields.has(key)) delete b[key];
       editing?.id
         ? await api(`/teams/${editing.id}`, {
             method: "PUT",
