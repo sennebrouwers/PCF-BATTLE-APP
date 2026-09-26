@@ -7032,7 +7032,7 @@ function ResourcePanel({ refresh }: { refresh: number }) {
 function UsersPanel({ refresh }: { refresh: number }) {
   const users = useData("/users", refresh),
     teams = useData("/teams", refresh),
-    [editing, setEditing] = useState<Row | null | undefined>(undefined),
+    [editing, setEditing] = useState<Row | null | undefined>(undefined);
 
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
