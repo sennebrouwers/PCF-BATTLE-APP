@@ -9214,3 +9214,10 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
  .member-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer):not([hidden]),
  .team-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer):not([hidden]){top:-90px!important}
 }
+
+
+/* Use one progress line only */
+.member-editor-dialog .wizard-topbar,
+.team-editor-dialog .wizard-topbar{border-bottom:0!important}
+.member-editor-dialog .wizard-topbar button::after,
+.team-editor-dialog .wizard-topbar button::after{bottom:0!important}
