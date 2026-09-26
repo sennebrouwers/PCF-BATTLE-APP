@@ -7695,6 +7695,11 @@ function ChatPanel({ refresh }: { refresh: number }) {
   );
 }
 
+const contactCardArt = {
+  phone: "https://kpowan6gu9zomqje.private.blob.vercel-storage.com/ChatGPT%20Image%20Sep%2026,%202026,%2005_47_49%20PM.png?vercel-blob-valid-until=1790437982947&vercel-blob-delegation=eyJzdG9yZUlkIjoic3RvcmVfa1Bvd0FuNkdVOVpPTVFKZSIsIm93bmVySWQiOiJ0ZWFtX0xoeWN2R3BITklyejNCTWlMZk42Y2Z6ZiIsInBhdGhuYW1lIjoiKiIsIm9wZXJhdGlvbnMiOlsiZ2V0IiwiaGVhZCJdLCJ2YWxpZFVudGlsIjoxNzkwNDgxMTE4MDI0LCJpYXQiOjE3OTA0Mzc5MTgxNTl9.XEYZcWOCFmk-7wJ5z3BOTYoFvIAkeij32b6MMd_N2xQ&vercel-blob-signature=C4ILD96OikVISyPr8ZSn730Ls6jBzrWJB6VLX0wt1PI",
+  whatsapp: "https://kpowan6gu9zomqje.private.blob.vercel-storage.com/ChatGPT%20Image%20Sep%2026,%202026,%2005_46_59%20PM.png?vercel-blob-valid-until=1790437992613&vercel-blob-delegation=eyJzdG9yZUlkIjoic3R0b3Jla1Bvd0FuNkdVOVpPTVFKZSIsIm93bmVySWQiOiJ0ZWFtX0xoeWN2R3BITklyejNCTWlMZk42Y2Z6ZiIsInBhdGhuYW1lIjoiKiIsIm9wZXJhdGlvbnMiOlsiZ2V0IiwiaGVhZCJ9.XEYZcWOCFmk-7wJ5z3BOTYoFvIAkeij32b6MMd_N2xQ&vercel-blob-signature=nXFVG3jm9B3vVRQh0DsH9T0WTETdQklv9_fzHXJ6C7w",
+} as const;
+
 function ContactsPanel({
   refresh,
   admin = false,
@@ -7772,7 +7777,13 @@ function ContactsPanel({
       </div>
       <div className="contact-grid">
         {contacts.data.map((c: Row) => (
-          <article key={c.id} className={`${c.emergency ? "emergency" : ""}${c.whatsapp && !c.phone && !c.email ? " whatsapp-only" : ""}`} >
+          <article key={c.id} className={`${c.emergency ? "emergency" : ""}${c.whatsapp && !c.phone && !c.email ? " whatsapp-only" : ""}`}>
+            <img
+              className="contact-card-art"
+              src={c.whatsapp && !c.phone && !c.email ? contactCardArt.whatsapp : contactCardArt.phone}
+              alt=""
+              aria-hidden="true"
+            />
             <span className="contact-icon">
               {c.whatsapp && !c.phone && !c.email ? <WhatsAppIcon /> : <Phone />}
             </span>
