@@ -9440,3 +9440,30 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   position:static!important;
   z-index:2!important;
 }
+
+
+/* Keep final wizard actions on one visible footer row */
+.member-editor-dialog .wizard-footer:has(.form-actions),
+.team-editor-dialog .wizard-footer:has(.form-actions){
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:16px!important;
+}
+.member-editor-dialog .wizard-footer:has(.form-actions) .wizard-actions,
+.team-editor-dialog .wizard-footer:has(.form-actions) .wizard-actions{
+  width:auto!important;
+  flex:1 1 auto!important;
+  min-width:0!important;
+  margin:0!important;
+  justify-content:flex-start!important;
+}
+.member-editor-dialog .wizard-footer:has(.form-actions) .form-actions,
+.team-editor-dialog .wizard-footer:has(.form-actions) .form-actions{
+  display:flex!important;
+  flex:0 0 auto!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:12px!important;
+  margin:0!important;
+}
