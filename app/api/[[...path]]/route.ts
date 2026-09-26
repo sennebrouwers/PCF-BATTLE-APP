@@ -191,6 +191,7 @@ async function ensureScheduleSchema() {
     "ALTER TABLE teams ADD COLUMN contact_email text",
     "ALTER TABLE teams ADD COLUMN whatsapp text",
     "ALTER TABLE teams ADD COLUMN team_photo text",
+    "DROP INDEX IF EXISTS rooms_number_unique",
     "ALTER TABLE teams ADD COLUMN withdrawal_reason text",
     "ALTER TABLE delegation_members ADD COLUMN member_type text DEFAULT 'STAFF'",
     "ALTER TABLE delegation_members ADD COLUMN player_role text",
