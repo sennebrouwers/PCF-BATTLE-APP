@@ -9139,3 +9139,41 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .team-editor-dialog .wizard-form>div:not(.wizard-topbar):not(.wizard-question):not(.wizard-footer):not([hidden]){
   align-self:center!important;
 }
+
+
+/* Match compact reference proportions */
+.member-editor-dialog,
+.team-editor-dialog{
+  max-height:min(780px,calc(100vh - 80px))!important;
+}
+.member-editor-dialog .wizard-form,
+.team-editor-dialog .wizard-form{
+  height:min(560px,calc(100vh - 250px))!important;
+  min-height:0!important;
+}
+.member-editor-dialog .wizard-topbar,
+.team-editor-dialog .wizard-topbar{
+  min-height:68px!important;
+  margin-top:18px!important;
+  padding-bottom:16px!important;
+}
+.member-editor-dialog .wizard-question,
+.team-editor-dialog .wizard-question{
+  margin-top:38px!important;
+  margin-bottom:18px!important;
+}
+.member-editor-dialog .wizard-topbar::before,
+.team-editor-dialog .wizard-topbar::before{
+  content:""!important;
+  position:absolute!important;
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  height:3px!important;
+  border-radius:3px!important;
+  background:var(--border,#403746)!important;
+}
+.member-editor-dialog .wizard-topbar button::after,
+.team-editor-dialog .wizard-topbar button::after{
+  z-index:1!important;
+}
