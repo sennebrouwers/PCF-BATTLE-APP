@@ -7498,3 +7498,1410 @@ function SettingsPanel({ reload }: { reload: () => void }) {
           />
           <div className="form-actions">
             <button className="btn primary">Update password</button>
+          </div>
+          {error && <p className="formerror">{error}</p>}
+        </form>
+      </section>
+    </>
+  );
+}
+
+function ChatPanel({ refresh }: { refresh: number }) {
+  const messages = useData("/messages", refresh, true),
+    recipients = useData("/message-recipients", refresh),
+    [selected, setSelected] = useState(""),
+    [busy, setBusy] = useState(false);
+  const me = JSON.parse(localStorage.getItem("phb_user") || "{}");
+  useEffect(() => {
+    if (!selected && recipients.data[0]?.id) setSelected(recipients.data[0].id);
+  }, [recipients.data, selected]);
+  const thread = messages.data
+    .filter(
+      (m: Row) =>
+        (m.sender_user_id === me.id && m.recipient_user_id === selected) ||
+        (m.sender_user_id === selected && m.recipient_user_id === me.id),
+    )
+    .sort((a: Row, b: Row) =>
+      String(a.created_at).localeCompare(String(b.created_at)),
+    );
+  const unreadFor = (id: string) =>
+    messages.data.filter(
+      (m: Row) =>
+        m.sender_user_id === id && m.recipient_user_id === me.id && !m.read_at,
+    ).length;
+  useEffect(() => {
+    if (!selected) return;
+    const unread = messages.data.filter(
+      (m: Row) =>
+        m.sender_user_id === selected &&
+        m.recipient_user_id === me.id &&
+        !m.read_at,
+    );
+    if (!unread.length) return;
+    Promise.all(
+      unread.map((m: Row) =>
+        api(`/messages/${m.id}`, {
+          method: "PUT",
+          body: JSON.stringify({ read: true }),
+        }),
+      ),
+    )
+      .then(messages.load)
+      .catch(() => {});
+  }, [
+    selected,
+    messages.data.map((m: Row) => `${m.id}:${m.read_at || ""}`).join("|"),
+  ]);
+  async function send(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!selected) return toast.error("Choose a conversation");
+    const form = e.currentTarget,
+      body = String(new FormData(form).get("body") || "").trim();
+    if (!body) return;
+    setBusy(true);
+    try {
+      const result = await api("/messages", {
+        method: "POST",
+        body: JSON.stringify({
+          recipient_user_id: selected,
+          subject: "Chat message",
+          body,
+        }),
+      });
+      form.reset();
+      await messages.load();
+      if (!result.emailSent)
+        toast.info("Message sent; email delivery is not configured");
+    } catch (err: unknown) {
+      toast.error(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function removeConversation() {
+    if (!selected) return;
+    await api(`/messages/conversation/${selected}`, { method: "DELETE" });
+    toast.success("Conversation removed from your inbox");
+    setSelected("");
+    await messages.load();
+  }
+  const person = recipients.data.find((r: Row) => r.id === selected);
+  return (
+    <section className="panel chat-panel">
+      <div className="panelhead">
+        <div>
+          <h3>Messages</h3>
+          <small>
+            Chat with{" "}
+            {me.role === "ADMIN"
+              ? "teams and referees"
+              : "the tournament organization"}
+          </small>
+        </div>
+      </div>
+      <div className="chat-layout">
+        <aside className="chat-contacts">
+          <b>Conversations</b>
+          {recipients.data.map((r: Row) => {
+            const unread = unreadFor(r.id),
+              last = messages.data.find(
+                (m: Row) =>
+                  m.sender_user_id === r.id || m.recipient_user_id === r.id,
+              );
+            return (
+              <button
+                key={r.id}
+                className={selected === r.id ? "active" : ""}
+                onClick={() => setSelected(r.id)}
+              >
+                <span className="member-avatar">
+                  {r.name
+                    .split(" ")
+                    .map((x: string) => x[0])
+                    .join("")
+                    .slice(0, 2)}
+                </span>
+                <span>
+                  <b>{r.name}</b>
+                  <small>{last?.body || r.role}</small>
+                </span>
+                {unread > 0 && <em>{unread}</em>}
+              </button>
+            );
+          })}
+        </aside>
+        <div className="chat-thread">
+          <header>
+            <span className="member-avatar">
+              {person?.name
+                ?.split(" ")
+                .map((x: string) => x[0])
+                .join("")
+                .slice(0, 2) || "?"}
+            </span>
+            <span>
+              <b>{person?.name || "Choose a conversation"}</b>
+              <small>
+                {person?.role &&
+                !String(person?.name || "")
+                  .toLowerCase()
+                  .includes(String(person.role).toLowerCase())
+                  ? person.role
+                  : ""}
+              </small>
+            </span>
+            {selected && (
+              <Confirm
+                title="Delete conversation"
+                text="Remove this conversation from your inbox? The other participant keeps their copy."
+                onConfirm={removeConversation}
+              >
+                <button
+                  className="chat-delete"
+                  aria-label="Delete conversation"
+                >
+                  <Trash2 /> Delete
+                </button>
+              </Confirm>
+            )}
+          </header>
+          <div className="chat-history">
+            {thread.length ? (
+              thread.map((m: Row) => (
+                <div
+                  key={m.id}
+                  className={`chat-bubble ${m.sender_user_id === me.id ? "mine" : "theirs"}`}
+                >
+                  <p>{m.body}</p>
+                  <time>
+                    {new Date(m.created_at).toLocaleString("en-BE", {
+                      day: "2-digit",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </time>
+                </div>
+              ))
+            ) : (
+              <div className="chat-welcome">
+                <Mail />
+                <b>No messages yet</b>
+                <span>Start the conversation below.</span>
+              </div>
+            )}
+          </div>
+          <form className="chat-reply" onSubmit={send}>
+            <textarea
+              name="body"
+              rows={2}
+              placeholder="Write a reply…"
+              aria-label="Write a reply"
+              required
+            />
+            <button
+              className="btn primary"
+              disabled={busy || !selected}
+              aria-label="Send reply"
+            >
+              <Send />
+              {busy ? "Sending…" : "Send"}
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const contactCardArt = {
+  phone: "https://3iyfxkvvovaczedh.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%2026%2C%202026%2C%2005_47_49%20PM.png",
+  whatsapp: "https://3iyfxkvvovaczedh.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%2026%2C%202026%2C%2005_46_59%20PM.png",
+} as const;;
+
+function ContactsPanel({
+  refresh,
+  admin = false,
+}: {
+  refresh: number;
+  admin?: boolean;
+}) {
+  const contacts = useData("/contacts", refresh),
+    [editing, setEditing] = useState<Row | null | undefined>(undefined),
+    [busy, setBusy] = useState(false),
+    [sameAsPhone, setSameAsPhone] = useState(true),
+    [contactMethods, setContactMethods] = useState<string[]>(["phone"]);
+  const saveLock = useRef(false);
+  async function save(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (saveLock.current || busy) return;
+    saveLock.current = true;
+    setBusy(true);
+    const b: any = Object.fromEntries(new FormData(e.currentTarget));
+    const hasPhone = contactMethods.includes("phone");
+    const hasWhatsApp = contactMethods.includes("whatsapp");
+    if (!hasPhone) b.phone = "";
+    if (!hasWhatsApp) b.whatsapp = null;
+    b.emergency = b.emergency === "1";
+    b.sort_order = Number(b.sort_order || 0);
+    if (hasWhatsApp && hasPhone && sameAsPhone) b.whatsapp = b.phone || null;
+    else if (hasWhatsApp) b.whatsapp = String(b.whatsapp || "").trim() || null;
+    if (!b.phone && !b.whatsapp && !b.email) {
+      toast.error("Select at least one contact method and provide its value");
+      saveLock.current = false;
+      setBusy(false);
+      return;
+    }
+    if (hasPhone && !b.phone) {
+      toast.error("Enter a phone number or deselect Phone");
+      saveLock.current = false;
+      setBusy(false);
+      return;
+    }
+    if (hasWhatsApp && !sameAsPhone && !b.whatsapp) {
+      toast.error("Enter a WhatsApp number or deselect WhatsApp");
+      saveLock.current = false;
+      setBusy(false);
+      return;
+    }
+    try {
+      editing?.id
+        ? await api(`/contacts/${editing.id}`, {
+            method: "PUT",
+            body: JSON.stringify(b),
+          })
+        : await api("/contacts", { method: "POST", body: JSON.stringify(b) });
+      toast.success("Contact saved");
+      setEditing(undefined);
+      contacts.load();
+    } catch (err: unknown) {
+      toast.error(errorMessage(err));
+    } finally {
+      saveLock.current = false;
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="panel contacts-panel">
+      <div className="panelhead">
+        <div>
+          <h3>Organization contacts</h3>
+          <small>Call or email the tournament organization</small>
+        </div>
+        {admin && (
+          <button className="btn primary" onClick={() => { setSameAsPhone(true); setContactMethods(["phone"]); setEditing(null); }}>
+            <Plus /> Add contact
+          </button>
+        )}
+      </div>
+      <div className="contact-grid">
+        {[...contacts.data]
+          .sort((a: Row, b: Row) => {
+            const aWhatsAppOnly = Boolean(a.whatsapp && !a.phone && !a.email);
+            const bWhatsAppOnly = Boolean(b.whatsapp && !b.phone && !b.email);
+            return Number(aWhatsAppOnly) - Number(bWhatsAppOnly);
+          })
+          .map((c: Row) => (
+          <article key={c.id} className={`${c.emergency ? "emergency" : ""}${c.whatsapp && !c.phone && !c.email ? " whatsapp-only" : ""}`}>
+            <span className="contact-icon">
+              {c.whatsapp && !c.phone && !c.email ? <WhatsAppIcon /> : <Phone />}
+            </span>
+            <div>
+              <small>{c.role === "Organization" || !c.role ? "General Questions" : c.role}</small>
+              <h4>{c.name}</h4>
+              {c.phone && <div className="contact-detail-line"><a href={`tel:${c.phone}`}>{c.phone}</a></div>}
+              {c.email && <div className="contact-detail-line"><a href={`mailto:${c.email}`}>{c.email}</a></div>}
+              {c.whatsapp && <div className="contact-detail-line"><a className="whatsapp-link" href={`https://wa.me/${String(c.whatsapp).replace(/[^\\d+]/g, "").replace(/^\\+/, "")}`} target="_blank" rel="noreferrer"><WhatsAppIcon /> {c.whatsapp}</a></div>}
+            </div>
+            {c.emergency ? <Badge>Emergency</Badge> : null}
+            {admin && (
+              <div className="row-actions">
+                <button onClick={() => { setSameAsPhone(Boolean(c.phone && c.whatsapp && c.phone === c.whatsapp)); setContactMethods(c.phone && c.whatsapp ? ["phone", "whatsapp"] : c.whatsapp ? ["whatsapp"] : ["phone"]); setEditing(c); }}>Edit</button>
+                <Confirm
+                  title="Delete contact"
+                  text={`Delete ${c.name}?`}
+                  onConfirm={async () => {
+                    await api(`/contacts/${c.id}`, { method: "DELETE" });
+                    contacts.load();
+                  }}
+                >
+                  <button className="danger-link">Delete</button>
+                </Confirm>
+              </div>
+            )}
+          </article>
+        ))}
+      </div>
+      {admin && (
+        <Modal
+          title={editing?.id ? "Edit contact" : "Add contact"}
+          open={editing !== undefined}
+          onOpenChange={(v) => !v && setEditing(undefined)}
+        >
+          <form key={editing?.id || "new-contact"} className="portal-form" noValidate onSubmit={save}>
+            <Field
+              label="Name"
+              name="name"
+              defaultValue={editing?.name}
+              required
+            />
+            <Field
+              label="Role or department"
+              name="role"
+              defaultValue={editing?.role}
+            />
+            
+            <Field
+              label="Email address"
+              name="email"
+              type="email"
+              defaultValue={editing?.email}
+            />
+            <fieldset className="contact-method-picker">
+              <legend>Contact methods</legend>
+              <small>Select only the ways people should contact this person.</small>
+              {[
+                ["phone", "Phone"],
+                ["whatsapp", "WhatsApp"],
+                ["both", "Phone + WhatsApp"],
+              ].map(([value, label]) => (
+                <label key={value}>
+                  <input
+                    type="radio"
+                    name="contact_method"
+                    checked={
+                      value === "both"
+                        ? contactMethods.includes("phone") && contactMethods.includes("whatsapp")
+                        : contactMethods.length === 1 && contactMethods.includes(value)
+                    }
+                    onChange={() =>
+                      setContactMethods(
+                        value === "both" ? ["phone", "whatsapp"] : [value],
+                      )
+                    }
+                  />
+                  {value !== "phone" ? <WhatsAppIcon /> : null}
+                  {label}
+                </label>
+              ))}
+            </fieldset>
+            {contactMethods.includes("phone") && <Field label="Phone number" name="phone" type="tel" defaultValue={editing?.phone} required />}
+            {contactMethods.includes("whatsapp") && <>
+              {contactMethods.includes("phone") && <label className="portal-field whatsapp-field"><span><WhatsAppIcon /> WhatsApp</span><span className="contact-method-option"><input type="checkbox" checked={sameAsPhone} onChange={(event) => setSameAsPhone(event.target.checked)} /> This number is also used for WhatsApp.</span></label>}
+              {(!contactMethods.includes("phone") || !sameAsPhone) && <label className="portal-field whatsapp-field"><span><WhatsAppIcon /> WhatsApp number</span><input name="whatsapp" type="tel" defaultValue={editing?.whatsapp} required={!contactMethods.includes("phone")} /></label>}
+            </>}
+            <Field
+              label="Contact type"
+              name="emergency"
+              children={
+                <select
+                  name="emergency"
+                  defaultValue={editing?.emergency ? "1" : "0"}
+                >
+                  <option value="0">General contact</option>
+                  <option value="1">Emergency contact</option>
+                </select>
+              }
+            />
+            <Field
+              label="Display order"
+              name="sort_order"
+              type="number"
+              defaultValue={editing?.sort_order || 0}
+            />
+            <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />
+          </form>
+        </Modal>
+      )}
+
+    </section>
+  );
+}
+
+function Team({
+  active,
+  refresh,
+  onNavigate,
+  reload,
+}: {
+  active: string;
+  refresh: number;
+  onNavigate: (page: string) => void;
+  reload: () => void;
+}) {
+  let content: React.ReactNode;
+  if (active === "messages") content = <ChatPanel refresh={refresh} />;
+  else if (active === "contacts") content = <ContactsPanel refresh={refresh} />;
+  else if (active === "delegation") content = <Delegation refresh={refresh} />;
+  else if (active === "rooms") content = <RoomsPanelV2 refresh={refresh} />;
+  else if (active === "info")
+    content = <TeamInfoV2 refresh={refresh} reload={reload} />;
+  else if (active === "documents") content = <Documents refresh={refresh} />;
+  else if (active === "review") content = <TeamReview refresh={refresh} />;
+  else if (active === "finance") content = <Finance refresh={refresh} />;
+  else content = <TeamOverview refresh={refresh} onNavigate={onNavigate} />;
+  return <div className="team-page-content">{content}</div>;
+}
+function TeamOnboardingProgress({
+  refresh,
+  teamData,
+  onNavigate,
+}: {
+  refresh: number;
+  teamData?: Row;
+  onNavigate: (page: string) => void;
+}) {
+  const onboarding = useData<Row>("/team-onboarding", refresh);
+  const data = onboarding.data || {};
+  const members = teamData?.members || [];
+  const hasValue = (value: unknown) => String(value || "").trim().length > 0;
+  const localTeam = teamData?.team || {};
+  const localHasAddress =
+    hasValue(localTeam.address) ||
+    [
+      localTeam.address_street,
+      localTeam.address_number,
+      localTeam.address_postal_code,
+      localTeam.address_city,
+      localTeam.address_country,
+    ].some(hasValue);
+  const localSetup =
+    hasValue(localTeam.contact_person) &&
+    hasValue(localTeam.phone) &&
+    localHasAddress;
+  const localDelegation = Boolean(
+    members.length &&
+    members.every((member: Row) => {
+      if (!member.name) return false;
+      return (
+        member.member_type !== "PLAYER" ||
+        Boolean(member.player_role)
+      );
+    }),
+  );
+  const localRooms = Boolean(
+    members.length && (teamData?.rooms || []).length >= members.length,
+  );
+  const reviewStatus = String(
+    teamData?.team?.review_status || "information_incomplete",
+  );
+  const localReview = localSetup && localDelegation && localRooms;
+  const localConfirmation = [
+    "awaiting_admin",
+    "approved_payment_open",
+  ].includes(reviewStatus);
+  const localRegistrationReview = reviewStatus === "approved_payment_open";
+  const fallbackStages = [
+    {
+      key: "setup",
+      label: "Team setup",
+      done: localSetup,
+      state: localSetup ? "completed" : "current",
+    },
+    {
+      key: "delegation",
+      label: "Delegation",
+      done: localDelegation,
+      state: localDelegation
+        ? "completed"
+        : localSetup
+          ? "current"
+          : "upcoming",
+    },
+    {
+      key: "rooms",
+      label: "Rooms",
+      done: localRooms,
+      state: localRooms
+        ? "completed"
+        : localDelegation
+          ? "current"
+          : "upcoming",
+    },
+    {
+      key: "review",
+      label: "Review",
+      done: localReview,
+      state: localReview ? "completed" : "upcoming",
+    },
+    {
+      key: "confirmation",
+      label: "Team Confirmation",
+      done: localConfirmation,
+      state: localConfirmation
+        ? "completed"
+        : localReview
+          ? "current"
+          : "upcoming",
+    },
+    {
+      key: "registration_review",
+      label: "Registration Review",
+      done: localRegistrationReview,
+      state:
+        reviewStatus === "awaiting_admin"
+          ? "current"
+          : localRegistrationReview
+            ? "completed"
+            : "upcoming",
+    },
+    { key: "deposit", label: "Deposit", state: "upcoming" },
+    { key: "balance", label: "Remaining balance", state: "upcoming" },
+    { key: "ready", label: "Tournament Ready", state: "upcoming" },
+  ];
+  const stageKeys = [
+    "setup",
+    "delegation",
+    "rooms",
+    "review",
+    "confirmation",
+    "registration_review",
+    "deposit",
+    "balance",
+    "ready",
+  ];
+  const serverStages = (data.stages || []).filter((stage: Row) =>
+    stageKeys.includes(stage.key),
+  );
+  const stages = serverStages.length ? serverStages : fallbackStages;
+  const current = stages.find((stage: Row) => stage.label === data.current);
+  const setupStage = stages.find((stage: Row) => stage.key === "setup");
+  const depositOpen =
+    data.status === "approved_payment_open" &&
+    Number(data.payment?.deposit || 0) > Number(data.payment?.paid || 0);
+  const localAction = !localSetup
+    ? "Complete your team setup"
+    : !localDelegation
+      ? "Complete your delegation"
+      : !localRooms
+        ? "Assign everyone to a room"
+        : reviewStatus === "changes_requested"
+          ? "Review the requested changes"
+          : reviewStatus === "awaiting_admin"
+            ? "No action required — Registration Review is pending"
+            : reviewStatus === "approved_payment_open"
+              ? "Payment is being prepared"
+              : "Review and confirm your tournament information";
+  const displayAction = depositOpen
+    ? `Pay the deposit of ${fmtMoney(Number(data.payment.deposit))}`
+    : !current || (current.key === "setup" && !setupStage?.done)
+      ? localAction
+      : data.action || localAction;
+  const actionPage = depositOpen
+    ? "finance"
+    : current?.key === "setup"
+      ? "info"
+      : current?.key === "delegation"
+        ? "delegation"
+        : current?.key === "rooms"
+          ? "rooms"
+          : current?.key === "review" ||
+              current?.key === "confirmation" ||
+              current?.key === "registration_review"
+            ? "review"
+            : current?.key === "deposit" || current?.key === "balance"
+              ? "finance"
+              : null;
+  return (
+    <section
+      className={`onboarding-shell panel${actionPage ? " is-clickable" : ""}`}
+      aria-label="Tournament onboarding progress"
+      onClick={() => actionPage && onNavigate(actionPage)}
+      onKeyDown={(event) => {
+        if (actionPage && (event.key === "Enter" || event.key === " ")) {
+          event.preventDefault();
+          onNavigate(actionPage);
+        }
+      }}
+      role={actionPage ? "button" : undefined}
+      tabIndex={actionPage ? 0 : undefined}
+    >
+      <div className="onboarding-heading">
+        <div>
+          <span className="eyebrow">Team onboarding</span>
+          <h2>
+            {data.team?.name || teamData?.team?.name || "Tournament setup"}
+          </h2>
+          <p>
+            Complete your tournament information through to Tournament Ready.
+          </p>
+        </div>
+        <span className="onboarding-current">
+          {current?.label || "Team setup"}
+        </span>
+      </div>
+      <div className="onboarding-stepper">
+        {stages.map((stage: Row, index: number) => (
+          <div
+            className={`onboarding-step ${stage.done ? "done" : stage.state === "current" ? "current" : "upcoming"}`}
+            key={stage.key}
+          >
+            <span>{stage.done ? "✓" : index + 1}</span>
+            <b>{stage.label}</b>
+          </div>
+        ))}
+      </div>
+      <div className="onboarding-action">
+        <div>
+          <small>Next action</small>
+          <strong>{displayAction}</strong>
+          {data.payment?.due && <em>Due {fmtDate(data.payment.due)}</em>}
+        </div>
+        {current && (
+          <span className="onboarding-state">
+            {current.state === "current"
+              ? "Action required"
+              : current.state === "completed"
+                ? "Completed"
+                : "Waiting"}
+          </span>
+        )}
+      </div>
+    </section>
+  );
+}
+function TeamOverview({
+  refresh,
+  onNavigate,
+}: {
+  refresh: number;
+  onNavigate: (page: string) => void;
+}) {
+  const mine = useData<TeamOverviewPayload>("/my-team", refresh),
+    teams = useData("/teams", refresh),
+    payload = mine.data;
+  const matches = Array.isArray(payload) ? [] : payload?.matches || [];
+  return (
+    <>
+      <TeamOnboardingProgress
+        refresh={refresh}
+        teamData={payload || undefined}
+        onNavigate={onNavigate}
+      />
+      <div className="cards cost">
+        <article>
+          <small>Your matches</small>
+          <b>{matches.length}</b>
+          <em>tournament total</em>
+        </article>
+        <article>
+          <small>Delegation</small>
+          <b>{payload?.members?.length || 0} / 16</b>
+          <em>maximum 8 players</em>
+        </article>
+        <article>
+          <small>Accommodation</small>
+          <b>{fmtMoney(payload?.roomCost || 0)}</b>
+          <em>{payload?.rooms?.length || 0} room(s) used</em>
+        </article>
+      </div>
+      <section className="panel">
+        <div className="panelhead">
+          <h3>Your matches</h3>
+        </div>
+        {matches.map((m: Row) => (
+          <MatchCard
+            key={m.id}
+            match={m}
+            teams={teams.data}
+            onChanged={mine.load}
+          />
+        ))}
+      </section>
+    </>
+  );
+}
+function TeamInfoV2({
+  refresh,
+  reload,
+}: {
+  refresh: number;
+  reload: () => void;
+}) {
+  const teams = useData("/teams", refresh),
+    team = teams.data[0],
+    [busy, setBusy] = useState(false),
+    [removeLogo, setRemoveLogo] = useState(false),
+    [removePhoto, setRemovePhoto] = useState(false),
+    [logoSelected, setLogoSelected] = useState(false),
+    [photoSelected, setPhotoSelected] = useState(false),
+    [invoiceRequested, setInvoiceRequested] = useState(Boolean(team?.invoice_requested));
+  const logoInputRef = useRef<HTMLInputElement>(null),
+    photoInputRef = useRef<HTMLInputElement>(null);
+  if (!team)
+    return <section className="panel">Loading team information…</section>;
+  async function save(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy(true);
+    const b: any = Object.fromEntries(new FormData(e.currentTarget)),
+      logoFile = b.logo_file,
+      photoFile = b.team_photo_file;
+    try {
+      if (removeLogo) b.logo = null;
+      else if (logoFile instanceof File && logoFile.size) {
+        if (!/^#[0-9a-fA-F]{6}$/.test(String(b.color_hex || ""))) {
+          const suggested = await suggestTeamColor(logoFile);
+          if (suggested) b.color = suggested;
+        }
+        b.logo = (await uploadFile(logoFile)).url;
+      }
+      if (removePhoto) b.team_photo = null;
+      else if (photoFile instanceof File && photoFile.size)
+        b.team_photo = (await uploadFile(photoFile)).url;
+      delete b.logo_file;
+      delete b.team_photo_file;
+      if (/^#[0-9a-fA-F]{6}$/.test(String(b.color_hex || ""))) b.color = b.color_hex;
+      delete b.color_hex;
+      b.invoice_requested = b.invoice_requested ? 1 : 0;
+      for (const key of ["contact_email", "whatsapp", "website", "billing_address", "billing_name", "vat_number", "billing_postal_code", "billing_city", "billing_country"]) {
+        if (b[key] === undefined || b[key] === null) b[key] = "";
+      }
+      if (!b.invoice_requested) {
+        b.billing_address = "";
+        b.billing_name = "";
+        b.vat_number = "";
+        b.billing_postal_code = "";
+        b.billing_city = "";
+        b.billing_country = "";
+      }
+      const allowedTeamFields = new Set([
+        "name", "contact_person", "contact_email", "phone", "phone_country_code",
+        "whatsapp", "expected_delegation_size", "website", "address",
+        "address_street", "address_number", "address_postal_code", "address_city",
+        "address_country", "color", "logo", "team_photo", "invoice_requested",
+        "billing_address", "billing_name", "vat_number", "billing_postal_code",
+        "billing_city", "billing_country",
+      ]);
+      for (const key of Object.keys(b)) if (!allowedTeamFields.has(key)) delete b[key];
+      await api(`/teams/${team.id}`, {
+        method: "PUT",
+        body: JSON.stringify(b),
+      });
+      toast.success("Team information saved");
+      setRemoveLogo(false);
+      setRemovePhoto(false);
+      setLogoSelected(false);
+      setPhotoSelected(false);
+      reload();
+    } catch (err: unknown) {
+      toast.error(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="panel">
+      <div className="panelhead">
+        <h3>Team information</h3>
+      </div>
+      <form className="portal-form" onSubmit={save}>
+        <Field
+          label="Team name"
+          name="name"
+          defaultValue={team.name}
+          required
+        />
+        <Field
+          label="Contact person"
+          name="contact_person"
+          defaultValue={team.contact_person}
+          required
+        />
+        <PhoneField
+          defaultValue={team.phone}
+          defaultCode={team.phone_country_code || "+32"}
+          required
+        />
+        <Field label="Contact email" name="contact_email" type="email" defaultValue={team.contact_email} />
+        <label className="portal-field whatsapp-field"><span><WhatsAppIcon /> WhatsApp</span><input name="whatsapp" type="tel" defaultValue={team.whatsapp} /></label>
+        <Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={0} max={16} defaultValue={team.expected_delegation_size ?? ""} />
+        <Field
+          label="Website"
+          name="website"
+          type="url"
+          defaultValue={team.website}
+        />
+        <AddressFields team={team} />
+        <Field
+          label="Team color"
+          name="color"
+          type="color"
+          defaultValue={team.color}
+        />
+        <Field label="HEX color" name="color_hex" defaultValue={team.color || "#ec3d91"} />
+        <label className="portal-field wide checkbox-field">
+          <input name="invoice_requested" type="checkbox" value="1" checked={invoiceRequested} onChange={(event) => setInvoiceRequested(event.target.checked)} />
+          <span>I would like to receive an invoice.</span>
+        </label>
+        {invoiceRequested && <Field label="Billing/address information" name="billing_address" defaultValue={team.billing_address} />}
+        <Field
+          label="Team logo file"
+          name="logo_file"
+          children={
+            <div className="file-picker-control">
+              <input
+                ref={logoInputRef}
+                name="logo_file"
+                type="file"
+                accept="image/*"
+                onChange={(event) => {
+                  setLogoSelected(Boolean(event.target.files?.length));
+                  setRemoveLogo(false);
+                }}
+              />
+              {logoSelected ? (
+                <button
+                  className="btn small icon-only"
+                  type="button"
+                  title="Clear selected logo file"
+                  aria-label="Clear selected logo file"
+                  onClick={() => {
+                    if (logoInputRef.current) logoInputRef.current.value = "";
+                    setLogoSelected(false);
+                  }}
+                >
+                  <Trash2 />
+                </button>
+              ) : null}
+            </div>
+          }
+        />
+        {team.logo && (
+          <div className="team-media-control">
+            <img
+              className="logo-preview"
+              src={team.logo}
+              alt="Current team logo"
+            />
+            <button
+              className="btn danger small"
+              type="button"
+              onClick={() => setRemoveLogo(true)}
+            >
+              {removeLogo ? "Logo will be removed" : "Remove logo"}
+            </button>
+          </div>
+        )}
+        <Field
+          label="Team photo file"
+          name="team_photo_file"
+          children={
+            <div className="file-picker-control">
+              <input
+                ref={photoInputRef}
+                name="team_photo_file"
+                type="file"
+                accept="image/*"
+                onChange={(event) => {
+                  setPhotoSelected(Boolean(event.target.files?.length));
+                  setRemovePhoto(false);
+                }}
+              />
+              {photoSelected ? (
+                <button
+                  className="btn small icon-only"
+                  type="button"
+                  title="Clear selected team photo file"
+                  aria-label="Clear selected team photo file"
+                  onClick={() => {
+                    if (photoInputRef.current) photoInputRef.current.value = "";
+                    setPhotoSelected(false);
+                  }}
+                >
+                  <Trash2 />
+                </button>
+              ) : null}
+            </div>
+          }
+        />
+        {team.team_photo && (
+          <div className="team-media-control">
+            <img
+              className="team-photo-preview"
+              src={team.team_photo}
+              alt="Current team photo"
+            />
+            <button
+              className="btn danger small"
+              type="button"
+              onClick={() => setRemovePhoto(true)}
+            >
+              {removePhoto ? "Photo will be removed" : "Remove team photo"}
+            </button>
+          </div>
+        )}
+        <div className="form-actions">
+          <button className="btn primary" disabled={busy}>
+            {busy ? "Saving…" : "Save changes"}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+function Documents({ refresh }: { refresh: number }) {
+  const links = useData("/links", refresh);
+  return (
+    <section className="panel">
+      <div className="panelhead">
+        <h3>Documents and resources</h3>
+      </div>
+      <div className="docs">
+        {links.data
+          .filter((l) => l.category !== "Sponsor")
+          .map((l) => (
+            <a href={l.url} download key={l.id}>
+              <FileText />
+              <span>
+                <b>{l.title}</b>
+                <small>{l.description || l.category}</small>
+              </span>
+              <Download aria-hidden="true" />
+            </a>
+          ))}
+      </div>
+    </section>
+  );
+}
+
+type MvpPayload = {
+  enabled?: boolean;
+  assistant_coach_eligible?: boolean;
+  candidates?: Row[];
+  referees?: Row[];
+  voteSummary?: Record<string, Record<string, number>>;
+  voteProgress?: { voted?: number; total?: number };
+  votedCategories?: string[];
+};
+type MvpCandidateRow = Row & { category: string };
+
+const MVP_CATEGORIES = [
+  ["BEST_KEEPER", "Best Goalkeeper"],
+  ["BEST_T_STICK", "Best T-stick Player"],
+  ["BEST_HANDSTICK_UNDER_3", "Best Handstick Player — under 3 points"],
+  ["BEST_HANDSTICK_3_PLUS", "Best Handstick Player — 3 points and above"],
+  ["BEST_REFEREE", "Best Referee"],
+  ["BEST_COACH", "Best Coach"],
+] as const;
+
+function MvpCandidate({
+  candidate,
+  selected,
+  onSelect,
+  votes,
+  total,
+}: {
+  candidate: Row;
+  selected?: boolean;
+  onSelect?: () => void;
+  votes: number;
+  total: number;
+}) {
+  const percentage = total ? Math.round((votes / total) * 100) : 0;
+  return (
+    <button
+      type="button"
+      className={`mvp-choice${selected ? " selected" : ""}`}
+      onClick={onSelect}
+      disabled={!onSelect}
+    >
+      <span className="mvp-rank">{candidate.name?.slice(0, 1) || "?"}</span>
+      <span className="mvp-choice-content">
+        <strong>{candidate.name || "Unnamed candidate"}</strong>
+        <small>
+          {candidate.team_name || "Tournament referee"} ·{" "}
+          {candidate.member_type === "PLAYER"
+            ? `${candidate.player_role || "Player"} · ${candidate.classification_points ?? "—"} points`
+            : candidate.member_type === "COACH"
+              ? "Coach"
+              : candidate.staff_role || "Referee"}
+        </small>
+        <span className="mvp-bar">
+          <i style={{ width: `${percentage}%` }} />
+        </span>
+      </span>
+      <span className="mvp-count">
+        <b>{votes}</b>
+        <small>{percentage}%</small>
+      </span>
+    </button>
+  );
+}
+
+function MvpVoting({
+  refresh,
+  admin = false,
+}: {
+  refresh: number;
+  admin?: boolean;
+}) {
+  const data = useData<MvpPayload>("/mvp/candidates", refresh);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [step, setStep] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [resetPassword, setResetPassword] = useState("");
+  const candidates: MvpCandidateRow[] = [
+    ...(data.data.candidates || []).map((candidate) => ({
+      ...candidate,
+      category: String(candidate.category || ""),
+    })),
+    ...(data.data.referees || []).map((referee) => ({
+      ...referee,
+      category: "BEST_REFEREE",
+    })),
+  ];
+  const getCandidates = (category: string) =>
+    candidates.filter((candidate) => candidate.category === category);
+  const label = MVP_CATEGORIES[step]?.[1] || "Review your votes";
+  const submit = async () => {
+    setBusy(true);
+    try {
+      const pending = MVP_CATEGORIES.map(([category, title]) => {
+        const candidate_id = answers[category];
+        if (!candidate_id)
+          throw new Error(`Please select a candidate for ${title}.`);
+        return api("/mvp/vote", {
+          method: "POST",
+          body: JSON.stringify({ category, candidate_id }),
+        }).catch((error: unknown) => {
+          throw new Error(`${title}: ${errorMessage(error)}`);
+        });
+      });
+      await Promise.all(pending);
+      setSubmitted(true);
+      toast.success("All votes submitted");
+    } catch (error: unknown) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const toggle = async () => {
+    try {
+      await api("/mvp/settings", {
+        method: "POST",
+        body: JSON.stringify({
+          enabled: !data.data.enabled,
+          assistant_coach_eligible: data.data.assistant_coach_eligible,
+        }),
+      });
+      data.load();
+    } catch (error: unknown) {
+      toast.error(errorMessage(error));
+    }
+  };
+  const resetVotes = async () => {
+    if (!resetPassword) {
+      toast.error("Enter the admin password first.");
+      return;
+    }
+    if (
+      !window.confirm(
+        "Reset all MVP votes for the active tournament? This cannot be undone.",
+      )
+    )
+      return;
+    setBusy(true);
+    try {
+      await api("/mvp/reset", {
+        method: "POST",
+        body: JSON.stringify({ password: resetPassword }),
+      });
+      setResetPassword("");
+      toast.success("MVP votes reset");
+      data.load();
+    } catch (error: unknown) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusy(false);
+    }
+  };
+  if (data.loading)
+    return (
+      <section className="panel">
+        <p className="muted">Loading MVP voting…</p>
+      </section>
+    );
+  if (admin)
+    return (
+      <section className="panel mvp-panel">
+        <div className="panelhead mvp-heading">
+          <div>
+            <span className="eyebrow">Awards</span>
+            <h3>MVP voting overview</h3>
+            <p className="muted">
+              Live results from referee votes, grouped by official award
+              category.
+            </p>
+            <div className="mvp-progress-summary">
+              <strong>
+                {data.data.voteProgress?.voted || 0} of{" "}
+                {data.data.voteProgress?.total || 0}
+              </strong>
+              <span>referees have voted</span>
+            </div>
+          </div>
+          <div className="mvp-actions">
+            <span
+              className={`mvp-status ${data.data.enabled ? "open" : "closed"}`}
+            >
+              {data.data.enabled ? "Voting open" : "Voting closed"}
+            </span>
+            <button className="btn primary" onClick={() => void toggle()}>
+              {data.data.enabled ? "Close voting" : "Open voting"}
+            </button>
+          </div>
+        </div>
+        <div className="mvp-category-grid">
+          {MVP_CATEGORIES.map(([category, title]) => {
+            const list = getCandidates(category);
+            const summary = data.data.voteSummary?.[category] || {};
+            const total = Object.values(summary).reduce(
+              (sum, count) => sum + Number(count),
+              0,
+            );
+            return (
+              <article className="mvp-result-card" key={category}>
+                <div className="mvp-card-title">
+                  <div>
+                    <span className="eyebrow">Award category</span>
+                    <h4>{title}</h4>
+                  </div>
+                  <strong>
+                    {total}
+                    <small> votes</small>
+                  </strong>
+                </div>
+                {list.length ? (
+                  [...list]
+                    .sort(
+                      (a, b) =>
+                        Number(summary[String(b.id)] || 0) -
+                        Number(summary[String(a.id)] || 0),
+                    )
+                    .map((candidate) => (
+                      <MvpCandidate
+                        key={candidate.id}
+                        candidate={candidate}
+                        votes={Number(summary[String(candidate.id)] || 0)}
+                        total={total}
+                      />
+                    ))
+                ) : (
+                  <p className="muted">No eligible candidates yet.</p>
+                )}
+              </article>
+            );
+          })}
+        </div>
+        <div className="mvp-reset">
+          <div>
+            <strong>Reset votes</strong>
+            <small>
+              Deletes all votes for this active tournament. Candidates and
+              settings stay unchanged.
+            </small>
+          </div>
+          <div className="mvp-reset-controls">
+            <input
+              type="password"
+              value={resetPassword}
+              onChange={(event) => setResetPassword(event.target.value)}
+              placeholder="Admin password"
+              autoComplete="current-password"
+            />
+            <button
+              className="btn danger"
+              disabled={busy || !resetPassword}
+              onClick={() => void resetVotes()}
+            >
+              Reset MVP votes
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  if (!data.data.enabled)
+    return (
+      <section className="panel mvp-panel mvp-closed">
+        <span className="mvp-status closed">Voting closed</span>
+        <h3>MVP voting is not open yet</h3>
+        <p className="muted">
+          The tournament administrators will open the voting when the candidate
+          review is complete.
+        </p>
+      </section>
+    );
+  if (
+    submitted ||
+    (data.data.votedCategories?.length || 0) >= MVP_CATEGORIES.length
+  )
+    return (
+      <section className="panel mvp-panel mvp-closed">
+        <span className="mvp-status open">Vote submitted</span>
+        <h3>Your MVP vote has been recorded</h3>
+        <p className="muted">
+          You can vote only once in each award category. Your submitted choices
+          cannot be changed.
+        </p>
+      </section>
+    );
+  if (step === MVP_CATEGORIES.length)
+    return (
+      <section className="panel mvp-panel mvp-wizard">
+        <div className="mvp-heading">
+          <span className="eyebrow">Final review</span>
+          <h3>Ready to submit?</h3>
+          <p className="muted">
+            Check your choices. You can go back to change any category before
+            submitting.
+          </p>
+        </div>
+        <div className="mvp-review">
+          {MVP_CATEGORIES.map(([category, title]) => {
+            const candidate = candidates.find(
+              (item) =>
+                item.category === category &&
+                String(item.id) === answers[category],
+            );
+            return (
+              <div key={category}>
+                <span>{title}</span>
+                <strong>{candidate?.name || "Not selected"}</strong>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mvp-wizard-actions">
+          <button className="btn" onClick={() => setStep(step - 1)}>
+            Back
+          </button>
+          <button
+            className="btn primary"
+            disabled={
+              busy || Object.keys(answers).length !== MVP_CATEGORIES.length
+            }
+            onClick={() => void submit()}
+          >
+            {busy ? "Submitting…" : "Submit votes"}
+          </button>
+        </div>
+      </section>
+    );
+  const list = getCandidates(MVP_CATEGORIES[step][0]);
+  return (
+    <section className="panel mvp-panel mvp-wizard">
+      <div className="mvp-stepper">
+        {MVP_CATEGORIES.map(([, title], index) => (
+          <span
+            className={index === step ? "active" : index < step ? "done" : ""}
+            key={title}
+          >
+            {index + 1}
+          </span>
+        ))}
+      </div>
+      <div className="mvp-heading">
+        <span className="eyebrow">
+          Step {step + 1} of {MVP_CATEGORIES.length}
+        </span>
+        <h3>{label}</h3>
+        <p className="muted">
+          Select one candidate. Your vote will be submitted at the end.
+        </p>
+      </div>
+      <div className="mvp-vote-list">
+        {list.length ? (
+          list.map((candidate) => (
+            <MvpCandidate
+              key={candidate.id}
+              candidate={candidate}
+              selected={
+                answers[MVP_CATEGORIES[step][0]] === String(candidate.id)
+              }
+              onSelect={() =>
+                setAnswers((current) => ({
+                  ...current,
+                  [MVP_CATEGORIES[step][0]]: String(candidate.id),
+                }))
+              }
+              votes={0}
+              total={0}
+            />
+          ))
+        ) : (
+          <p className="muted">No eligible candidates for this award.</p>
+        )}
+      </div>
+      <div className="mvp-wizard-actions">
+        {step > 0 && (
+          <button className="btn" onClick={() => setStep(step - 1)}>
+            Back
+          </button>
+        )}
+        <button
+          className="btn primary"
+          disabled={!answers[MVP_CATEGORIES[step][0]]}
+          onClick={() => setStep(step + 1)}
+        >
+          {step === MVP_CATEGORIES.length - 1
+            ? "Review votes"
+            : "Next category"}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function Referee({ active, refresh }: { active: string; refresh: number }) {
+  if (active === "messages") return <ChatPanel refresh={refresh} />;
+  if (active === "contacts") return <ContactsPanel refresh={refresh} />;
+  if (active === "mvp") return <MvpVoting refresh={refresh} />;
+  return <RefereeMatches active={active} refresh={refresh} />;
+}
+function RefereeMatches({
+  active,
+  refresh,
+}: {
+  active: string;
+  refresh: number;
+}) {
+  const matches = useData("/matches", refresh, true),
+    teams = useData("/teams", refresh),
+    [q, setQ] = useState("");
+  const shown = useMemo(
+    () =>
+      matches.data.filter((m) =>
+        `${teamName(teams.data, m.home_team_id)} ${teamName(teams.data, m.away_team_id)} ${m.court}`
+          .toLowerCase()
+          .includes(q.toLowerCase()),
+      ),
+    [matches.data, teams.data, q],
+  );
+  return (
+    <section className="panel">
+      <div className="panelhead">
+        <h3>{active === "schedule" ? "Your schedule" : "Assigned matches"}</h3>
+        <Badge>{shown.length} assigned</Badge>
+      </div>
+      <div className="filters">
+        <Search />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search team or court"
+        />
+      </div>
+      {shown.map((m) => (
+        <MatchCard
+          key={m.id}
+          match={m}
+          teams={teams.data}
+          editable={false}
+          onChanged={matches.load}
+        />
+      ))}
+    </section>
+  );
+}
