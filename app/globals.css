@@ -10406,3 +10406,38 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     gap: 14px !important;
   }
 }
+
+
+/* Explicit invoice rows: two fields side by side */
+.team-editor-dialog .team-invoice-fields {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  width: 100% !important;
+}
+.team-editor-dialog .team-invoice-fields .team-invoice-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  column-gap: 20px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+.team-editor-dialog .team-invoice-fields .team-invoice-row > .portal-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+.team-editor-dialog .team-invoice-fields .team-invoice-row > .portal-field > span {
+  display: block !important;
+  width: 100% !important;
+  margin-bottom: 6px !important;
+}
+@media (max-width: 700px) {
+  .team-editor-dialog .team-invoice-fields .team-invoice-row {
+    grid-template-columns: minmax(0, 1fr) !important;
+    row-gap: 14px !important;
+  }
+}
