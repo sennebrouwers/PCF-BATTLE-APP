@@ -10063,3 +10063,36 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   padding-top:16px!important;
   padding-bottom:16px!important;
 }
+
+
+/* Referee step: member type and wheelchair option side by side */
+.member-editor-dialog .wizard-member-fields-referee,
+.team-editor-dialog .wizard-member-fields-referee{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:18px 24px!important;
+  width:min(760px,100%)!important;
+  max-width:760px!important;
+}
+.member-editor-dialog .wizard-member-fields-referee > .portal-field:not(.wide),
+.team-editor-dialog .wizard-member-fields-referee > .portal-field:not(.wide){
+  grid-column:auto!important;
+}
+.member-editor-dialog .wizard-member-fields-referee > .portal-field.wide.checkbox-field,
+.team-editor-dialog .wizard-member-fields-referee > .portal-field.wide.checkbox-field{
+  grid-column:auto!important;
+  align-self:end!important;
+  min-height:48px!important;
+  box-sizing:border-box!important;
+}
+@media(max-width:700px){
+  .member-editor-dialog .wizard-member-fields-referee,
+  .team-editor-dialog .wizard-member-fields-referee{
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  .member-editor-dialog .wizard-member-fields-referee > .portal-field.wide.checkbox-field,
+  .team-editor-dialog .wizard-member-fields-referee > .portal-field.wide.checkbox-field{
+    grid-column:auto!important;
+    align-self:stretch!important;
+  }
+}
