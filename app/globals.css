@@ -10803,3 +10803,183 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     padding: 14px 0 16px !important;
   }
 }
+
+/* Team wizard: desktop sidebar + right content + bottom navigation. */
+.team-editor-dialog > form.team-wizard {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+.team-editor-dialog .team-wizard-shell {
+  display: grid !important;
+  grid-template-columns: 210px minmax(0, 1fr) !important;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.team-editor-dialog .team-wizard-sidebar {
+  position: relative !important;
+  min-width: 210px !important;
+  width: 210px !important;
+  padding: 24px 16px !important;
+  border-right: 1px solid var(--line) !important;
+  overflow: hidden !important;
+}
+.team-editor-dialog .team-wizard-sidebar .wizard-topbar {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+.team-editor-dialog .team-wizard-sidebar .wizard-topbar::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 40px !important;
+  bottom: 40px !important;
+  left: 35px !important;
+  width: 1px !important;
+  background: var(--line) !important;
+}
+.team-editor-dialog .team-wizard-sidebar .wizard-topbar button {
+  position: relative !important;
+  z-index: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  min-height: 38px !important;
+  padding: 5px 4px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  color: var(--muted) !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+}
+.team-editor-dialog .team-wizard-sidebar .wizard-topbar button > span {
+  display: grid !important;
+  place-items: center !important;
+  flex: 0 0 28px !important;
+  width: 28px !important;
+  height: 28px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 50% !important;
+  background: var(--surface-3) !important;
+  color: var(--muted) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+.team-editor-dialog .team-wizard-sidebar .wizard-topbar button b {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  font-weight: 700 !important;
+}
+.team-editor-dialog .team-wizard-sidebar .wizard-topbar button.active {
+  color: var(--pink) !important;
+}
+.team-editor-dialog .team-wizard-sidebar .wizard-topbar button.active > span {
+  border-color: var(--pink) !important;
+  background: var(--pink) !important;
+  color: #fff !important;
+}
+.team-editor-dialog .team-wizard-sidebar .wizard-topbar button.complete {
+  color: #15803d !important;
+}
+.team-editor-dialog .team-wizard-sidebar .wizard-topbar button.complete > span {
+  border-color: #16a34a !important;
+  background: #16a34a !important;
+  color: #fff !important;
+}
+.team-editor-dialog .team-wizard-main {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+}
+.team-editor-dialog .team-wizard-main > .wizard-content {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 0 32px 28px !important;
+}
+.team-editor-dialog .team-wizard-main > .wizard-content > .wizard-question {
+  margin: 28px auto 24px !important;
+}
+.team-editor-dialog .team-wizard-main > .wizard-footer {
+  flex: 0 0 auto !important;
+  min-height: 78px !important;
+  height: 78px !important;
+  margin: 0 !important;
+  padding: 18px 32px 20px !important;
+  border-top: 1px solid var(--line) !important;
+  background: var(--surface-3) !important;
+}
+.team-editor-dialog .team-wizard-main > .wizard-footer .wizard-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+.team-editor-dialog .team-wizard-main > .wizard-content .team-invoice-grid {
+  width: min(760px, 100%) !important;
+  margin: 0 auto !important;
+  padding-bottom: 20px !important;
+}
+@media (max-width: 700px) {
+  .team-editor-dialog .team-wizard-shell {
+    display: block !important;
+  }
+  .team-editor-dialog .team-wizard-sidebar {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    padding: 8px 16px 12px !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--line) !important;
+  }
+  .team-editor-dialog .team-wizard-sidebar .wizard-topbar {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 6px !important;
+  }
+  .team-editor-dialog .team-wizard-sidebar .wizard-topbar::before {
+    display: none !important;
+  }
+  .team-editor-dialog .team-wizard-sidebar .wizard-topbar button {
+    width: auto !important;
+    min-height: 32px !important;
+    padding: 2px 4px !important;
+  }
+  .team-editor-dialog .team-wizard-sidebar .wizard-topbar button b {
+    display: none !important;
+  }
+  .team-editor-dialog .team-wizard-sidebar .wizard-topbar button > span {
+    flex-basis: 28px !important;
+  }
+  .team-editor-dialog .team-wizard-main {
+    height: calc(100% - 76px) !important;
+  }
+  .team-editor-dialog .team-wizard-main > .wizard-content {
+    padding: 0 16px 28px !important;
+  }
+  .team-editor-dialog .team-wizard-main > .wizard-footer {
+    min-height: 72px !important;
+    height: 72px !important;
+    padding: 14px 16px 16px !important;
+  }
+}
