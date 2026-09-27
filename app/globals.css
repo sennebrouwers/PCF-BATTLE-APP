@@ -9653,3 +9653,37 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     grid-column:auto!important;
   }
 }
+
+
+/* Force the visible player fields into the requested 2x2 layout */
+.member-editor-dialog .wizard-content > .wizard-member-fields:not([hidden]),
+.team-editor-dialog .wizard-content > .wizard-member-fields:not([hidden]){
+  display:grid!important;
+  grid-auto-flow:row!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  grid-template-rows:auto auto!important;
+  column-gap:18px!important;
+  row-gap:16px!important;
+  align-items:start!important;
+  overflow:visible!important;
+  margin-inline:auto!important;
+  padding:0 0 18px!important;
+}
+.member-editor-dialog .wizard-content > .wizard-member-fields:not([hidden]) > .portal-field,
+.team-editor-dialog .wizard-content > .wizard-member-fields:not([hidden]) > .portal-field{
+  display:flex!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+}
+.member-editor-dialog .wizard-content,
+.team-editor-dialog .wizard-content{
+  padding-bottom:56px!important;
+}
+@media(max-width:700px){
+  .member-editor-dialog .wizard-content > .wizard-member-fields:not([hidden]),
+  .team-editor-dialog .wizard-content > .wizard-member-fields:not([hidden]){
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-rows:none!important;
+  }
+}
