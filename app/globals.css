@@ -9571,3 +9571,51 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   justify-content:space-between!important;
   width:100%!important;
 }
+
+
+/* Deterministic wizard rows: content can scroll, footer cannot be pushed out */
+.member-editor-dialog > .wizard-form,
+.team-editor-dialog > .wizard-form{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:auto auto minmax(0,1fr) 96px!important;
+  flex:1 1 auto!important;
+  min-height:0!important;
+  height:auto!important;
+  max-height:none!important;
+  overflow:hidden!important;
+  align-items:stretch!important;
+}
+.member-editor-dialog > .wizard-form > .wizard-subtitle,
+.team-editor-dialog > .wizard-form > .wizard-subtitle{
+  grid-row:1!important;
+  grid-column:1!important;
+}
+.member-editor-dialog > .wizard-form > .wizard-topbar,
+.team-editor-dialog > .wizard-form > .wizard-topbar{
+  grid-row:2!important;
+  grid-column:1!important;
+  min-height:0!important;
+  height:auto!important;
+}
+.member-editor-dialog > .wizard-form > .wizard-content,
+.team-editor-dialog > .wizard-form > .wizard-content{
+  grid-row:3!important;
+  grid-column:1!important;
+  min-height:0!important;
+  height:auto!important;
+  max-height:none!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+}
+.member-editor-dialog > .wizard-form > .wizard-footer,
+.team-editor-dialog > .wizard-form > .wizard-footer{
+  grid-row:4!important;
+  grid-column:1!important;
+  min-height:96px!important;
+  height:96px!important;
+  align-self:stretch!important;
+  position:static!important;
+  overflow:visible!important;
+  z-index:5!important;
+}
