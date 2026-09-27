@@ -10548,3 +10548,34 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     gap: 8px !important;
   }
 }
+
+/* Match City/Country controls to the dimensions of the other invoice fields. */
+.team-editor-dialog .team-invoice-city-country {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  width: 100% !important;
+  max-width: none !important;
+  align-items: start !important;
+}
+.team-editor-dialog .team-invoice-city-country > .portal-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+.team-editor-dialog .team-invoice-city-country > .portal-field > input,
+.team-editor-dialog .team-invoice-city-country > .portal-field > select {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 44px !important;
+  height: 44px !important;
+  box-sizing: border-box !important;
+}
+.team-editor-dialog .team-invoice-city-country > .portal-field > span {
+  display: block !important;
+  min-height: 1.25em !important;
+  margin-bottom: 6px !important;
+}
