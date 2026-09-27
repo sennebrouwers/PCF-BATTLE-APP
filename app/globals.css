@@ -10164,3 +10164,48 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     grid-row: auto !important;
   }
 }
+
+
+/* Final referee layout override: direct wizard fields in two columns */
+.member-editor-dialog .wizard-member-fields.wizard-member-fields-referee,
+.team-editor-dialog .wizard-member-fields.wizard-member-fields-referee {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  column-gap: 24px !important;
+  row-gap: 18px !important;
+  align-items: end !important;
+}
+.member-editor-dialog .wizard-member-fields.wizard-member-fields-referee > .referee-type-field,
+.team-editor-dialog .wizard-member-fields.wizard-member-fields-referee > .referee-type-field {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+.member-editor-dialog .wizard-member-fields.wizard-member-fields-referee > .referee-wheelchair-field,
+.team-editor-dialog .wizard-member-fields.wizard-member-fields-referee > .referee-wheelchair-field {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  width: 100% !important;
+  min-height: 48px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  align-self: end !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+@media (max-width: 700px) {
+  .member-editor-dialog .wizard-member-fields.wizard-member-fields-referee,
+  .team-editor-dialog .wizard-member-fields.wizard-member-fields-referee {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .member-editor-dialog .wizard-member-fields.wizard-member-fields-referee > .referee-type-field,
+  .team-editor-dialog .wizard-member-fields.wizard-member-fields-referee > .referee-type-field,
+  .member-editor-dialog .wizard-member-fields.wizard-member-fields-referee > .referee-wheelchair-field,
+  .team-editor-dialog .wizard-member-fields.wizard-member-fields-referee > .referee-wheelchair-field {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+  }
+}
