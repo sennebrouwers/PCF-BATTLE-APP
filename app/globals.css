@@ -5779,7 +5779,14 @@ header nav {
 }
 .public-header .head-actions {
   margin-left: 0;
-  gap: 12px;
+  gap: 20px;
+  align-items: center;
+}
+.public-header .social-links {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 .public-header .login {
   min-height: 44px;
