@@ -2618,13 +2618,6 @@ function TournamentManager({ refresh }: { refresh: number }) {
                 </small>
               </label>
               <Field
-                label="Instagram profile URL"
-                name="instagram_url"
-                type="url"
-                defaultValue={active.instagram_url || ""}
-                placeholder="https://www.instagram.com/yourprofile/"
-              />
-              <Field
                 label="YouTube livestream URL"
                 name="livestream_url"
                 type="url"
@@ -2742,7 +2735,6 @@ function SetupReadiness({ tournament }: { tournament: Row }) {
         "Practical information",
         tournament.opening_hours && tournament.catering_info,
       ],
-      ["Instagram", tournament.instagram_url],
     ] as [string, any][],
     complete = checks.filter(([, value]) => value).length,
     percent = Math.round((complete / checks.length) * 100);
