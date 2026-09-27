@@ -10579,3 +10579,71 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   min-height: 1.25em !important;
   margin-bottom: 6px !important;
 }
+
+/* Rebuilt invoice form: six equal cells, with City and Country in the final row. */
+.team-editor-dialog .team-invoice-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 16px 20px !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 0 24px !important;
+  align-content: start !important;
+  justify-items: stretch !important;
+}
+.team-editor-dialog .team-invoice-cell {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+.team-editor-dialog .team-invoice-cell > .portal-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+.team-editor-dialog .team-invoice-cell .portal-field > span {
+  display: block !important;
+  min-height: 1.25em !important;
+  margin: 0 0 6px !important;
+}
+.team-editor-dialog .team-invoice-cell .portal-field > input,
+.team-editor-dialog .team-invoice-cell .portal-field > select {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  box-sizing: border-box !important;
+}
+.team-editor-dialog .team-invoice-options-step {
+  align-content: start !important;
+  justify-content: start !important;
+  margin-top: 0 !important;
+}
+.team-editor-dialog .team-wizard .wizard-content {
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  padding-top: 0 !important;
+}
+@media (max-width: 700px) {
+  .team-editor-dialog .team-invoice-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 14px 12px !important;
+    overflow: visible !important;
+  }
+  .team-editor-dialog .team-wizard .wizard-content {
+    overflow-y: auto !important;
+    min-height: 0 !important;
+    padding-bottom: 32px !important;
+  }
+}
+@media (max-width: 360px) {
+  .team-editor-dialog .team-invoice-grid {
+    gap: 12px 8px !important;
+  }
+}
