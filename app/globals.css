@@ -10273,3 +10273,81 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     grid-template-columns: 1fr !important;
   }
 }
+
+
+/* Team wizard viewport-safe layout */
+.team-editor-dialog {
+  max-height: calc(100vh - 24px) !important;
+  height: min(820px, calc(100vh - 24px)) !important;
+  overflow: hidden !important;
+}
+.team-editor-dialog .team-wizard {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+.team-editor-dialog .team-wizard .wizard-subtitle,
+.team-editor-dialog .team-wizard .wizard-topbar {
+  flex: 0 0 auto !important;
+}
+.team-editor-dialog .team-wizard .wizard-topbar {
+  margin-bottom: 12px !important;
+}
+.team-editor-dialog .team-wizard .wizard-content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 0 8px 28px !important;
+}
+.team-editor-dialog .team-wizard .wizard-question {
+  margin: 12px auto 24px !important;
+}
+.team-editor-dialog .team-wizard .wizard-question-icon {
+  transform: scale(.82) !important;
+  margin-bottom: 8px !important;
+}
+.team-editor-dialog .team-wizard .wizard-question h3 {
+  margin: 0 !important;
+}
+.team-editor-dialog .team-wizard .wizard-question p {
+  margin: 8px 0 0 !important;
+}
+.team-editor-dialog .team-wizard .wizard-content > [hidden] {
+  display: none !important;
+}
+.team-editor-dialog .team-wizard .wizard-content > div:not([hidden]) {
+  width: min(760px, 100%) !important;
+  margin-inline: auto !important;
+}
+.team-editor-dialog .team-wizard .wizard-content .team-identity-step,
+.team-editor-dialog .team-wizard .wizard-content .team-contact-details-step,
+.team-editor-dialog .team-wizard .wizard-content .team-invoice-options-step,
+.team-editor-dialog .team-wizard .wizard-content .team-login-details-step {
+  display: grid !important;
+  gap: 16px 22px !important;
+}
+.team-editor-dialog .team-wizard .wizard-footer {
+  flex: 0 0 auto !important;
+  min-height: 76px !important;
+  padding: 16px 8px 4px !important;
+  margin-top: 0 !important;
+  background: var(--surface-1) !important;
+  border-top: 1px solid var(--line) !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+@media (max-width: 700px) {
+  .team-editor-dialog {
+    height: calc(100vh - 16px) !important;
+    max-height: calc(100vh - 16px) !important;
+  }
+  .team-editor-dialog .team-wizard .wizard-content {
+    padding: 0 2px 24px !important;
+  }
+  .team-editor-dialog .team-wizard .wizard-question {
+    margin-bottom: 18px !important;
+  }
+}
