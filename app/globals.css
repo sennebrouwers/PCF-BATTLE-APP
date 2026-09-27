@@ -9483,3 +9483,42 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .team-editor-dialog .wizard-content>div:not(.wizard-question):not([hidden]){
   margin-bottom:0!important;
 }
+
+
+/* Ensure footer controls remain visible inside the modal */
+.member-editor-dialog .wizard-footer,
+.team-editor-dialog .wizard-footer{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  flex:0 0 96px!important;
+  min-height:96px!important;
+  height:96px!important;
+  box-sizing:border-box!important;
+  overflow:visible!important;
+  padding:20px 0 8px!important;
+}
+.member-editor-dialog .wizard-footer .wizard-actions,
+.team-editor-dialog .wizard-footer .wizard-actions{
+  display:flex!important;
+  flex:1 1 auto!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:42px!important;
+  height:auto!important;
+  margin:0!important;
+  gap:16px!important;
+}
+.member-editor-dialog .wizard-footer .wizard-actions .form-actions,
+.team-editor-dialog .wizard-footer .wizard-actions .form-actions{
+  display:flex!important;
+  flex:0 0 auto!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:12px!important;
+  margin:0!important;
+  min-height:42px!important;
+}
