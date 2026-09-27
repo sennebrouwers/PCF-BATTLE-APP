@@ -11343,3 +11343,190 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     padding: 15px 18px !important;
   }
 }
+
+/* Team wizard v2: isolated layout rebuilt from zero. */
+.team-editor-dialog:has(> form.team-wizard-v2) {
+  display: flex !important;
+  flex-direction: column !important;
+  width: min(1360px, calc(100vw - 40px)) !important;
+  height: min(850px, calc(100vh - 40px)) !important;
+  max-height: calc(100vh - 40px) !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+.team-editor-dialog:has(> form.team-wizard-v2) > [data-slot="dialog-header"] {
+  flex: 0 0 auto !important;
+  padding: 28px 30px 14px !important;
+}
+.team-editor-dialog > form.team-wizard-v2 {
+  display: flex !important;
+  flex: 1 1 0 !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
+.team-editor-dialog > form.team-wizard-v2 > .wizard-subtitle {
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+  padding: 0 30px 18px !important;
+  text-align: left !important;
+}
+.team-editor-dialog > form.team-wizard-v2 > .team-wizard-shell {
+  display: grid !important;
+  grid-template-columns: 300px minmax(0, 1fr) !important;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.team-editor-dialog > form.team-wizard-v2 .team-wizard-sidebar {
+  position: relative !important;
+  width: auto !important;
+  min-width: 0 !important;
+  padding: 26px 28px !important;
+  background: var(--surface-2) !important;
+  border-right: 1px solid var(--line) !important;
+  overflow: hidden !important;
+}
+.team-editor-dialog > form.team-wizard-v2 .team-wizard-sidebar .wizard-topbar {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.team-editor-dialog > form.team-wizard-v2 .team-wizard-sidebar .wizard-topbar::before {
+  left: 34px !important;
+  top: 39px !important;
+  bottom: 39px !important;
+}
+.team-editor-dialog > form.team-wizard-v2 .team-wizard-sidebar .wizard-topbar button {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  width: 100% !important;
+  min-height: 42px !important;
+  padding: 4px 8px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--muted) !important;
+  text-align: left !important;
+}
+.team-editor-dialog > form.team-wizard-v2 .team-wizard-sidebar .wizard-topbar button > span {
+  flex: 0 0 34px !important;
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  background: var(--surface-3) !important;
+}
+.team-editor-dialog > form.team-wizard-v2 .team-wizard-sidebar .wizard-topbar button.active { color: var(--pink) !important; }
+.team-editor-dialog > form.team-wizard-v2 .team-wizard-sidebar .wizard-topbar button.complete { color: #16a34a !important; }
+.team-editor-dialog > form.team-wizard-v2 .team-wizard-main {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+}
+.team-editor-dialog > form.team-wizard-v2 .team-wizard-main > .wizard-content {
+  display: block !important;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 48px 28px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+.team-editor-dialog > form.team-wizard-v2 .team-wizard-main > .wizard-content > .wizard-question {
+  width: min(850px, 100%) !important;
+  margin: 74px auto 36px !important;
+}
+.team-editor-dialog > form.team-wizard-v2 .team-wizard-main > .wizard-content > div:not(.wizard-question):not([hidden]) {
+  width: min(850px, 100%) !important;
+  max-width: 850px !important;
+  margin: 0 auto !important;
+  padding-bottom: 24px !important;
+}
+.team-editor-dialog > form.team-wizard-v2 .team-wizard-main > .wizard-footer {
+  display: flex !important;
+  flex: 0 0 104px !important;
+  align-items: center !important;
+  min-height: 104px !important;
+  height: 104px !important;
+  margin: 0 !important;
+  padding: 24px 28px !important;
+  background: var(--surface-3) !important;
+  border-top: 1px solid var(--line) !important;
+}
+.team-editor-dialog > form.team-wizard-v2 .wizard-footer .wizard-actions {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  min-height: 48px !important;
+  margin: 0 !important;
+}
+.team-editor-dialog > form.team-wizard-v2 .wizard-footer .btn {
+  min-width: 150px !important;
+  height: 48px !important;
+  padding: 0 24px !important;
+}
+@media (max-width:700px) {
+  .team-editor-dialog:has(> form.team-wizard-v2) {
+    width: calc(100vw - 16px) !important;
+    height: calc(100dvh - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+  }
+  .team-editor-dialog > form.team-wizard-v2 > .wizard-subtitle {
+    padding: 0 18px 12px !important;
+    text-align: center !important;
+  }
+  .team-editor-dialog > form.team-wizard-v2 > .team-wizard-shell {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .team-editor-dialog > form.team-wizard-v2 .team-wizard-sidebar {
+    flex: 0 0 auto !important;
+    padding: 10px 14px 12px !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--line) !important;
+  }
+  .team-editor-dialog > form.team-wizard-v2 .team-wizard-sidebar .wizard-topbar {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 6px !important;
+  }
+  .team-editor-dialog > form.team-wizard-v2 .team-wizard-sidebar .wizard-topbar::before { display:none !important; }
+  .team-editor-dialog > form.team-wizard-v2 .team-wizard-sidebar .wizard-topbar button {
+    width: auto !important;
+    min-height: 32px !important;
+    padding: 2px 4px !important;
+  }
+  .team-editor-dialog > form.team-wizard-v2 .team-wizard-sidebar .wizard-topbar button b { display:none !important; }
+  .team-editor-dialog > form.team-wizard-v2 .team-wizard-main {
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+  }
+  .team-editor-dialog > form.team-wizard-v2 .team-wizard-main > .wizard-content {
+    padding: 0 18px 24px !important;
+  }
+  .team-editor-dialog > form.team-wizard-v2 .team-wizard-main > .wizard-content > .wizard-question {
+    margin: 30px auto 24px !important;
+  }
+  .team-editor-dialog > form.team-wizard-v2 .team-wizard-main > .wizard-footer {
+    flex-basis: 78px !important;
+    min-height: 78px !important;
+    height: 78px !important;
+    padding: 15px 18px !important;
+  }
+}
