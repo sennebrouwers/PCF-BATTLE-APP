@@ -9687,3 +9687,44 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     grid-template-rows:none!important;
   }
 }
+
+
+/* Responsive wizard roadmap: wrap naturally instead of shrinking or clipping */
+.member-editor-dialog .wizard-topbar,
+.team-editor-dialog .wizard-topbar{
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:wrap!important;
+  justify-content:center!important;
+  align-content:center!important;
+  align-items:center!important;
+  column-gap:18px!important;
+  row-gap:12px!important;
+  width:100%!important;
+  max-width:none!important;
+  height:auto!important;
+  min-height:70px!important;
+  overflow:visible!important;
+}
+.member-editor-dialog .wizard-topbar button,
+.team-editor-dialog .wizard-topbar button{
+  flex:0 0 auto!important;
+  width:auto!important;
+  min-width:max-content!important;
+  white-space:nowrap!important;
+}
+@media(max-width:1100px){
+  .member-editor-dialog .wizard-topbar,
+  .team-editor-dialog .wizard-topbar{
+    column-gap:12px!important;
+    row-gap:10px!important;
+  }
+}
+@media(max-width:700px){
+  .member-editor-dialog .wizard-topbar,
+  .team-editor-dialog .wizard-topbar{
+    justify-content:center!important;
+    column-gap:8px!important;
+    row-gap:8px!important;
+  }
+}
