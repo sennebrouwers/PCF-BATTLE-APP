@@ -112,6 +112,7 @@ export default function PublicHeader({
       )}
       <div className="head-actions">
         <ThemeToggle />
+        <div className="social-links" aria-label="Social media">
         <a
           className="instagram-link"
           href="https://www.instagram.com/pcfbattle/"
@@ -134,6 +135,8 @@ export default function PublicHeader({
             <path d="M14 8h3V4h-3c-3.31 0-5 1.97-5 5v3H6v4h3v8h4v-8h3.2l.8-4H13V9c0-.66.34-1 1-1Z" fill="currentColor" />
           </svg>
         </a>
+        <Link className="login" href="/login">Log in <ChevronRight /></Link>
+        </div>
         <Link className="login" href="/login">Log in <ChevronRight /></Link>
       </div>
     </header>
