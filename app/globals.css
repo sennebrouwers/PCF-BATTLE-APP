@@ -10119,3 +10119,48 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     grid-row:auto!important;
   }
 }
+
+/* Referee fields: keep member type and wheelchair option side by side */
+.member-editor-dialog .wizard-member-fields > .referee-fields,
+.team-editor-dialog .wizard-member-fields > .referee-fields {
+  grid-column: 1 / -1 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 18px 24px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+.member-editor-dialog .referee-fields > .referee-type-field,
+.member-editor-dialog .referee-fields > .referee-wheelchair-field,
+.team-editor-dialog .referee-fields > .referee-type-field,
+.team-editor-dialog .referee-fields > .referee-wheelchair-field {
+  grid-column: auto !important;
+  grid-row: 1 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+.member-editor-dialog .referee-fields > .referee-wheelchair-field,
+.team-editor-dialog .referee-fields > .referee-wheelchair-field {
+  align-self: end !important;
+  min-height: 48px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 12px 14px !important;
+  box-sizing: border-box !important;
+}
+@media (max-width: 700px) {
+  .member-editor-dialog .wizard-member-fields > .referee-fields,
+  .team-editor-dialog .wizard-member-fields > .referee-fields {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .member-editor-dialog .referee-fields > .referee-type-field,
+  .member-editor-dialog .referee-fields > .referee-wheelchair-field,
+  .team-editor-dialog .referee-fields > .referee-type-field,
+  .team-editor-dialog .referee-fields > .referee-wheelchair-field {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+  }
+}
