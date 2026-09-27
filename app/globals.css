@@ -5877,6 +5877,7 @@ header nav {
   width: 27px;
   height: 27px;
   display: block;
+  transform: translateY(-6px);
 }
 .public-header .facebook-link:hover {
   color: #db2777;
