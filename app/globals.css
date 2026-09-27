@@ -10517,3 +10517,34 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     column-gap: 12px !important;
   }
 }
+
+/* Final explicit invoice layout: City and Country share one row at every viewport. */
+.team-editor-dialog .team-invoice-city-country {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  width: 100% !important;
+  align-items: start !important;
+}
+.team-editor-dialog .team-invoice-city-country > .portal-field {
+  grid-column: auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+.team-editor-dialog .team-wizard .wizard-content {
+  padding-top: 0 !important;
+  align-items: flex-start !important;
+}
+.team-editor-dialog .team-wizard .wizard-content .wizard-question {
+  margin-top: 0 !important;
+  margin-bottom: 20px !important;
+}
+.team-editor-dialog .team-wizard .wizard-content > div:not([hidden]) {
+  align-self: flex-start !important;
+}
+@media (max-width: 480px) {
+  .team-editor-dialog .team-invoice-city-country {
+    gap: 8px !important;
+  }
+}
