@@ -9467,3 +9467,19 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   gap:12px!important;
   margin:0!important;
 }
+
+
+/* Add breathing room between wizard fields and above the footer */
+.member-editor-dialog .wizard-content,
+.team-editor-dialog .wizard-content{
+  row-gap:16px!important;
+  padding-bottom:32px!important;
+}
+.member-editor-dialog .wizard-content .wizard-question,
+.team-editor-dialog .wizard-content .wizard-question{
+  margin-bottom:16px!important;
+}
+.member-editor-dialog .wizard-content>div:not(.wizard-question):not([hidden]),
+.team-editor-dialog .wizard-content>div:not(.wizard-question):not([hidden]){
+  margin-bottom:0!important;
+}
