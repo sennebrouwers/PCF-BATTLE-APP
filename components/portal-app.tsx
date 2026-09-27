@@ -6795,14 +6795,18 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
             >
               <form ref={wizardFormRef} className="portal-form team-wizard wizard-form" onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
                 <p className="wizard-subtitle">Create a new team for the tournament.</p>
-                <div className="wizard-topbar wizard-progress-bar" aria-label="Team creation progress">
-                  {["Team name","Country","Team identity","Team photo","Contact details","Delegation","Invoice options","Login details","Review"].map((label, index) => (
-                    <button type="button" key={label} disabled={index + 1 > teamStep + 1 || (index + 1 === teamStep + 1 && !stepValid)} className={teamStep === index + 1 ? "active" : teamStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= teamStep + 1 && (index + 1 <= teamStep || stepValid)) setTeamStep(index + 1); }}>
-                      <span>{index + 1}</span>{label}
-                    </button>
-                  ))}
-                </div>
-                <div className="wizard-content">
+                <div className="team-wizard-shell">
+                  <aside className="team-wizard-sidebar" aria-label="Team creation steps">
+                    <div className="wizard-topbar wizard-progress-bar">
+                      {["Team name","Country","Team identity","Team photo","Contact details","Delegation","Invoice options","Login details","Review"].map((label, index) => (
+                        <button type="button" key={label} disabled={index + 1 > teamStep + 1 || (index + 1 === teamStep + 1 && !stepValid)} className={teamStep === index + 1 ? "active" : teamStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= teamStep + 1 && (index + 1 <= teamStep || stepValid)) setTeamStep(index + 1); }}>
+                          <span>{index + 1}</span><b>{label}</b>
+                        </button>
+                      ))}
+                    </div>
+                  </aside>
+                  <div className="team-wizard-main">
+                    <div className="wizard-content">
                   <div className="wizard-question">
                     <div className="wizard-question-icon"><UserRoundCog /></div>
                     <h3>{teamStep === 1 ? "What is the team name?" : teamStep === 2 ? "Where is the team from?" : teamStep === 3 ? "Add the team identity" : teamStep === 4 ? "Add a team photo" : teamStep === 5 ? "Who is the contact person?" : teamStep === 6 ? "How large is the delegation?" : teamStep === 7 ? "Does the team need an invoice?" : teamStep === 8 ? "Create the team login" : "Review and create the team"}</h3>
@@ -6838,7 +6842,11 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                   </div>
                   <div hidden={teamStep !== 9} className="team-wizard-review"><h4>Review and create</h4><p>Review the information before saving this team.</p></div>
                 </div>
-                <div className="wizard-footer"><div className="wizard-actions">{teamStep > 1 && <button type="button" className="btn" onClick={() => setTeamStep((step) => step - 1)}>Back</button>}{teamStep < 9 && <button type="button" className="btn primary" disabled={!stepValid} onClick={() => setTeamStep((step) => step + 1)}>Next</button>}</div>{teamStep === 9 && <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}</div>
+                    </div>
+                    <div className="wizard-footer"><div className="wizard-actions">{teamStep > 1 && <button type="button" className="btn" onClick={() => setTeamStep((step) => step - 1)}>Back</button>}{teamStep < 9 && <button type="button" className="btn primary" disabled={!stepValid} onClick={() => setTeamStep((step) => step + 1)}>Next</button>}</div>{teamStep === 9 && <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}</div>
+                    </div>
+                  </div>
+                </div>
               </form>
             </Modal>
           </section>
