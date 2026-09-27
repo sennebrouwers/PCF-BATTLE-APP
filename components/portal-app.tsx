@@ -6793,7 +6793,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
               onOpenChange={(v) => !v && setEditing(undefined)}
               className="team-editor-dialog"
             >
-              <form ref={wizardFormRef} className="portal-form team-wizard wizard-form" onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
+              <form ref={wizardFormRef} className="portal-form team-wizard-v2 wizard-form" onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
                 <p className="wizard-subtitle">Create a new team for the tournament.</p>
                 <div className="team-wizard-shell">
                   <aside className="team-wizard-sidebar" aria-label="Team creation steps">
