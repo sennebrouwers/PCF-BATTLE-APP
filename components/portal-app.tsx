@@ -6633,12 +6633,11 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
     if (teamStep === 2) valid = Boolean(value("address_country"));
     if (teamStep === 3) valid = Boolean(editing?.logo || input?.files?.length) && /^#[0-9a-fA-F]{6}$/.test(value("color_hex"));
     if (teamStep === 4) valid = true;
-    if (teamStep === 5) valid = true;
-    if (teamStep === 6) valid = Boolean(value("contact_person")) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value("contact_email")) && Boolean(value("phone"));
-    if (teamStep === 7) valid = /^\d+$/.test(value("expected_delegation_size")) && Number(value("expected_delegation_size")) <= 16;
-    if (teamStep === 8) valid = !invoiceRequested || (Boolean(value("billing_name")) && Boolean(value("billing_address")) && Boolean(value("billing_postal_code")) && Boolean(value("billing_city")) && Boolean(value("billing_country")));
-    if (teamStep === 9) valid = Boolean(value("login_email")) && (editing?.id || String(value("login_password")).length >= 8);
-    if (teamStep >= 10) valid = true;
+    if (teamStep === 5) valid = Boolean(value("contact_person")) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value("contact_email")) && Boolean(value("phone"));
+    if (teamStep === 6) valid = /^\d+$/.test(value("expected_delegation_size")) && Number(value("expected_delegation_size")) <= 16;
+    if (teamStep === 7) valid = !invoiceRequested || (Boolean(value("billing_name")) && Boolean(value("billing_address")) && Boolean(value("billing_postal_code")) && Boolean(value("billing_city")) && Boolean(value("billing_country")));
+    if (teamStep === 8) valid = Boolean(value("login_email")) && (editing?.id || String(value("login_password")).length >= 8);
+    if (teamStep >= 9) valid = true;
     setStepValid(valid);
   }
   useEffect(() => { readStepValidity(); }, [teamStep, editing, invoiceRequested, wizardRevision]);
