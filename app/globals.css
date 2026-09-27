@@ -10501,3 +10501,28 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   margin-right: auto !important;
   align-self: center !important;
 }
+
+/* Vertically center the active Team wizard question and form together. */
+.team-editor-dialog .team-wizard .wizard-content {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  min-height: 0 !important;
+}
+.team-editor-dialog .team-wizard .wizard-content > .wizard-question {
+  flex: 0 0 auto !important;
+  margin-top: 0 !important;
+  margin-bottom: 28px !important;
+}
+.team-editor-dialog .team-wizard .wizard-content > div:not(.wizard-question):not([hidden]) {
+  flex: 0 0 auto !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+@media (max-width: 700px) {
+  .team-editor-dialog .team-wizard .wizard-content {
+    justify-content: center !important;
+    overflow-y: auto !important;
+  }
+}
