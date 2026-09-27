@@ -10096,3 +10096,26 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     align-self:stretch!important;
   }
 }
+
+
+/* Explicit referee two-column placement */
+.member-editor-dialog .wizard-member-fields-referee > .referee-type-field,
+.team-editor-dialog .wizard-member-fields-referee > .referee-type-field{
+  grid-column:1!important;
+  grid-row:1!important;
+}
+.member-editor-dialog .wizard-member-fields-referee > .referee-wheelchair-field,
+.team-editor-dialog .wizard-member-fields-referee > .referee-wheelchair-field{
+  grid-column:2!important;
+  grid-row:1!important;
+  align-self:end!important;
+}
+@media(max-width:700px){
+  .member-editor-dialog .wizard-member-fields-referee > .referee-type-field,
+  .team-editor-dialog .wizard-member-fields-referee > .referee-type-field,
+  .member-editor-dialog .wizard-member-fields-referee > .referee-wheelchair-field,
+  .team-editor-dialog .wizard-member-fields-referee > .referee-wheelchair-field{
+    grid-column:1!important;
+    grid-row:auto!important;
+  }
+}
