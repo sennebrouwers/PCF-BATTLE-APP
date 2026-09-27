@@ -10647,3 +10647,159 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     gap: 12px 8px !important;
   }
 }
+
+/* Complete team wizard form reset: viewport-safe layout with a compact scrollable middle. */
+.team-editor-dialog {
+  width: min(900px, calc(100vw - 24px)) !important;
+  height: min(760px, calc(100vh - 24px)) !important;
+  max-height: calc(100vh - 24px) !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+.team-editor-dialog > [data-slot="dialog-header"] {
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+  padding: 20px 28px 12px !important;
+}
+.team-editor-dialog > .modal-body,
+.team-editor-dialog > [data-slot="dialog-body"] {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  padding: 0 28px !important;
+  overflow: hidden !important;
+}
+.team-editor-dialog > form.team-wizard {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  gap: 0 !important;
+}
+.team-editor-dialog > form.team-wizard > .wizard-subtitle {
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 0 12px !important;
+  text-align: center !important;
+}
+.team-editor-dialog > form.team-wizard > .wizard-topbar {
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  min-height: 58px !important;
+  margin: 0 !important;
+  padding: 8px 0 14px !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+.team-editor-dialog > form.team-wizard > .wizard-content {
+  display: block !important;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 0 24px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scrollbar-gutter: stable !important;
+}
+.team-editor-dialog > form.team-wizard > .wizard-content > .wizard-question {
+  width: min(760px, 100%) !important;
+  margin: 22px auto 20px !important;
+  padding: 0 !important;
+}
+.team-editor-dialog > form.team-wizard > .wizard-content > div:not(.wizard-question):not([hidden]) {
+  width: min(760px, 100%) !important;
+  max-width: 760px !important;
+  margin: 0 auto !important;
+  padding: 0 0 24px !important;
+  align-self: auto !important;
+}
+.team-editor-dialog > form.team-wizard > .wizard-content .team-invoice-options-step {
+  display: block !important;
+  width: min(760px, 100%) !important;
+  max-width: 760px !important;
+  margin: 0 auto !important;
+  padding: 0 0 24px !important;
+}
+.team-editor-dialog > form.team-wizard > .wizard-content .team-invoice-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 16px 20px !important;
+  width: 100% !important;
+  margin: 16px 0 0 !important;
+  padding: 0 !important;
+}
+.team-editor-dialog > form.team-wizard > .wizard-content .team-invoice-cell,
+.team-editor-dialog > form.team-wizard > .wizard-content .team-invoice-cell > .portal-field {
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+.team-editor-dialog > form.team-wizard > .wizard-content .team-invoice-cell > .portal-field {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+.team-editor-dialog > form.team-wizard > .wizard-content .team-invoice-cell input,
+.team-editor-dialog > form.team-wizard > .wizard-content .team-invoice-cell select {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 44px !important;
+  min-height: 44px !important;
+}
+.team-editor-dialog > form.team-wizard > .wizard-footer {
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  min-height: 78px !important;
+  height: 78px !important;
+  margin: 0 !important;
+  padding: 16px 0 18px !important;
+  background: var(--surface-3) !important;
+  border-top: 1px solid var(--line) !important;
+  overflow: visible !important;
+}
+.team-editor-dialog > form.team-wizard > .wizard-footer .wizard-actions {
+  width: 100% !important;
+  min-height: 42px !important;
+  height: 42px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+@media (max-width: 700px) {
+  .team-editor-dialog {
+    width: calc(100vw - 16px) !important;
+    height: calc(100dvh - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+  }
+  .team-editor-dialog > [data-slot="dialog-header"] {
+    padding: 16px 16px 8px !important;
+  }
+  .team-editor-dialog > .modal-body,
+  .team-editor-dialog > [data-slot="dialog-body"] {
+    padding: 0 16px !important;
+  }
+  .team-editor-dialog > form.team-wizard > .wizard-topbar {
+    min-height: 74px !important;
+    padding: 8px 0 12px !important;
+  }
+  .team-editor-dialog > form.team-wizard > .wizard-content > .wizard-question {
+    margin: 18px auto 16px !important;
+  }
+  .team-editor-dialog > form.team-wizard > .wizard-content .team-invoice-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 14px 10px !important;
+  }
+  .team-editor-dialog > form.team-wizard > .wizard-footer {
+    min-height: 76px !important;
+    height: 76px !important;
+    padding: 14px 0 16px !important;
+  }
+}
