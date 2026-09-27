@@ -20,7 +20,6 @@ type TournamentSettings = {
   show_gallery?: number;
   show_about?: number;
   show_livestream?: number;
-  instagram_url?: string;
 };
 
 export default function PublicHeader({
@@ -115,13 +114,25 @@ export default function PublicHeader({
         <ThemeToggle />
         <a
           className="instagram-link"
-          href={settings?.instagram_url || "https://www.instagram.com/"}
+          href="https://www.instagram.com/pcfbattle/"
           target="_blank"
           rel="noreferrer"
           aria-label="Instagram"
           title="Instagram"
         >
           <span className="instagram-glyph" aria-hidden="true" />
+        </a>
+        <a
+          className="facebook-link"
+          href="https://www.facebook.com/pcfbattle"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Facebook"
+          title="Facebook"
+        >
+          <svg className="facebook-glyph" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M14 8h3V4h-3c-3.31 0-5 1.97-5 5v3H6v4h3v8h4v-8h3.2l.8-4H13V9c0-.66.34-1 1-1Z" fill="currentColor" />
+          </svg>
         </a>
         <Link className="login" href="/login">Log in <ChevronRight /></Link>
       </div>
