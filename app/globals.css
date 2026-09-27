@@ -10209,3 +10209,19 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     grid-row: auto !important;
   }
 }
+
+
+/* Keep notes placeholder at the top-left of the textarea */
+.member-editor-dialog .wizard-final-fields textarea[name="notes"],
+.team-editor-dialog .wizard-final-fields textarea[name="notes"] {
+  display: block !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-height: 120px !important;
+  height: 120px !important;
+  padding: 14px 16px !important;
+  text-align: left !important;
+  vertical-align: top !important;
+  line-height: 1.4 !important;
+  white-space: pre-wrap !important;
+}
