@@ -10983,3 +10983,163 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     padding: 14px 16px 16px !important;
   }
 }
+
+/* Exact Add Team reference layout: wide modal, 300px roadmap, centered right panel. */
+.team-editor-dialog {
+  width: min(1360px, calc(100vw - 48px)) !important;
+  height: min(850px, calc(100vh - 48px)) !important;
+  max-height: calc(100vh - 48px) !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 18px !important;
+}
+.team-editor-dialog > [data-slot="dialog-header"] {
+  padding: 26px 30px 14px !important;
+  margin: 0 !important;
+}
+.team-editor-dialog > form.team-wizard {
+  display: flex !important;
+  flex-direction: column !important;
+  height: calc(100% - 96px) !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+.team-editor-dialog > form.team-wizard > .wizard-subtitle {
+  flex: 0 0 auto !important;
+  align-self: stretch !important;
+  margin: 0 !important;
+  padding: 0 30px 18px !important;
+  text-align: left !important;
+  color: var(--muted) !important;
+  font-size: 16px !important;
+}
+.team-editor-dialog .team-wizard-shell {
+  display: grid !important;
+  grid-template-columns: 300px minmax(0, 1fr) !important;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.team-editor-dialog .team-wizard-sidebar {
+  width: 300px !important;
+  min-width: 300px !important;
+  padding: 24px 28px !important;
+  background: color-mix(in srgb, var(--surface-2) 82%, #000 18%) !important;
+  border-right: 1px solid var(--line) !important;
+}
+.team-editor-dialog .team-wizard-sidebar .wizard-topbar {
+  gap: 8px !important;
+}
+.team-editor-dialog .team-wizard-sidebar .wizard-topbar::before {
+  left: 36px !important;
+  top: 39px !important;
+  bottom: 39px !important;
+  background: #736b78 !important;
+}
+.team-editor-dialog .team-wizard-sidebar .wizard-topbar button {
+  min-height: 42px !important;
+  gap: 14px !important;
+  padding: 5px 8px !important;
+  font-size: 16px !important;
+}
+.team-editor-dialog .team-wizard-sidebar .wizard-topbar button > span {
+  flex-basis: 34px !important;
+  width: 34px !important;
+  height: 34px !important;
+  font-size: 14px !important;
+  border-color: #736b78 !important;
+}
+.team-editor-dialog .team-wizard-sidebar .wizard-topbar button b {
+  font-weight: 600 !important;
+}
+.team-editor-dialog .team-wizard-main {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+}
+.team-editor-dialog .team-wizard-main > .wizard-content {
+  padding: 0 48px 32px !important;
+  overflow-y: auto !important;
+}
+.team-editor-dialog .team-wizard-main > .wizard-content > .wizard-question {
+  width: min(850px, 100%) !important;
+  margin: 74px auto 36px !important;
+}
+.team-editor-dialog .team-wizard-main > .wizard-content > .wizard-question-icon {
+  width: 92px !important;
+  height: 92px !important;
+  margin-bottom: 28px !important;
+}
+.team-editor-dialog .team-wizard-main > .wizard-content > div:not(.wizard-question):not([hidden]) {
+  width: min(850px, 100%) !important;
+  max-width: 850px !important;
+  margin: 0 auto !important;
+  padding-bottom: 28px !important;
+}
+.team-editor-dialog .team-wizard-main > .wizard-content .team-invoice-grid {
+  width: 100% !important;
+}
+.team-editor-dialog .team-wizard-main > .wizard-footer {
+  flex: 0 0 104px !important;
+  height: 104px !important;
+  min-height: 104px !important;
+  padding: 28px 28px !important;
+  background: var(--surface-3) !important;
+  border-top: 1px solid var(--line) !important;
+}
+.team-editor-dialog .team-wizard-main > .wizard-footer .wizard-actions {
+  height: 48px !important;
+}
+.team-editor-dialog .team-wizard-main > .wizard-footer .btn {
+  min-width: 150px !important;
+  height: 48px !important;
+  border-radius: 12px !important;
+  font-size: 16px !important;
+}
+.team-editor-dialog .team-wizard-main > .wizard-footer .btn.primary {
+  min-width: 178px !important;
+}
+@media (max-width: 700px) {
+  .team-editor-dialog {
+    width: calc(100vw - 16px) !important;
+    height: calc(100dvh - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+  }
+  .team-editor-dialog > [data-slot="dialog-header"] {
+    padding: 18px 18px 10px !important;
+  }
+  .team-editor-dialog > form.team-wizard {
+    height: calc(100% - 86px) !important;
+  }
+  .team-editor-dialog > form.team-wizard > .wizard-subtitle {
+    padding: 0 18px 12px !important;
+    font-size: 14px !important;
+  }
+  .team-editor-dialog .team-wizard-shell {
+    display: block !important;
+  }
+  .team-editor-dialog .team-wizard-sidebar {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 10px 12px !important;
+  }
+  .team-editor-dialog .team-wizard-main {
+    height: calc(100% - 70px) !important;
+  }
+  .team-editor-dialog .team-wizard-main > .wizard-content {
+    padding: 0 18px 24px !important;
+  }
+  .team-editor-dialog .team-wizard-main > .wizard-content > .wizard-question {
+    margin: 32px auto 24px !important;
+  }
+  .team-editor-dialog .team-wizard-main > .wizard-footer {
+    height: 78px !important;
+    min-height: 78px !important;
+    flex-basis: 78px !important;
+    padding: 15px 18px !important;
+  }
+}
