@@ -9838,3 +9838,83 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     gap:16px!important;
   }
 }
+
+
+/* Definitive member wizard layout reset */
+.member-editor-dialog > form.wizard-form,
+.team-editor-dialog > form.wizard-form{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:auto auto minmax(0,1fr) 96px!important;
+  height:min(720px,calc(100vh - 96px))!important;
+  min-height:0!important;
+  max-height:calc(100vh - 96px)!important;
+  overflow:hidden!important;
+}
+.member-editor-dialog > form.wizard-form > .wizard-content,
+.team-editor-dialog > form.wizard-form > .wizard-content{
+  min-height:0!important;
+  height:auto!important;
+  max-height:none!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding:0 8px 140px!important;
+  scrollbar-gutter:stable!important;
+}
+.member-editor-dialog > form.wizard-form > .wizard-content > .wizard-member-fields:not([hidden]),
+.team-editor-dialog > form.wizard-form > .wizard-content > .wizard-member-fields:not([hidden]){
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  grid-auto-flow:row!important;
+  align-content:start!important;
+  align-items:start!important;
+  gap:18px 24px!important;
+  width:min(760px,100%)!important;
+  max-width:760px!important;
+  height:auto!important;
+  min-height:0!important;
+  margin:0 auto!important;
+  padding:0 0 32px!important;
+  overflow:visible!important;
+}
+.member-editor-dialog > form.wizard-form > .wizard-content > .wizard-member-fields:not([hidden]) > .portal-field,
+.team-editor-dialog > form.wizard-form > .wizard-content > .wizard-member-fields:not([hidden]) > .portal-field{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  gap:8px!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+}
+.member-editor-dialog > form.wizard-form > .wizard-content > .wizard-member-fields:not([hidden]) > .portal-field > span,
+.team-editor-dialog > form.wizard-form > .wizard-content > .wizard-member-fields:not([hidden]) > .portal-field > span{
+  display:block!important;
+  min-height:1.25em!important;
+  line-height:1.25!important;
+  white-space:normal!important;
+}
+.member-editor-dialog > form.wizard-form > .wizard-footer,
+.team-editor-dialog > form.wizard-form > .wizard-footer{
+  min-height:96px!important;
+  height:96px!important;
+  overflow:visible!important;
+  position:static!important;
+  z-index:3!important;
+}
+@media(max-width:700px){
+  .member-editor-dialog > form.wizard-form,
+  .team-editor-dialog > form.wizard-form{
+    height:calc(100vh - 72px)!important;
+    max-height:calc(100vh - 72px)!important;
+  }
+  .member-editor-dialog > form.wizard-form > .wizard-content,
+  .team-editor-dialog > form.wizard-form > .wizard-content{
+    padding-inline:0!important;
+  }
+  .member-editor-dialog > form.wizard-form > .wizard-content > .wizard-member-fields:not([hidden]),
+  .team-editor-dialog > form.wizard-form > .wizard-content > .wizard-member-fields:not([hidden]){
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:16px!important;
+  }
+}
