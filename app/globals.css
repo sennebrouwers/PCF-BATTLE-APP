@@ -9967,3 +9967,36 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   margin:0!important;
   display:inline!important;
 }
+
+
+/* Mobile final step: keep the two consent controls side by side */
+@media(max-width:700px){
+  .member-editor-dialog .wizard-final-fields,
+  .team-editor-dialog .wizard-final-fields{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    gap:12px!important;
+    width:100%!important;
+    align-items:stretch!important;
+  }
+  .member-editor-dialog .wizard-final-fields > .portal-field:nth-child(1),
+  .member-editor-dialog .wizard-final-fields > .portal-field:nth-child(2),
+  .team-editor-dialog .wizard-final-fields > .portal-field:nth-child(1),
+  .team-editor-dialog .wizard-final-fields > .portal-field:nth-child(2){
+    grid-column:1 / -1!important;
+  }
+  .member-editor-dialog .wizard-final-fields > .portal-field:nth-child(3),
+  .member-editor-dialog .wizard-final-fields > .portal-field:nth-child(4),
+  .team-editor-dialog .wizard-final-fields > .portal-field:nth-child(3),
+  .team-editor-dialog .wizard-final-fields > .portal-field:nth-child(4){
+    grid-column:auto!important;
+    min-width:0!important;
+    margin:0!important;
+  }
+  .member-editor-dialog .wizard-final-fields > .portal-field:nth-child(3) > span,
+  .member-editor-dialog .wizard-final-fields > .portal-field:nth-child(4) > span,
+  .team-editor-dialog .wizard-final-fields > .portal-field:nth-child(3) > span,
+  .team-editor-dialog .wizard-final-fields > .portal-field:nth-child(4) > span{
+    white-space:normal!important;
+  }
+}
