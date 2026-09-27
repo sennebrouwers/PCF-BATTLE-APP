@@ -9930,3 +9930,40 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .team-editor-dialog > form.wizard-form > .wizard-content > .wizard-member-fields:not([hidden]) > .portal-field.wide{
   grid-column:1 / -1!important;
 }
+
+
+/* Referee member type: keep the wheelchair option as one clear full-width control */
+.member-editor-dialog .wizard-member-fields-referee,
+.team-editor-dialog .wizard-member-fields-referee{
+  grid-template-columns:minmax(0,1fr)!important;
+  max-width:760px!important;
+}
+.member-editor-dialog .wizard-member-fields-referee > .portal-field.wide.checkbox-field,
+.team-editor-dialog .wizard-member-fields-referee > .portal-field.wide.checkbox-field{
+  grid-column:1!important;
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:12px!important;
+  min-height:48px!important;
+  padding:12px 14px!important;
+  border:1px solid var(--line)!important;
+  border-radius:12px!important;
+  background:var(--surface-2)!important;
+}
+.member-editor-dialog .wizard-member-fields-referee > .portal-field.wide.checkbox-field > input[type="checkbox"],
+.team-editor-dialog .wizard-member-fields-referee > .portal-field.wide.checkbox-field > input[type="checkbox"]{
+  flex:0 0 18px!important;
+  width:18px!important;
+  height:18px!important;
+  margin:0!important;
+  accent-color:var(--pink)!important;
+}
+.member-editor-dialog .wizard-member-fields-referee > .portal-field.wide.checkbox-field > span,
+.team-editor-dialog .wizard-member-fields-referee > .portal-field.wide.checkbox-field > span{
+  width:auto!important;
+  min-height:0!important;
+  margin:0!important;
+  display:inline!important;
+}
