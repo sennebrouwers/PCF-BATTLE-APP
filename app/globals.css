@@ -9798,3 +9798,43 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     grid-column:auto!important;
   }
 }
+
+
+/* Final overflow guard for the member-type step */
+.member-editor-dialog > .wizard-form > .wizard-content,
+.team-editor-dialog > .wizard-form > .wizard-content{
+  overflow-y:auto!important;
+  overscroll-behavior:contain!important;
+  padding-bottom:120px!important;
+  scrollbar-gutter:stable!important;
+}
+.member-editor-dialog > .wizard-form > .wizard-content > .wizard-member-fields:not([hidden]),
+.team-editor-dialog > .wizard-form > .wizard-content > .wizard-member-fields:not([hidden]){
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  grid-auto-rows:max-content!important;
+  align-items:start!important;
+  gap:18px 24px!important;
+  width:min(760px,calc(100% - 16px))!important;
+  max-width:760px!important;
+  margin:0 auto!important;
+  padding:0 0 24px!important;
+  flex:none!important;
+}
+.member-editor-dialog > .wizard-form > .wizard-content > .wizard-member-fields:not([hidden]) > .portal-field,
+.team-editor-dialog > .wizard-form > .wizard-content > .wizard-member-fields:not([hidden]) > .portal-field{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+}
+@media(max-width:700px){
+  .member-editor-dialog > .wizard-form > .wizard-content > .wizard-member-fields:not([hidden]),
+  .team-editor-dialog > .wizard-form > .wizard-content > .wizard-member-fields:not([hidden]){
+    grid-template-columns:minmax(0,1fr)!important;
+    width:100%!important;
+    gap:16px!important;
+  }
+}
