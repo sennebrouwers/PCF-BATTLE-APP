@@ -6846,7 +6846,6 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                     <div className="wizard-footer"><div className="wizard-actions">{teamStep > 1 && <button type="button" className="btn" onClick={() => setTeamStep((step) => step - 1)}>Back</button>}{teamStep < 9 && <button type="button" className="btn primary" disabled={!stepValid} onClick={() => setTeamStep((step) => step + 1)}>Next</button>}</div>{teamStep === 9 && <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}</div>
                     </div>
                   </div>
-                </div>
               </form>
             </Modal>
           </section>
