@@ -9741,3 +9741,60 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     text-align:center!important;
   }
 }
+
+
+/* Refined member-type layout: labels above controls, balanced 2x2 grid */
+.member-editor-dialog .wizard-member-fields,
+.team-editor-dialog .wizard-member-fields{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  column-gap:24px!important;
+  row-gap:18px!important;
+  width:min(760px,100%)!important;
+  max-width:760px!important;
+  padding:0 8px 24px!important;
+}
+.member-editor-dialog .wizard-member-fields .portal-field,
+.team-editor-dialog .wizard-member-fields .portal-field{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  gap:8px!important;
+  min-width:0!important;
+  width:100%!important;
+  margin:0!important;
+}
+.member-editor-dialog .wizard-member-fields .portal-field > span,
+.team-editor-dialog .wizard-member-fields .portal-field > span{
+  display:block!important;
+  width:100%!important;
+  min-height:1.25em!important;
+  color:var(--ink)!important;
+  font-size:14px!important;
+  font-weight:750!important;
+  line-height:1.25!important;
+  white-space:normal!important;
+}
+.member-editor-dialog .wizard-member-fields .portal-field > input,
+.member-editor-dialog .wizard-member-fields .portal-field > select,
+.team-editor-dialog .wizard-member-fields .portal-field > input,
+.team-editor-dialog .wizard-member-fields .portal-field > select{
+  width:100%!important;
+  min-width:0!important;
+}
+.member-editor-dialog .wizard-member-fields .portal-field.wide,
+.team-editor-dialog .wizard-member-fields .portal-field.wide{
+  grid-column:1/-1!important;
+}
+@media(max-width:700px){
+  .member-editor-dialog .wizard-member-fields,
+  .team-editor-dialog .wizard-member-fields{
+    grid-template-columns:minmax(0,1fr)!important;
+    column-gap:0!important;
+    row-gap:16px!important;
+    padding-inline:0!important;
+  }
+  .member-editor-dialog .wizard-member-fields .portal-field.wide,
+  .team-editor-dialog .wizard-member-fields .portal-field.wide{
+    grid-column:auto!important;
+  }
+}
