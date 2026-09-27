@@ -10481,3 +10481,23 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Center the active Team wizard form in the available content area. */
+.team-editor-dialog .team-wizard .wizard-content {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+.team-editor-dialog .team-wizard .wizard-content > .wizard-question {
+  width: min(760px, 100%) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  text-align: center !important;
+}
+.team-editor-dialog .team-wizard .wizard-content > div:not(.wizard-question):not([hidden]) {
+  width: min(760px, 100%) !important;
+  max-width: 760px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  align-self: center !important;
+}
