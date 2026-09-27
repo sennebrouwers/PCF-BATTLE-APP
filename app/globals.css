@@ -10490,3 +10490,30 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     column-gap: 12px !important;
   }
 }
+
+
+/* Final invoice wizard alignment: keep billing fields high and City/Country together. */
+.team-editor-dialog .team-wizard .wizard-content {
+  align-content: flex-start !important;
+}
+.team-editor-dialog .team-wizard .wizard-question {
+  flex: 0 0 auto !important;
+}
+.team-editor-dialog .team-invoice-options-step {
+  align-content: start !important;
+  justify-content: start !important;
+  margin-top: 0 !important;
+}
+.team-editor-dialog .team-invoice-fields .team-invoice-row:nth-child(3) {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  column-gap: 20px !important;
+}
+@media (max-width: 700px) {
+  .team-editor-dialog .team-wizard .wizard-content {
+    align-content: flex-start !important;
+  }
+  .team-editor-dialog .team-invoice-fields .team-invoice-row:nth-child(3) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    column-gap: 12px !important;
+  }
+}
