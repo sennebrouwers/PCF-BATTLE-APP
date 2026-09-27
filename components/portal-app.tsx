@@ -6631,21 +6631,14 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
     let valid = true;
     if (teamStep === 1) valid = Boolean(value("name"));
     if (teamStep === 2) valid = Boolean(value("address_country"));
-    if (teamStep === 3) valid = Boolean(editing?.logo || input?.files?.length);
+    if (teamStep === 3) valid = Boolean(editing?.logo || input?.files?.length) && /^#[0-9a-fA-F]{6}$/.test(value("color_hex"));
     if (teamStep === 4) valid = true;
-    if (teamStep === 5) valid = /^#[0-9a-fA-F]{6}$/.test(value("color_hex"));
-    if (teamStep === 6) valid = true;
-    if (teamStep === 7) valid = Boolean(value("contact_person"));
-    if (teamStep === 8) valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value("contact_email"));
-    if (teamStep === 9) valid = Boolean(value("phone"));
-    if (teamStep === 10) valid = /^\d+$/.test(value("expected_delegation_size")) && Number(value("expected_delegation_size")) <= 16;
-    if (teamStep === 11) valid = true;
-    if (teamStep === 12) valid = !invoiceRequested || Boolean(value("billing_name"));
-    if (teamStep === 13) valid = !invoiceRequested || Boolean(value("billing_address"));
-    if (teamStep === 14) valid = !invoiceRequested || Boolean(value("billing_postal_code"));
-    if (teamStep === 15) valid = !invoiceRequested || Boolean(value("billing_city"));
-    if (teamStep === 16) valid = !invoiceRequested || Boolean(value("billing_country"));
-    if (teamStep >= 17) valid = true;
+    if (teamStep === 5) valid = true;
+    if (teamStep === 6) valid = Boolean(value("contact_person")) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value("contact_email")) && Boolean(value("phone"));
+    if (teamStep === 7) valid = /^\d+$/.test(value("expected_delegation_size")) && Number(value("expected_delegation_size")) <= 16;
+    if (teamStep === 8) valid = !invoiceRequested || (Boolean(value("billing_name")) && Boolean(value("billing_address")) && Boolean(value("billing_postal_code")) && Boolean(value("billing_city")) && Boolean(value("billing_country")));
+    if (teamStep === 9) valid = Boolean(value("login_email")) && (editing?.id || String(value("login_password")).length >= 8);
+    if (teamStep >= 10) valid = true;
     setStepValid(valid);
   }
   useEffect(() => { readStepValidity(); }, [teamStep, editing, invoiceRequested, wizardRevision]);
@@ -6803,8 +6796,8 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
             >
               <form ref={wizardFormRef} className="portal-form team-wizard wizard-form" onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
                 <div className="wizard-topbar wizard-progress-bar" aria-label="Team creation progress">
-                  {["Team name","Country","Team logo","Team photo","Team color","Group","Contact name","Email","Phone","Delegation size","Invoice option","Billing name","Billing address","Postal code","City","Billing country","Login email","Password","Review"].map((label, index) => (
-                    <button type="button" key={label} disabled={index + 1 > teamStep + 1 || index + 1 === teamStep + 1 && !stepValid} className={teamStep === index + 1 ? "active" : teamStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= teamStep + 1 && (index + 1 <= teamStep || stepValid)) setTeamStep(index + 1); }}>
+                  {["Team name","Country","Team identity","Team photo","Group","Contact details","Delegation","Invoice options","Login details","Review"].map((label, index) => (
+                    <button type="button" key={label} disabled={index + 1 > teamStep + 1 || (index + 1 === teamStep + 1 && !stepValid)} className={teamStep === index + 1 ? "active" : teamStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= teamStep + 1 && (index + 1 <= teamStep || stepValid)) setTeamStep(index + 1); }}>
                       <span>{index + 1}</span>{label}
                     </button>
                   ))}
@@ -6812,24 +6805,28 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                 {!stepValid && <p className="wizard-validation" role="alert">Complete this required field to continue.</p>}
                 <div hidden={teamStep !== 1}><Field label="Team name" name="name" defaultValue={editing?.name} required /></div>
                 <div hidden={teamStep !== 2}><Field label="Country" name="address_country" defaultValue={editing?.address_country} required /></div>
-                <div hidden={teamStep !== 3}><Field label="Team logo" name="logo_file" type="file" required={!editing?.logo} children={<input name="logo_file" type="file" accept="image/*" required={!editing?.logo} onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; const suggested = await suggestTeamColor(file); const input = document.querySelector<HTMLInputElement>('input[name="color_hex"]'); const picker = document.querySelector<HTMLInputElement>('input[data-team-color-picker]'); if (suggested && input && picker) { input.value = suggested; picker.value = suggested; setWizardRevision((value) => value + 1); } }} />} /></div>
+                <div hidden={teamStep !== 3} className="team-identity-step">
+                  <Field label="Team logo" name="logo_file" type="file" required={!editing?.logo} children={<input name="logo_file" type="file" accept="image/*" required={!editing?.logo} onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; const suggested = await suggestTeamColor(file); const input = document.querySelector<HTMLInputElement>('input[name="color_hex"]'); const picker = document.querySelector<HTMLInputElement>('input[data-team-color-picker]'); if (suggested && input && picker) { input.value = suggested; picker.value = suggested; setWizardRevision((value) => value + 1); } }} />} />
+                  <Field label="Team color (HEX)" name="color_hex" defaultValue={editing?.color || teamColors[teams.data.length % 8]} required children={<div className="hex-color-control"><input name="color_hex" defaultValue={editing?.color || teamColors[teams.data.length % 8]} required /><input data-team-color-picker type="color" defaultValue={editing?.color || teamColors[teams.data.length % 8]} aria-label="Choose team color" onChange={(event) => { const input = document.querySelector<HTMLInputElement>('input[name="color_hex"]'); if (input) { input.value = event.target.value; input.dispatchEvent(new Event("input", { bubbles: true })); } }} /></div>} />
+                </div>
                 <div hidden={teamStep !== 4}><Field label="Team photo (optional)" name="team_photo_file" type="file" children={<input name="team_photo_file" type="file" accept="image/*" />} /></div>
-                <div hidden={teamStep !== 5}><Field label="Team color (HEX)" name="color_hex" defaultValue={editing?.color || teamColors[teams.data.length % 8]} required children={<div className="hex-color-control"><input name="color_hex" defaultValue={editing?.color || teamColors[teams.data.length % 8]} required /><input data-team-color-picker type="color" defaultValue={editing?.color || teamColors[teams.data.length % 8]} aria-label="Choose team color" onChange={(event) => { const input = document.querySelector<HTMLInputElement>('input[name="color_hex"]'); if (input) { input.value = event.target.value; input.dispatchEvent(new Event("input", { bubbles: true })); } }} /></div>} /></div>
-                <div hidden={teamStep !== 6}><Field label="Group (optional)" name="group_id" defaultValue={editing?.group_id} /></div>
-                <div hidden={teamStep !== 7}><Field label="Contact full name" name="contact_person" defaultValue={editing?.contact_person} required /></div>
-                <div hidden={teamStep !== 8}><Field label="Contact email address" name="contact_email" type="email" defaultValue={editing?.contact_email} required /></div>
-                <div hidden={teamStep !== 9}><PhoneField defaultValue={editing?.phone} defaultCode={editing?.phone_country_code || "+32"} required /></div>
-                <div hidden={teamStep !== 10}><Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={0} max={16} defaultValue={editing?.expected_delegation_size || ""} required onChange={(event) => setDelegationSize(Math.min(16, Math.max(0, Number(event.target.value || 0))))} /><p className="wizard-help">Initial rooms required: {delegationSize ? Math.ceil(delegationSize / 2) : "—"}. Room numbers remain empty until the hotel meeting.</p></div>
-                <div hidden={teamStep !== 11}><label className="portal-field wide checkbox-field"><input type="checkbox" name="invoice_requested" value="1" checked={invoiceRequested} onChange={(event) => { setInvoiceRequested(event.target.checked); setWizardRevision((value) => value + 1); }} /><span>I would like to receive an invoice during payment for administration.</span></label></div>
-                <div hidden={teamStep !== 12}><Field label="Billing name / organisation" name="billing_name" defaultValue={editing?.billing_name} required={invoiceRequested} /></div>
-                <div hidden={teamStep !== 13}><Field label="Street and house number" name="billing_address" defaultValue={editing?.billing_address} required={invoiceRequested} /></div>
-                <div hidden={teamStep !== 14}><Field label="Postal code" name="billing_postal_code" defaultValue={editing?.billing_postal_code} required={invoiceRequested} /></div>
-                <div hidden={teamStep !== 15}><Field label="City" name="billing_city" defaultValue={editing?.billing_city} required={invoiceRequested} /></div>
-                <div hidden={teamStep !== 16}><Field label="Country" name="billing_country" defaultValue={editing?.billing_country} required={invoiceRequested} /></div>
-                <div hidden={teamStep !== 17}><Field label="Login email" name="login_email" type="email" required={!editing?.id} /></div>
-                <div hidden={teamStep !== 18}><Field label="Temporary password" name="login_password" type="password" minLength={8} required={!editing?.id} /></div>
-                <div hidden={teamStep !== 19} className="team-wizard-review"><h4>Review and create</h4><p>Review the information before saving this team.</p></div>
-                <div className="wizard-footer"><div className="wizard-actions">{teamStep > 1 && <button type="button" className="btn" onClick={() => setTeamStep((step) => step - 1)}>Back</button>}{teamStep < 19 && <button type="button" className="btn primary" disabled={!stepValid} onClick={() => setTeamStep((step) => step + 1)}>Next</button>}</div>{teamStep === 19 && <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}</div>
+                <div hidden={teamStep !== 5}><Field label="Group (optional)" name="group_id" defaultValue={editing?.group_id} /></div>
+                <div hidden={teamStep !== 6} className="team-contact-details-step">
+                  <Field label="Contact full name" name="contact_person" defaultValue={editing?.contact_person} required />
+                  <Field label="Contact email address" name="contact_email" type="email" defaultValue={editing?.contact_email} required />
+                  <PhoneField defaultValue={editing?.phone} defaultCode={editing?.phone_country_code || "+32"} required />
+                </div>
+                <div hidden={teamStep !== 7}><Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={0} max={16} defaultValue={editing?.expected_delegation_size || ""} required onChange={(event) => setDelegationSize(Math.min(16, Math.max(0, Number(event.target.value || 0))))} /><p className="wizard-help">Initial rooms required: {delegationSize ? Math.ceil(delegationSize / 2) : "—"}. Room numbers remain empty until the hotel meeting.</p></div>
+                <div hidden={teamStep !== 8} className="team-invoice-options-step">
+                  <label className="portal-field wide checkbox-field"><input type="checkbox" name="invoice_requested" value="1" checked={invoiceRequested} onChange={(event) => { setInvoiceRequested(event.target.checked); setWizardRevision((value) => value + 1); }} /><span>I would like to receive an invoice during payment for administration.</span></label>
+                  {invoiceRequested && <><Field label="Billing name / organisation" name="billing_name" defaultValue={editing?.billing_name} required /><Field label="Street and house number" name="billing_address" defaultValue={editing?.billing_address} required /><Field label="Postal code" name="billing_postal_code" defaultValue={editing?.billing_postal_code} required /><Field label="City" name="billing_city" defaultValue={editing?.billing_city} required /><Field label="Country" name="billing_country" defaultValue={editing?.billing_country} required /></>}
+                </div>
+                <div hidden={teamStep !== 9} className="team-login-details-step">
+                  <Field label="Login email" name="login_email" type="email" defaultValue={editing?.login_email} required={!editing?.id} />
+                  <Field label="Temporary password" name="login_password" type="password" minLength={8} required={!editing?.id} />
+                </div>
+                <div hidden={teamStep !== 10} className="team-wizard-review"><h4>Review and create</h4><p>Review the information before saving this team.</p></div>
+                <div className="wizard-footer"><div className="wizard-actions">{teamStep > 1 && <button type="button" className="btn" onClick={() => setTeamStep((step) => step - 1)}>Back</button>}{teamStep < 10 && <button type="button" className="btn primary" disabled={!stepValid} onClick={() => setTeamStep((step) => step + 1)}>Next</button>}</div>{teamStep === 10 && <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}</div>
               </form>
             </Modal>
           </section>
