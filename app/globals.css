@@ -10351,3 +10351,58 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     margin-bottom: 18px !important;
   }
 }
+
+
+/* Invoice step: labels above controls and no footer overlay */
+.team-editor-dialog .team-invoice-options-step {
+  display: block !important;
+  width: 100% !important;
+}
+.team-editor-dialog .team-invoice-options-step > .checkbox-field {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin: 0 0 18px !important;
+}
+.team-editor-dialog .team-invoice-options-step .team-invoice-fields {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px 20px !important;
+  width: 100% !important;
+}
+.team-editor-dialog .team-invoice-options-step .team-invoice-fields > .portal-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 6px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+.team-editor-dialog .team-invoice-options-step .team-invoice-fields > .portal-field > span {
+  display: block !important;
+  width: 100% !important;
+}
+.team-editor-dialog .team-wizard .wizard-footer {
+  flex: 0 0 auto !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 16%, transparent) !important;
+  padding: 20px 0 24px !important;
+  margin: 0 !important;
+  position: relative !important;
+  z-index: 3 !important;
+}
+.team-editor-dialog .team-wizard .wizard-content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  padding-bottom: 28px !important;
+}
+@media (max-width: 700px) {
+  .team-editor-dialog .team-invoice-options-step .team-invoice-fields {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+}
