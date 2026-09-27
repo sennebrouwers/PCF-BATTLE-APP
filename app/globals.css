@@ -9918,3 +9918,15 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     gap:16px!important;
   }
 }
+
+
+/* Ensure each member field occupies one grid cell */
+.member-editor-dialog > form.wizard-form > .wizard-content > .wizard-member-fields:not([hidden]) > .portal-field,
+.team-editor-dialog > form.wizard-form > .wizard-content > .wizard-member-fields:not([hidden]) > .portal-field{
+  grid-column:auto!important;
+  grid-row:auto!important;
+}
+.member-editor-dialog > form.wizard-form > .wizard-content > .wizard-member-fields:not([hidden]) > .portal-field.wide,
+.team-editor-dialog > form.wizard-form > .wizard-content > .wizard-member-fields:not([hidden]) > .portal-field.wide{
+  grid-column:1 / -1!important;
+}
