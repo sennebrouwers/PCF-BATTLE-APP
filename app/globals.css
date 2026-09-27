@@ -9522,3 +9522,52 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   margin:0!important;
   min-height:42px!important;
 }
+
+
+/* Use the actual Radix DialogContent structure for wizard sizing */
+.member-editor-dialog,
+.team-editor-dialog{
+  display:flex!important;
+  flex-direction:column!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+.member-editor-dialog > [data-slot="dialog-header"],
+.team-editor-dialog > [data-slot="dialog-header"]{
+  flex:0 0 auto!important;
+  min-height:0!important;
+}
+.member-editor-dialog > .wizard-form,
+.team-editor-dialog > .wizard-form{
+  display:flex!important;
+  flex:1 1 auto!important;
+  flex-direction:column!important;
+  min-height:0!important;
+  height:auto!important;
+  max-height:none!important;
+  overflow:hidden!important;
+}
+.member-editor-dialog > .wizard-form .wizard-content,
+.team-editor-dialog > .wizard-form .wizard-content{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+}
+.member-editor-dialog > .wizard-form .wizard-footer,
+.team-editor-dialog > .wizard-form .wizard-footer{
+  flex:0 0 96px!important;
+  min-height:96px!important;
+  height:96px!important;
+  position:static!important;
+  overflow:visible!important;
+}
+.member-editor-dialog > .wizard-form .wizard-footer .wizard-actions,
+.team-editor-dialog > .wizard-form .wizard-footer .wizard-actions{
+  min-height:42px!important;
+  height:auto!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  width:100%!important;
+}
