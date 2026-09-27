@@ -6823,10 +6823,13 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                   <div hidden={teamStep !== 6}><Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={0} max={16} defaultValue={editing?.expected_delegation_size || ""} required onChange={(event) => setDelegationSize(Math.min(16, Math.max(0, Number(event.target.value || 0))))} /><p className="wizard-help">Initial rooms required: {delegationSize ? Math.ceil(delegationSize / 2) : "—"}. Room numbers remain empty until the hotel meeting.</p></div>
                   <div hidden={teamStep !== 7} className="team-invoice-options-step">
                     <label className="portal-field wide checkbox-field"><input type="checkbox" name="invoice_requested" value="1" checked={invoiceRequested} onChange={(event) => { setInvoiceRequested(event.target.checked); setWizardRevision((value) => value + 1); }} /><span>I would like to receive an invoice during payment for administration.</span></label>
-                    {invoiceRequested && <div className="team-invoice-fields">
-                      <div className="team-invoice-row"><Field label="Billing name / organisation" name="billing_name" defaultValue={editing?.billing_name} required /><Field label="VAT / company number" name="vat_number" defaultValue={editing?.vat_number} /></div>
-                      <div className="team-invoice-row"><Field label="Street and house number" name="billing_address" defaultValue={editing?.billing_address} required /><Field label="Postal code" name="billing_postal_code" defaultValue={editing?.billing_postal_code} required /></div>
-                      <div className="team-invoice-row team-invoice-city-country"><Field label="City" name="billing_city" defaultValue={editing?.billing_city} required /><Field label="Country" name="billing_country" defaultValue={editing?.billing_country} required /></div>
+                    {invoiceRequested && <div className="team-invoice-grid">
+                      <div className="team-invoice-cell"><Field label="Billing name / organisation" name="billing_name" defaultValue={editing?.billing_name} required /></div>
+                      <div className="team-invoice-cell"><Field label="VAT / company number" name="vat_number" defaultValue={editing?.vat_number} /></div>
+                      <div className="team-invoice-cell"><Field label="Street and house number" name="billing_address" defaultValue={editing?.billing_address} required /></div>
+                      <div className="team-invoice-cell"><Field label="Postal code" name="billing_postal_code" defaultValue={editing?.billing_postal_code} required /></div>
+                      <div className="team-invoice-cell"><Field label="City" name="billing_city" defaultValue={editing?.billing_city} required /></div>
+                      <div className="team-invoice-cell"><Field label="Country" name="billing_country" defaultValue={editing?.billing_country} required /></div>
                     </div>}
                   </div>
                   <div hidden={teamStep !== 8} className="team-login-details-step">
