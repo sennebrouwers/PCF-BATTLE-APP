@@ -10053,3 +10053,13 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     gap:10px!important;
   }
 }
+
+
+/* Give the Notes input more room without requiring a new Field type */
+.member-editor-dialog .wizard-final-fields input[name="notes"],
+.team-editor-dialog .wizard-final-fields input[name="notes"]{
+  min-height:120px!important;
+  height:120px!important;
+  padding-top:16px!important;
+  padding-bottom:16px!important;
+}
