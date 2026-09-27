@@ -10225,3 +10225,29 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   line-height: 1.4 !important;
   white-space: pre-wrap !important;
 }
+
+
+/* Team wizard invoice options: compact two-column layout */
+.team-editor-dialog .team-invoice-options-step {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 18px 24px !important;
+  align-items: start !important;
+}
+.team-editor-dialog .team-invoice-options-step > .checkbox-field {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+}
+.team-editor-dialog .team-invoice-options-step > .portal-field {
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+@media (max-width: 700px) {
+  .team-editor-dialog .team-invoice-options-step {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .team-editor-dialog .team-invoice-options-step > .checkbox-field {
+    grid-column: 1 !important;
+  }
+}
