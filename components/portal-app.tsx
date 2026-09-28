@@ -373,7 +373,7 @@ function Modal({
           boxSizing: "border-box",
           width: "min(1180px, calc(100vw - 24px))",
           maxWidth: "calc(100vw - 24px)",
-          height: "min(900px, calc(100dvh - 24px))",
+          height: className.includes("confirm-dialog") ? "auto" : "min(900px, calc(100dvh - 24px))",
           maxHeight: "calc(100dvh - 24px)",
           minHeight: 0,
           margin: 0,
@@ -388,11 +388,11 @@ function Modal({
           className="modal-body"
           style={{
             display: "flex",
-            flex: "1 1 0",
+            flex: className.includes("confirm-dialog") ? "0 0 auto" : "1 1 0",
             flexDirection: "column",
             minHeight: 0,
-            height: 0,
-            overflow: "hidden",
+            height: className.includes("confirm-dialog") ? "auto" : 0,
+            overflow: className.includes("confirm-dialog") ? "visible" : "hidden",
           }}
         >
           {children}
