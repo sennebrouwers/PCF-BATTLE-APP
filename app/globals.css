@@ -9705,3 +9705,17 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     max-height: none !important;
   }
 }
+
+/* Keep disabled Next visible in the delegation wizard, matching Team. */
+.member-editor-dialog[data-slot="dialog-content"] .wizard-footer-next > .btn.primary:disabled,
+.member-editor-dialog[data-slot="dialog-content"] .wizard-actions > .btn.primary:disabled {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: .48 !important;
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+  color: #fff !important;
+  background: var(--pink) !important;
+  border-color: var(--pink) !important;
+  box-shadow: none !important;
+}
