@@ -289,7 +289,7 @@ async function buildTeamReview(teamId: string, prepareSchema = true) {
   const hasValue = (value: unknown) => String(value || "").trim().length > 0;
   const expectedDelegation = Number(team.expected_delegation_size);
   const validExpectedDelegation = Number.isInteger(expectedDelegation) && expectedDelegation >= 1 && expectedDelegation <= 16;
-  if (!hasValue(team.contact_person) || !hasValue(team.phone) || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(String(team.contact_email || "")) || !validExpectedDelegation) issues.push("Complete the required team contact email and delegation size");
+  if (!hasValue(team.contact_person) || !hasValue(team.phone) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(team.contact_email || "")) || !validExpectedDelegation) issues.push("Complete the required team contact email and delegation size");
   const participantSubtotal = members.length * unitPrice, accommodationSupplement = singleRooms.length * singleSupplement, total = participantSubtotal + accommodationSupplement, depositPercentage = Number(settings?.deposit_percentage || 30);
   const deposit = roundMoney(total * depositPercentage / 100), balance = roundMoney(total - deposit);
   return { team, members, rooms, unassigned, issues, settings, pricing: { unitPrice, singleSupplement, singleRoomCount: singleRooms.length, participantSubtotal, accommodationSupplement, total: roundMoney(total), depositPercentage, deposit, balance } };
@@ -3143,7 +3143,7 @@ export async function POST(
     if (table === "teams") {
       const contactEmail = String(body.contact_email || "").trim().toLowerCase();
       const expectedDelegation = Number(body.expected_delegation_size);
-      if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(contactEmail)) return out({ error: "A valid contact email address is required" }, 422);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) return out({ error: "A valid contact email address is required" }, 422);
       if (!Number.isInteger(expectedDelegation) || expectedDelegation < 1 || expectedDelegation > 16) return out({ error: "Expected delegation size must be a whole number between 1 and 16" }, 422);
       body.contact_email = contactEmail;
       const loginEmail = String(body.login_email || `team-${uuid().slice(0, 8)}@phb.app`).toLowerCase().trim();
@@ -3428,7 +3428,7 @@ export async function PUT(
   if (table === "teams") {
     const contactEmail = String(body.contact_email || "").trim().toLowerCase();
     const expectedDelegation = Number(body.expected_delegation_size);
-    if (body.contact_email !== undefined && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(contactEmail)) return out({ error: "A valid contact email address is required" }, 422);
+    if (body.contact_email !== undefined && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) return out({ error: "A valid contact email address is required" }, 422);
     if (body.expected_delegation_size !== undefined && (!Number.isInteger(expectedDelegation) || expectedDelegation < 1 || expectedDelegation > 16)) return out({ error: "Expected delegation size must be a whole number between 1 and 16" }, 422);
     if (body.contact_email !== undefined) body.contact_email = contactEmail;
     const parts = [body.address_street, body.address_number, body.address_postal_code, body.address_city, body.address_country].filter((value) => String(value || "").trim());
