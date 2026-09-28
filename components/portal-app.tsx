@@ -354,11 +354,33 @@ function Modal({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`portal-dialog ${className}`}>
+      <DialogContent
+        className={`portal-dialog ${className}`}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          width: "min(1180px, calc(100vw - 48px))",
+          maxWidth: "calc(100vw - 48px)",
+          height: "calc(100dvh - 40px)",
+          maxHeight: "calc(100dvh - 40px)",
+          minHeight: 0,
+          overflow: "hidden",
+        }}
+      >
         <DialogHeader className="modal-header">
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <div className="modal-body">
+        <div
+          className="modal-body"
+          style={{
+            display: "flex",
+            flex: "1 1 0",
+            flexDirection: "column",
+            minHeight: 0,
+            height: 0,
+            overflow: "hidden",
+          }}
+        >
           {children}
         </div>
       </DialogContent>
