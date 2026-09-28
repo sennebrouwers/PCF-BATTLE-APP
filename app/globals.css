@@ -9878,3 +9878,28 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   min-height: 42px !important;
   flex: 0 0 auto !important;
 }
+
+.confirm-dialog .confirm-actions {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+.confirm-dialog .confirm-actions .btn {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 96px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
