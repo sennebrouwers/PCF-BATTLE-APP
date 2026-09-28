@@ -6786,6 +6786,38 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
               className="team-editor-dialog"
             >
               <form ref={wizardFormRef} className="portal-form team-wizard wizard-form" onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
+                {editing?.id ? (
+                  <div className="team-quick-edit">
+                    <p className="wizard-subtitle">Update the team details without going through the setup wizard.</p>
+                    <div className="team-quick-edit-grid">
+                      <Field label="Team name" name="name" defaultValue={editing?.name} required />
+                      <Field label="Country" name="address_country" defaultValue={editing?.address_country} required />
+                      <Field label="Team logo (optional)" name="logo_file" type="file" children={<input name="logo_file" type="file" accept="image/*" />} />
+                      <Field label="Team photo (optional)" name="team_photo_file" type="file" children={<input name="team_photo_file" type="file" accept="image/*" />} />
+                      <Field label="Team color (HEX)" name="color_hex" defaultValue={editing?.color || "#ec4899"} required children={<div className="hex-color-control"><input name="color_hex" defaultValue={editing?.color || "#ec4899"} required /><input data-team-color-picker type="color" defaultValue={editing?.color || "#ec4899"} aria-label="Choose team color" onChange={(event) => { const input = event.target.parentElement?.querySelector<HTMLInputElement>('input[name="color_hex"]'); if (input) { input.value = event.target.value; input.dispatchEvent(new Event("input", { bubbles: true })); } }} /></div>} />
+                      <Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={0} max={16} defaultValue={editing?.expected_delegation_size || ""} required />
+                      <Field label="Contact full name" name="contact_person" defaultValue={editing?.contact_person} required />
+                      <Field label="Contact email address" name="contact_email" type="email" defaultValue={editing?.contact_email} required />
+                      <PhoneField defaultValue={editing?.phone} defaultCode={editing?.phone_country_code || "+32"} required />
+                      <Field label="Login email" name="login_email" type="email" defaultValue={editing?.login_email} required />
+                    </div>
+                    <label className="portal-field wide checkbox-field">
+                      <input type="checkbox" name="invoice_requested" value="1" defaultChecked={Boolean(editing?.invoice_requested)} />
+                      <span>I would like to receive an invoice during payment for administration.</span>
+                    </label>
+                    {editing?.invoice_requested && (
+                      <div className="team-invoice-fields team-quick-invoice-fields">
+                        <div className="team-invoice-row"><Field label="Billing name / organisation" name="billing_name" defaultValue={editing?.billing_name} /><Field label="VAT / company number" name="vat_number" defaultValue={editing?.vat_number} /></div>
+                        <div className="team-invoice-row"><Field label="Street and house number" name="billing_address" defaultValue={editing?.billing_address} /><Field label="Postal code" name="billing_postal_code" defaultValue={editing?.billing_postal_code} /></div>
+                        <div className="team-invoice-row"><Field label="City" name="billing_city" defaultValue={editing?.billing_city} /><Field label="Country" name="billing_country" defaultValue={editing?.billing_country} /></div>
+                      </div>
+                    )}
+                    <div className="wizard-footer team-quick-edit-footer">
+                      <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />
+                    </div>
+                  </div>
+                ) : (
+                  <>
                 <p className="wizard-subtitle">Create a new team for the tournament.</p>
                 <div className="wizard-topbar wizard-progress-bar" aria-label="Team creation progress">
                   {["Team name","Country","Team identity","Team photo","Contact details","Delegation","Invoice options","Login details","Review"].map((label, index) => (
@@ -6828,6 +6860,8 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                   <div hidden={teamStep !== 9} className="team-wizard-review"><h4>Review and create</h4><p>Review the information before saving this team.</p></div>
                 </div>
                 <div className="wizard-footer"><div className="wizard-actions">{teamStep > 1 && <button type="button" className="btn" onClick={() => setTeamStep((step) => step - 1)}>Back</button>}{teamStep < 9 && <button type="button" className="btn primary" disabled={!stepValid} onClick={() => setTeamStep((step) => step + 1)}>Next</button>}</div>{teamStep === 9 && <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}</div>
+                  </>
+                )}
               </form>
             </Modal>
           </section>
