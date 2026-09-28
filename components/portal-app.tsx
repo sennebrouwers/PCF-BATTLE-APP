@@ -743,7 +743,7 @@ function Confirm({
             )}
             <DialogTitle>{title}</DialogTitle>
           </DialogHeader>
-          <div className="modal-body confirm-body">
+          <div className="confirm-content">
             <p>{text}</p>
             {!passwordInput && (
               <span className="confirm-warning-note">
@@ -760,7 +760,8 @@ function Confirm({
                 autoComplete="current-password"
               />
             )}
-            <div className="confirm-divider" />
+          </div>
+          <div className="confirm-footer">
             <div className="confirm-actions">
               <button
                 type="button"
