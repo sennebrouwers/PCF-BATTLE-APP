@@ -9951,3 +9951,25 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     min-width: 0 !important;
   }
 }
+
+
+/* Confirmation body must not inherit the wizard body's collapsed height. */
+.portal-dialog.confirm-dialog[data-slot="dialog-content"] > .modal-body.confirm-body {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+  padding: 0 !important;
+}
+
+.portal-dialog.confirm-dialog[data-slot="dialog-content"] .confirm-actions {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  flex: 0 0 auto !important;
+  height: auto !important;
+  min-height: 44px !important;
+  overflow: visible !important;
+}
