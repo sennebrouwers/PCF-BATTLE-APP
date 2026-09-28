@@ -9958,3 +9958,8 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     min-width: 0 !important;
   }
 }
+
+
+.confirm-trigger {
+  display: contents;
+}
