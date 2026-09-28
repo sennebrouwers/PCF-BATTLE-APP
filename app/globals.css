@@ -8920,3 +8920,28 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     padding: 0 2px 40px !important;
   }
 }
+
+
+/* Remove the legacy two-column wizard grid. */
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form,
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.team-wizard {
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-auto-flow: row !important;
+  justify-items: stretch !important;
+  align-items: stretch !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > *,
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.team-wizard > * {
+  grid-column: 1 / -1 !important;
+  min-width: 0 !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-content {
+  grid-row: 3 !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-footer {
+  grid-column: 1 / -1 !important;
+  grid-row: 4 !important;
+}
