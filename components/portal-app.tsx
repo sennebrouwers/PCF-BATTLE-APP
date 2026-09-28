@@ -344,12 +344,14 @@ function Modal({
   open,
   onOpenChange,
   className = "",
+  description,
   children,
 }: {
   title: string;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   className?: string;
+  description?: string;
   children: ReactNode;
 }) {
   return (
@@ -379,6 +381,7 @@ function Modal({
       >
         <DialogHeader className="modal-header">
           <DialogTitle>{title}</DialogTitle>
+          {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
         <div
           className="modal-body"
@@ -6818,8 +6821,9 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
               open={editing !== undefined}
               onOpenChange={(v) => !v && setEditing(undefined)}
               className="team-editor-dialog"
+              description={editing?.id ? "Update the team details without going through the setup wizard." : "Create a new team for the tournament."}
             >
-              <form ref={wizardFormRef} className={editing?.id ? "portal-form team-wizard wizard-form team-edit-form" : "portal-form team-wizard wizard-form"} onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
+              <form ref={wizardFormRef} className={editing?.id ? "portal-form team-wizard wizard-form team-edit-form" : "portal-form wizard-form team-wizard-shell"} onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
                 {editing?.id ? (
                   <div className="team-quick-edit">
                     <p className="wizard-subtitle">Update the team details without going through the setup wizard.</p>
@@ -6852,7 +6856,6 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                   </div>
                 ) : (
                   <>
-                <p className="wizard-subtitle">Create a new team for the tournament.</p>
                 <div className="wizard-topbar wizard-progress-bar" aria-label="Team creation progress">
                   {["Team name","Country","Team identity","Team photo","Contact details","Delegation","Invoice options","Login details","Review"].map((label, index) => (
                     <button type="button" key={label} disabled={index + 1 > teamStep + 1 || (index + 1 === teamStep + 1 && !stepValid)} className={teamStep === index + 1 ? "active" : teamStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= teamStep + 1 && (index + 1 <= teamStep || stepValid)) setTeamStep(index + 1); }}>
@@ -6861,6 +6864,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                   ))}
                 </div>
                 <div className="wizard-content">
+                  <div className="wizard-content-inner">
                   <div className="wizard-question">
                     <div className="wizard-question-icon"><UserRoundCog /></div>
                     <h3>{teamStep === 1 ? "What is the team name?" : teamStep === 2 ? "Where is the team from?" : teamStep === 3 ? "Add the team identity" : teamStep === 4 ? "Add a team photo" : teamStep === 5 ? "Who is the contact person?" : teamStep === 6 ? "How large is the delegation?" : teamStep === 7 ? "Does the team need an invoice?" : teamStep === 8 ? "Create the team login" : "Review and create the team"}</h3>
@@ -6892,8 +6896,14 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                     <Field label="Temporary password" name="login_password" type="password" minLength={8} required={!editing?.id} />
                   </div>
                   <div hidden={teamStep !== 9} className="team-wizard-review"><h4>Review and create</h4><p>Review the information before saving this team.</p></div>
+                  </div>
                 </div>
-                <div className="wizard-footer"><div className="wizard-actions">{teamStep > 1 && <button type="button" className="btn" onClick={() => setTeamStep((step) => step - 1)}>Back</button>}{teamStep < 9 && <button type="button" className="btn primary" disabled={!stepValid} onClick={() => setTeamStep((step) => step + 1)}>Next</button>}</div>{teamStep === 9 && <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}</div>
+                <div className="wizard-footer">
+                  <div className="wizard-actions">
+                    {teamStep > 1 && <button type="button" className="btn" onClick={() => setTeamStep((step) => step - 1)}>Back</button>}
+                  </div>
+                  {teamStep < 9 ? <button type="button" className="btn primary" disabled={!stepValid} onClick={() => setTeamStep((step) => step + 1)}>Next <span aria-hidden="true">→</span></button> : <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}
+                </div>
                   </>
                 )}
               </form>
