@@ -10016,3 +10016,29 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     padding: 24px !important;
   }
 }
+
+
+/* Final confirmation geometry: center in viewport and contain the actions */
+.confirm-dialog[data-slot="dialog-content"] {
+  position: fixed !important;
+  inset: 0 !important;
+  margin: auto !important;
+  transform: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-self: center !important;
+  width: min(560px, calc(100vw - 24px)) !important;
+  max-width: calc(100vw - 24px) !important;
+  height: max-content !important;
+  max-height: calc(100dvh - 24px) !important;
+  overflow: hidden !important;
+}
+
+.confirm-dialog .confirm-body {
+  flex: 0 0 auto !important;
+  overflow: visible !important;
+}
+
+.confirm-dialog .confirm-actions {
+  flex: 0 0 auto !important;
+}
