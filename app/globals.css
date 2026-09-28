@@ -10588,3 +10588,36 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     grid-template-columns: 1fr;
   }
 }
+
+/* Consistent scrolling for every portal form with more fields than the viewport. */
+.portal-dialog:not(.team-editor-dialog):not(.member-editor-dialog) > .portal-form {
+  max-height: calc(100dvh - 190px);
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 4px 24px;
+  scrollbar-width: thin;
+}
+.portal-dialog:not(.team-editor-dialog):not(.member-editor-dialog) > .portal-form .form-actions {
+  position: sticky;
+  bottom: 0;
+  padding: 14px 0 4px;
+  background: var(--surface-1);
+  z-index: 2;
+}
+.team-editor-dialog .team-edit-form {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  min-height: 0 !important;
+  padding-bottom: 24px !important;
+}
+.team-editor-dialog .team-edit-form .team-quick-edit {
+  padding-bottom: 4px;
+}
+@media (max-height: 720px) {
+  .member-editor-dialog .wizard-form,
+  .team-editor-dialog .wizard-form {
+    height: calc(100dvh - 120px) !important;
+    min-height: 0 !important;
+  }
+}
