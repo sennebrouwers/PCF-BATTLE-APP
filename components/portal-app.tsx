@@ -6878,7 +6878,6 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                       <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />
                     </div>
                   </div>
-                ) : (</div>
                 ) : (
                   <>
                 <div className="wizard-topbar wizard-progress-bar" aria-label="Team creation progress">
