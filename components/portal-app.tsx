@@ -6785,7 +6785,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
               onOpenChange={(v) => !v && setEditing(undefined)}
               className="team-editor-dialog"
             >
-              <form ref={wizardFormRef} className="portal-form team-wizard wizard-form" onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
+              <form ref={wizardFormRef} className={editing?.id ? "portal-form team-wizard wizard-form team-edit-form" : "portal-form team-wizard wizard-form"} onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
                 {editing?.id ? (
                   <div className="team-quick-edit">
                     <p className="wizard-subtitle">Update the team details without going through the setup wizard.</p>
