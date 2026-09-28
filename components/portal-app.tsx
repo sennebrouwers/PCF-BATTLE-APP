@@ -16,6 +16,7 @@ import {
   CalendarDays,
   ChevronRight,
   CircleDollarSign,
+  CircleAlert,
   ClipboardList,
   ClipboardCheck,
   Download,
@@ -728,21 +729,50 @@ function Confirm({
             left: "50%",
             top: "50%",
             transform: "translate(-50%, -50%)",
-            width: "min(520px, calc(100vw - 32px))",
-            maxWidth: "calc(100vw - 32px)",
+            width: "min(560px, calc(100vw - 24px))",
+            maxWidth: "calc(100vw - 24px)",
             height: "auto",
-            maxHeight: "calc(100dvh - 32px)",
+            maxHeight: "calc(100dvh - 24px)",
             minHeight: 0,
-            padding: "24px",
+            padding: "32px",
             overflow: "visible",
           }}
         >
-          <DialogHeader className="modal-header">
+          <DialogHeader className="modal-header confirm-header">
+            {!passwordInput && (
+              <div className="confirm-icon" aria-hidden="true">
+                <CircleAlert />
+              </div>
+            )}
             <DialogTitle>{title}</DialogTitle>
           </DialogHeader>
-          <div className="modal-body confirm-body" style={{ display: "flex", flexDirection: "column", gap: "20px", height: "auto", minHeight: 0, overflow: "visible" }}>
+          <div
+            className="modal-body confirm-body"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "22px",
+              height: "auto",
+              minHeight: 0,
+              overflow: "visible",
+            }}
+          >
             <p>{text}</p>
-            {passwordInput && <Field label="Admin password" name="reset-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" />}
+            {!passwordInput && (
+              <span className="confirm-warning-note">
+                This action cannot be undone.
+              </span>
+            )}
+            {passwordInput && (
+              <Field
+                label="Admin password"
+                name="reset-password"
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
+              />
+            )}
             <div className="confirm-actions">
               <button type="button" className="btn" onClick={() => setOpen(false)}>
                 Cancel
@@ -762,7 +792,9 @@ function Confirm({
                   }
                 }}
               >
-                {busy ? "Working…" : confirmLabel || (passwordInput ? "Reset securely" : "Confirm")}
+                {busy
+                  ? "Working…"
+                  : confirmLabel || (passwordInput ? "Reset securely" : "Delete")}
               </button>
             </div>
           </div>
