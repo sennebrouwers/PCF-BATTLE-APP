@@ -733,6 +733,7 @@ function Confirm({
         <DialogContent
           className="portal-dialog confirm-dialog"
           showCloseButton={!busy}
+          centerInOverlay
         >
           <DialogHeader className="modal-header confirm-header">
             {!passwordInput && (
