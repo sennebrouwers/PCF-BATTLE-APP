@@ -9818,7 +9818,8 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 
 
 
-/* Compact confirmation dialog */
+
+/* Confirmation modal */
 .confirm-dialog[data-slot="dialog-content"] {
   position: relative !important;
   top: auto !important;
@@ -9829,12 +9830,12 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   display: flex !important;
   flex-direction: column !important;
   width: min(520px, calc(100vw - 24px)) !important;
-  max-width: calc(100vw - 24px) !important;
+  max-width: 520px !important;
   height: auto !important;
   max-height: calc(100dvh - 24px) !important;
   min-height: 0 !important;
   margin: 0 !important;
-  padding: 28px !important;
+  padding: 28px 28px 0 !important;
   overflow: hidden !important;
   border-radius: 20px !important;
 }
@@ -9874,40 +9875,43 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   line-height: 1.2 !important;
 }
 
-.confirm-dialog .confirm-body {
+.confirm-dialog .confirm-content {
   display: flex !important;
   flex: 0 0 auto !important;
   flex-direction: column !important;
   align-items: center !important;
   gap: 18px !important;
   width: 100% !important;
-  height: auto !important;
   min-height: 0 !important;
-  padding: 0 !important;
-  overflow: visible !important;
+  padding: 0 0 28px !important;
+  text-align: center !important;
 }
 
-.confirm-dialog .confirm-body > p {
+.confirm-dialog .confirm-content > p {
   width: 100% !important;
   max-width: 410px !important;
   margin: 0 !important;
   color: var(--muted) !important;
-  text-align: center !important;
   line-height: 1.45 !important;
 }
 
 .confirm-dialog .confirm-warning-note {
   margin-top: -8px !important;
   color: var(--muted) !important;
-  text-align: center !important;
   font-size: 0.9rem !important;
 }
 
-.confirm-dialog .confirm-divider {
-  width: 100% !important;
-  height: 1px !important;
-  margin: 2px 0 0 !important;
-  background: var(--border) !important;
+.confirm-dialog .confirm-footer {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  width: calc(100% + 56px) !important;
+  min-height: 80px !important;
+  margin-left: -28px !important;
+  padding: 16px 20px 20px !important;
+  border-top: 1px solid var(--border) !important;
+  box-sizing: border-box !important;
 }
 
 .confirm-dialog .confirm-actions {
@@ -9917,8 +9921,6 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   justify-content: flex-end !important;
   gap: 12px !important;
   width: 100% !important;
-  height: auto !important;
-  min-height: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
 }
@@ -9943,33 +9945,16 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 @media (max-width: 520px) {
   .confirm-dialog[data-slot="dialog-content"] {
     width: calc(100vw - 24px) !important;
-    padding: 24px !important;
+    padding: 24px 24px 0 !important;
+  }
+
+  .confirm-dialog .confirm-footer {
+    width: calc(100% + 48px) !important;
+    margin-left: -24px !important;
   }
 
   .confirm-dialog .confirm-actions .btn {
     flex: 1 1 0 !important;
     min-width: 0 !important;
   }
-}
-
-
-/* Confirmation body must not inherit the wizard body's collapsed height. */
-.portal-dialog.confirm-dialog[data-slot="dialog-content"] > .modal-body.confirm-body {
-  display: flex !important;
-  flex: 0 0 auto !important;
-  height: auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  overflow: visible !important;
-  padding: 0 !important;
-}
-
-.portal-dialog.confirm-dialog[data-slot="dialog-content"] .confirm-actions {
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  flex: 0 0 auto !important;
-  height: auto !important;
-  min-height: 44px !important;
-  overflow: visible !important;
 }
