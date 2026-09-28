@@ -9905,7 +9905,7 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   display: flex !important;
   flex: 0 0 auto !important;
   align-items: center !important;
-  justify-content: flex-end !important;
+  justify-content: center !important;
   width: calc(100% + 56px) !important;
   min-height: 80px !important;
   margin-left: -28px !important;
@@ -9918,7 +9918,7 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   display: flex !important;
   flex: 0 0 auto !important;
   align-items: center !important;
-  justify-content: flex-end !important;
+  justify-content: center !important;
   gap: 12px !important;
   width: 100% !important;
   margin: 0 !important;
