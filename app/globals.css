@@ -9817,7 +9817,8 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 }
 
 
-/* Confirmation dialog */
+
+/* Compact confirmation dialog */
 .confirm-dialog[data-slot="dialog-content"] {
   position: fixed !important;
   top: 50dvh !important;
@@ -9827,52 +9828,50 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   transform: translate(-50%, -50%) !important;
   display: flex !important;
   flex-direction: column !important;
-  width: min(560px, calc(100vw - 24px)) !important;
+  width: min(520px, calc(100vw - 24px)) !important;
   max-width: calc(100vw - 24px) !important;
   height: auto !important;
   max-height: calc(100dvh - 24px) !important;
   min-height: 0 !important;
   margin: 0 !important;
-  padding: 32px !important;
+  padding: 28px !important;
   overflow: hidden !important;
-  border-radius: 22px !important;
+  border-radius: 20px !important;
 }
 
 .confirm-dialog .confirm-header {
   display: flex !important;
+  flex: 0 0 auto !important;
   flex-direction: column !important;
   align-items: center !important;
-  justify-content: center !important;
-  gap: 14px !important;
-  flex: 0 0 auto !important;
+  gap: 12px !important;
   padding: 0 !important;
   text-align: center !important;
 }
 
 .confirm-dialog .confirm-icon {
   display: grid !important;
-  width: 64px !important;
-  height: 64px !important;
+  width: 60px !important;
+  height: 60px !important;
   place-items: center !important;
-  margin: 0 0 4px !important;
+  margin: 0 0 2px !important;
   border: 1px solid color-mix(in srgb, var(--pink) 35%, transparent) !important;
   border-radius: 50% !important;
   background: color-mix(in srgb, var(--pink) 18%, transparent) !important;
   color: var(--pink) !important;
-  box-shadow: 0 0 0 9px color-mix(in srgb, var(--pink) 7%, transparent) !important;
 }
 
 .confirm-dialog .confirm-icon svg {
-  width: 30px !important;
-  height: 30px !important;
+  width: 28px !important;
+  height: 28px !important;
 }
 
 .confirm-dialog [data-slot="dialog-title"] {
   width: 100% !important;
   margin: 0 !important;
   text-align: center !important;
-  font-size: 1.55rem !important;
-  line-height: 1.15 !important;
+  font-size: 1.45rem !important;
+  line-height: 1.2 !important;
 }
 
 .confirm-dialog .confirm-body {
@@ -9880,7 +9879,7 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   flex: 0 0 auto !important;
   flex-direction: column !important;
   align-items: center !important;
-  gap: 22px !important;
+  gap: 18px !important;
   width: 100% !important;
   height: auto !important;
   min-height: 0 !important;
@@ -9894,34 +9893,42 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   margin: 0 !important;
   color: var(--muted) !important;
   text-align: center !important;
-  line-height: 1.5 !important;
+  line-height: 1.45 !important;
 }
 
 .confirm-dialog .confirm-warning-note {
-  margin-top: -12px !important;
+  margin-top: -8px !important;
   color: var(--muted) !important;
   text-align: center !important;
   font-size: 0.9rem !important;
 }
 
+.confirm-dialog .confirm-divider {
+  width: 100% !important;
+  height: 1px !important;
+  margin: 2px 0 0 !important;
+  background: var(--border) !important;
+}
+
 .confirm-dialog .confirm-actions {
-  display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  display: flex !important;
   flex: 0 0 auto !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
   gap: 12px !important;
   width: 100% !important;
   height: auto !important;
   min-height: 0 !important;
-  margin: 4px 0 0 !important;
+  margin: 0 !important;
   padding: 0 !important;
 }
 
 .confirm-dialog .confirm-actions .btn {
   display: inline-flex !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  height: 52px !important;
-  min-height: 52px !important;
+  width: auto !important;
+  min-width: 116px !important;
+  height: 44px !important;
+  min-height: 44px !important;
   align-items: center !important;
   justify-content: center !important;
   margin: 0 !important;
@@ -9937,5 +9944,10 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   .confirm-dialog[data-slot="dialog-content"] {
     width: calc(100vw - 24px) !important;
     padding: 24px !important;
+  }
+
+  .confirm-dialog .confirm-actions .btn {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
   }
 }
