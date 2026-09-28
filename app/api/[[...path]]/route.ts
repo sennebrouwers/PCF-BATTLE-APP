@@ -287,8 +287,9 @@ async function buildTeamReview(teamId: string, prepareSchema = true) {
   if (!members.length) issues.push("Add at least one delegation member");
   if (unassigned.length) issues.push(`${unassigned.length} delegation member(s) have no room assignment`);
   const hasValue = (value: unknown) => String(value || "").trim().length > 0;
-  const hasAddress = hasValue(team.address) || [team.address_street, team.address_number, team.address_postal_code, team.address_city, team.address_country].some(hasValue);
-  if (!hasValue(team.contact_person) || !hasValue(team.phone) || !hasAddress) issues.push("Complete team contact and billing address information");
+  const expectedDelegation = Number(team.expected_delegation_size);
+  const validExpectedDelegation = Number.isInteger(expectedDelegation) && expectedDelegation >= 1 && expectedDelegation <= 16;
+  if (!hasValue(team.contact_person) || !hasValue(team.phone) || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(String(team.contact_email || "")) || !validExpectedDelegation) issues.push("Complete the required team contact email and delegation size");
   const participantSubtotal = members.length * unitPrice, accommodationSupplement = singleRooms.length * singleSupplement, total = participantSubtotal + accommodationSupplement, depositPercentage = Number(settings?.deposit_percentage || 30);
   const deposit = roundMoney(total * depositPercentage / 100), balance = roundMoney(total - deposit);
   return { team, members, rooms, unassigned, issues, settings, pricing: { unitPrice, singleSupplement, singleRoomCount: singleRooms.length, participantSubtotal, accommodationSupplement, total: roundMoney(total), depositPercentage, deposit, balance } };
@@ -3140,6 +3141,11 @@ export async function POST(
     if (table === "teams" && (!body.login_password || String(body.login_password).length < 8))
       return out({ error: "Choose a temporary password of at least 8 characters" }, 422);
     if (table === "teams") {
+      const contactEmail = String(body.contact_email || "").trim().toLowerCase();
+      const expectedDelegation = Number(body.expected_delegation_size);
+      if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(contactEmail)) return out({ error: "A valid contact email address is required" }, 422);
+      if (!Number.isInteger(expectedDelegation) || expectedDelegation < 1 || expectedDelegation > 16) return out({ error: "Expected delegation size must be a whole number between 1 and 16" }, 422);
+      body.contact_email = contactEmail;
       const loginEmail = String(body.login_email || `team-${uuid().slice(0, 8)}@phb.app`).toLowerCase().trim();
       const existingUser: any = await db().prepare("SELECT id FROM users WHERE lower(email)=lower(?) LIMIT 1").bind(loginEmail).first();
       if (existingUser) return out({ error: "A user with this login email already exists" }, 409);
@@ -3420,6 +3426,11 @@ export async function PUT(
   }
   if (table === "tournaments" || table === "rooms" || table === "teams") await ensureScheduleSchema();
   if (table === "teams") {
+    const contactEmail = String(body.contact_email || "").trim().toLowerCase();
+    const expectedDelegation = Number(body.expected_delegation_size);
+    if (body.contact_email !== undefined && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(contactEmail)) return out({ error: "A valid contact email address is required" }, 422);
+    if (body.expected_delegation_size !== undefined && (!Number.isInteger(expectedDelegation) || expectedDelegation < 1 || expectedDelegation > 16)) return out({ error: "Expected delegation size must be a whole number between 1 and 16" }, 422);
+    if (body.contact_email !== undefined) body.contact_email = contactEmail;
     const parts = [body.address_street, body.address_number, body.address_postal_code, body.address_city, body.address_country].filter((value) => String(value || "").trim());
     if (parts.length) body.address = parts.join(" ");
   }
