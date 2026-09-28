@@ -5608,14 +5608,28 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
   top: 0;
   left: 0;
   right: 0;
+  z-index: 30;
 }
 .portal .workspace {
   padding-top: 122px;
+  position: relative;
+  z-index: 1;
 }
 .portal .sidebar {
   position: fixed;
   top: 88px;
   bottom: 0;
+  z-index: 25;
+}
+.portal .workspace button,
+.portal .workspace a,
+.portal .workspace input,
+.portal .workspace select,
+.portal .workspace textarea,
+.portal .sidebar button,
+.portal > header button,
+.portal > header a {
+  pointer-events: auto;
 }
 .portal .workspacehead {
   margin-top: 0;
