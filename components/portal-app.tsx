@@ -728,7 +728,23 @@ function Confirm({
 
   return (
     <>
-      <span onClick={() => setOpen(true)}>{children}</span>
+      <span
+        className="confirm-trigger"
+        onClick={(event) => {
+          event.stopPropagation();
+          setOpen(true);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            event.stopPropagation();
+            setOpen(true);
+          }
+        }}
+        role="presentation"
+      >
+        {children}
+      </span>
       <Dialog open={open} onOpenChange={(nextOpen) => !busy && setOpen(nextOpen)}>
         <DialogContent
           className="portal-dialog confirm-dialog"
