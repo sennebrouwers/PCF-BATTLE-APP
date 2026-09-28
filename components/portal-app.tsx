@@ -718,25 +718,21 @@ function Confirm({
   const [open, setOpen] = useState(false),
     [busy, setBusy] = useState(false),
     [password, setPassword] = useState("");
+
+  const close = () => {
+    if (!busy) {
+      setPassword("");
+      setOpen(false);
+    }
+  };
+
   return (
     <>
       <span onClick={() => setOpen(true)}>{children}</span>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(nextOpen) => !busy && setOpen(nextOpen)}>
         <DialogContent
           className="portal-dialog confirm-dialog"
-          style={{
-            position: "fixed",
-            left: "50%",
-            top: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "min(560px, calc(100vw - 24px))",
-            maxWidth: "calc(100vw - 24px)",
-            height: "auto",
-            maxHeight: "calc(100dvh - 24px)",
-            minHeight: 0,
-            padding: "32px",
-            overflow: "visible",
-          }}
+          showCloseButton={!busy}
         >
           <DialogHeader className="modal-header confirm-header">
             {!passwordInput && (
@@ -746,17 +742,7 @@ function Confirm({
             )}
             <DialogTitle>{title}</DialogTitle>
           </DialogHeader>
-          <div
-            className="modal-body confirm-body"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "22px",
-              height: "auto",
-              minHeight: 0,
-              overflow: "visible",
-            }}
-          >
+          <div className="modal-body confirm-body">
             <p>{text}</p>
             {!passwordInput && (
               <span className="confirm-warning-note">
@@ -773,8 +759,14 @@ function Confirm({
                 autoComplete="current-password"
               />
             )}
+            <div className="confirm-divider" />
             <div className="confirm-actions">
-              <button type="button" className="btn" onClick={() => setOpen(false)}>
+              <button
+                type="button"
+                className="btn"
+                disabled={busy}
+                onClick={close}
+              >
                 Cancel
               </button>
               <button
@@ -793,7 +785,7 @@ function Confirm({
                 }}
               >
                 {busy
-                  ? "Working…"
+                  ? "Deleting…"
                   : confirmLabel || (passwordInput ? "Reset securely" : "Delete")}
               </button>
             </div>
@@ -4488,6 +4480,7 @@ function Delegation({
               <Confirm
                 title="Remove member"
                 text={`Remove ${m.name} from the delegation?`}
+                confirmLabel="Delete member"
                 onConfirm={async () => {
                   await api(`/delegation/${m.id}`, { method: "DELETE" });
                   toast.success("Member removed");
