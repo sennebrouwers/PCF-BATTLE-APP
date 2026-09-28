@@ -9473,3 +9473,60 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     justify-content: flex-start !important;
   }
 }
+
+/* Reference-matched modal proportions for Team edit and Delegation. */
+.team-editor-dialog[data-slot="dialog-content"],
+.member-editor-dialog[data-slot="dialog-content"] {
+  width: min(1366px, calc(100vw - 32px)) !important;
+  max-width: min(1366px, calc(100vw - 32px)) !important;
+  height: min(1008px, calc(100dvh - 24px)) !important;
+  max-height: calc(100dvh - 24px) !important;
+  border-radius: 16px !important;
+}
+.team-editor-dialog[data-slot="dialog-content"] > .modal-header,
+.member-editor-dialog[data-slot="dialog-content"] > .modal-header {
+  padding: 28px 30px 14px !important;
+}
+.team-editor-dialog[data-slot="dialog-content"] > .modal-body,
+.member-editor-dialog[data-slot="dialog-content"] > .modal-body {
+  padding-inline: 32px !important;
+}
+.team-editor-dialog .team-quick-edit,
+.member-editor-dialog .wizard-content {
+  padding-top: 30px !important;
+}
+.team-editor-dialog .team-quick-edit-grid {
+  width: min(850px, 100%) !important;
+  margin-inline: auto !important;
+}
+.member-editor-dialog .wizard-question {
+  width: min(850px, 100%) !important;
+  margin-inline: auto !important;
+  align-items: flex-start !important;
+  text-align: left !important;
+}
+.member-editor-dialog .wizard-question-icon {
+  margin-bottom: 10px !important;
+}
+.member-editor-dialog .wizard-question h3,
+.member-editor-dialog .wizard-question p {
+  text-align: left !important;
+}
+@media (max-width:700px) {
+  .team-editor-dialog[data-slot="dialog-content"],
+  .member-editor-dialog[data-slot="dialog-content"] {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    height: calc(100dvh - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+    border-radius: 16px !important;
+  }
+  .team-editor-dialog[data-slot="dialog-content"] > .modal-header,
+  .member-editor-dialog[data-slot="dialog-content"] > .modal-header {
+    padding: 20px 18px 12px !important;
+  }
+  .team-editor-dialog[data-slot="dialog-content"] > .modal-body,
+  .member-editor-dialog[data-slot="dialog-content"] > .modal-body {
+    padding-inline: 18px !important;
+  }
+}
