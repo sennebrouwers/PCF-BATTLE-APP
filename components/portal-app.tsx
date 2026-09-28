@@ -7183,6 +7183,8 @@ function UsersPanel({ refresh }: { refresh: number }) {
               text={`Delete ${u.name}?`}
               onConfirm={async () => {
                 await api(`/users/${u.id}`, { method: "DELETE" });
+                setDetails(null);
+                setEditing(undefined);
                 users.load();
               }}
             >
