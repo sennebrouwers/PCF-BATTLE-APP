@@ -10991,3 +10991,107 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     padding: 0 2px 36px !important;
   }
 }
+
+
+/* HARD RESET: the wizard must scroll inside the modal, never outside it. */
+.portal-dialog[data-slot="dialog-content"] {
+  display: flex !important;
+  flex-direction: column !important;
+  width: min(900px, calc(100vw - 32px)) !important;
+  max-width: calc(100vw - 32px) !important;
+  height: min(760px, calc(100dvh - 24px)) !important;
+  max-height: calc(100dvh - 24px) !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] > .modal-body {
+  display: flex !important;
+  flex: 1 1 0 !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 28px 20px !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form {
+  display: flex !important;
+  flex: 1 1 0 !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-content {
+  display: block !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: scroll !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: auto !important;
+  padding: 0 8px 48px !important;
+}
+
+/* The old rules vertically centered the form and made the scroll area ineffective. */
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-content {
+  justify-content: flex-start !important;
+  align-items: stretch !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-content > .wizard-question {
+  width: min(760px, 100%) !important;
+  margin: 18px auto 28px !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-content > div:not(.wizard-question):not([hidden]) {
+  width: min(760px, 100%) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-footer {
+  display: block !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 76px !important;
+  height: 76px !important;
+  box-sizing: border-box !important;
+  position: static !important;
+  margin: 0 !important;
+  padding: 16px 8px 4px !important;
+  overflow: visible !important;
+  border-top: 1px solid var(--line) !important;
+  background: var(--surface-3, var(--card, #fff)) !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-footer .wizard-actions,
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-footer .form-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  min-height: 42px !important;
+  margin: 0 !important;
+}
+
+@media (max-width: 700px) {
+  .portal-dialog[data-slot="dialog-content"] {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    height: calc(100dvh - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+  }
+
+  .portal-dialog[data-slot="dialog-content"] > .modal-body {
+    padding: 0 16px max(16px, env(safe-area-inset-bottom)) !important;
+  }
+}
