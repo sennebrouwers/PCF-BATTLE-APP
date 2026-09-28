@@ -9351,3 +9351,125 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     max-height: none !important;
   }
 }
+
+/* Unified edit-team and delegation modal layout. Edit team has no roadmap; delegation keeps its wizard roadmap. */
+.team-editor-dialog[data-slot="dialog-content"] > .modal-body > form.team-edit-form,
+.member-editor-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form {
+  display: flex !important;
+  flex: 1 1 0 !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.team-editor-dialog[data-slot="dialog-content"] > .modal-body > form.team-edit-form > .team-quick-edit {
+  display: flex !important;
+  flex: 1 1 0 !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  gap: 0 !important;
+  padding: 24px 8px 0 !important;
+}
+.team-editor-dialog .team-quick-edit > .wizard-subtitle {
+  display: none !important;
+}
+.team-editor-dialog .team-quick-edit-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 16px 20px !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 0 0 32px !important;
+  align-content: start !important;
+}
+.team-editor-dialog .team-quick-edit > .checkbox-field,
+.team-editor-dialog .team-quick-edit > .team-invoice-fields {
+  flex: 0 0 auto !important;
+}
+.team-editor-dialog .team-quick-edit > .team-invoice-fields {
+  max-height: min(300px, 34dvh) !important;
+  overflow-y: auto !important;
+  padding-bottom: 20px !important;
+}
+.team-editor-dialog .team-quick-edit-footer {
+  flex: 0 0 78px !important;
+  min-height: 78px !important;
+  height: 78px !important;
+  margin: 0 !important;
+  padding: 18px 0 16px !important;
+  border-top: 1px solid var(--line) !important;
+  background: var(--surface-3) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+.member-editor-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-progress-bar {
+  flex: 0 0 auto !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  overflow: visible !important;
+  max-height: none !important;
+}
+.member-editor-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-content {
+  display: block !important;
+  flex: 1 1 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 28px 8px 40px !important;
+  overscroll-behavior: contain !important;
+  scrollbar-gutter: stable !important;
+}
+.member-editor-dialog .wizard-content > .wizard-question,
+.member-editor-dialog .wizard-content > div:not(.wizard-question):not([hidden]) {
+  width: min(850px, 100%) !important;
+  margin-inline: auto !important;
+}
+.member-editor-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-footer {
+  flex: 0 0 78px !important;
+  height: 78px !important;
+  min-height: 78px !important;
+  margin: 0 !important;
+  padding: 18px 8px 16px !important;
+  border-top: 1px solid var(--line) !important;
+  background: var(--surface-3) !important;
+  display: flex !important;
+  align-items: center !important;
+  overflow: visible !important;
+}
+.member-editor-dialog .wizard-footer > .wizard-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+}
+.member-editor-dialog .wizard-footer .btn {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-width: 112px !important;
+  min-height: 44px !important;
+  height: 44px !important;
+}
+@media (max-width:700px) {
+  .team-editor-dialog .team-quick-edit-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  .team-editor-dialog .team-quick-edit {
+    padding: 20px 0 0 !important;
+  }
+  .member-editor-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-progress-bar {
+    justify-content: flex-start !important;
+  }
+}
