@@ -9530,3 +9530,83 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     padding-inline: 18px !important;
   }
 }
+
+/* Delegation uses the same visual system as Team; only its roadmap remains. */
+.member-editor-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  gap: 0 !important;
+}
+.member-editor-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-progress-bar {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex: 0 0 auto !important;
+  overflow: visible !important;
+  margin: 0 !important;
+  padding: 14px 0 16px !important;
+}
+.member-editor-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-content {
+  display: block !important;
+  flex: 1 1 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 38px 8px 48px !important;
+}
+.member-editor-dialog .wizard-content > .wizard-question {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  width: min(850px, 100%) !important;
+  margin: 0 auto 32px !important;
+  text-align: center !important;
+}
+.member-editor-dialog .wizard-content > .wizard-question .wizard-question-icon {
+  margin: 0 0 16px !important;
+}
+.member-editor-dialog .wizard-content > .wizard-question h3,
+.member-editor-dialog .wizard-content > .wizard-question p {
+  width: 100% !important;
+  text-align: center !important;
+}
+.member-editor-dialog .wizard-content > div:not(.wizard-question):not([hidden]) {
+  width: min(850px, 100%) !important;
+  margin-inline: auto !important;
+}
+.member-editor-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-footer {
+  display: flex !important;
+  flex: 0 0 78px !important;
+  height: 78px !important;
+  min-height: 78px !important;
+  margin: 0 !important;
+  padding: 18px 8px 16px !important;
+  align-items: center !important;
+  overflow: visible !important;
+}
+.member-editor-dialog .wizard-footer > .wizard-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+}
+.member-editor-dialog .wizard-footer > .wizard-actions > .btn.primary {
+  margin-left: auto !important;
+}
+@media (max-width:700px) {
+  .member-editor-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-progress-bar {
+    justify-content: flex-start !important;
+  }
+  .member-editor-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-content {
+    padding: 24px 0 40px !important;
+  }
+}
