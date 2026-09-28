@@ -9610,3 +9610,40 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     padding: 24px 0 40px !important;
   }
 }
+
+/* Shared footer row structure used by both Team and Member wizards. */
+.member-editor-dialog[data-slot="dialog-content"] .wizard-footer-row {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  height: 44px !important;
+  min-height: 44px !important;
+}
+.member-editor-dialog[data-slot="dialog-content"] .wizard-footer-back,
+.member-editor-dialog[data-slot="dialog-content"] .wizard-footer-next {
+  display: flex !important;
+  align-items: center !important;
+  min-width: 112px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+}
+.member-editor-dialog[data-slot="dialog-content"] .wizard-footer-next {
+  justify-content: flex-end !important;
+  margin-left: auto !important;
+}
+.member-editor-dialog[data-slot="dialog-content"] .wizard-footer-row .btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 112px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: 0 22px !important;
+}
+@media (max-width:700px) {
+  .member-editor-dialog[data-slot="dialog-content"] .wizard-footer-row {
+    width: 100% !important;
+  }
+}
