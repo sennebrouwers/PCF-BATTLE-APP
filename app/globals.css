@@ -9815,3 +9815,41 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .team-editor-dialog .team-edit-billing-section .team-edit-invoice-toggle {
   background: transparent !important;
 }
+
+/* Compact confirmation modal, including team deletion. */
+.confirm-dialog[data-slot="dialog-content"] {
+  width: min(520px, calc(100vw - 32px)) !important;
+  max-width: min(520px, calc(100vw - 32px)) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: calc(100dvh - 32px) !important;
+  padding: 24px !important;
+}
+.confirm-dialog[data-slot="dialog-content"] > .modal-header {
+  padding: 0 0 18px !important;
+}
+.confirm-dialog[data-slot="dialog-content"] > .modal-body {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 20px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+.confirm-dialog[data-slot="dialog-content"] > .modal-body > p {
+  margin: 0 !important;
+}
+.confirm-dialog .form-actions {
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  margin: 0 !important;
+}
+@media (max-width:700px) {
+  .confirm-dialog[data-slot="dialog-content"] {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    padding: 20px !important;
+  }
+}
