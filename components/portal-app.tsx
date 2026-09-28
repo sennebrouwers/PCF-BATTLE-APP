@@ -6900,10 +6900,14 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                   </div>
                 </div>
                 <div className="wizard-footer">
-                  <div className="wizard-actions">
-                    {teamStep > 1 && <button type="button" className="btn" onClick={() => setTeamStep((step) => step - 1)}>Back</button>}
+                  <div className="wizard-footer-row">
+                    <div className="wizard-footer-back">
+                      {teamStep > 1 && <button type="button" className="btn" onClick={() => setTeamStep((step) => step - 1)}>Back</button>}
+                    </div>
+                    <div className="wizard-footer-next">
+                      {teamStep < 9 ? <button type="button" className="btn primary" disabled={!stepValid} onClick={() => setTeamStep((step) => step + 1)}>Next <span aria-hidden="true">→</span></button> : <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}
+                    </div>
                   </div>
-                  {teamStep < 9 ? <button type="button" className="btn primary" disabled={!stepValid} onClick={() => setTeamStep((step) => step + 1)}>Next <span aria-hidden="true">→</span></button> : <FormButtons busy={busy} onCancel={() => setEditing(undefined)} />}
                 </div>
                   </>
                 )}
