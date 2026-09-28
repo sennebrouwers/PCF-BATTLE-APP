@@ -9311,3 +9311,17 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     padding-inline: 0 !important;
   }
 }
+
+
+/* Disabled Next remains visible so users can see the required action. */
+.team-editor-dialog[data-slot="dialog-content"] .team-wizard-shell .wizard-footer-next > .btn.primary:disabled {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: .48 !important;
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+  color: #fff !important;
+  background: var(--pink) !important;
+  border-color: var(--pink) !important;
+  box-shadow: none !important;
+}
