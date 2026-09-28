@@ -26,6 +26,13 @@ import {
   Link2,
   LogOut,
   Mail,
+  MoreVertical,
+  Paperclip,
+  Smile,
+  ArrowLeft,
+  Reply,
+  Pencil,
+  CheckCheck,
   Menu,
   Minus,
   Phone,
@@ -6765,10 +6772,20 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
   }
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setBusy(true);
     const b: any = Object.fromEntries(new FormData(e.currentTarget)),
       logoFile = b.logo_file,
       photoFile = b.team_photo_file;
+    const contactEmail = String(b.contact_email || "").trim();
+    const expectedDelegation = Number(b.expected_delegation_size);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+      toast.error("Enter a valid contact email address.");
+      return;
+    }
+    if (!Number.isInteger(expectedDelegation) || expectedDelegation < 1 || expectedDelegation > 16) {
+      toast.error("Expected delegation size must be a whole number between 1 and 16.");
+      return;
+    }
+    setBusy(true);
     try {
       if (logoFile instanceof File && logoFile.size)
         b.logo = (await uploadFile(logoFile)).url;
@@ -6955,7 +6972,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                     <p>Enter the information for this team.</p>
                   </div>
                   <div hidden={teamStep !== 1}><Field label="Team name" name="name" defaultValue={editing?.name} required /></div>
-                  <div hidden={teamStep !== 2}><Field label="Country" name="address_country" defaultValue={editing?.address_country} required /></div>
+                  <div hidden={teamStep !== 2}><Field label="Country" name="address_country" defaultValue={editing?.address_country} /></div>
                   <div hidden={teamStep !== 3} className="team-identity-step">
                     <Field label="Team logo" name="logo_file" type="file" required={!editing?.logo} children={<input name="logo_file" type="file" accept="image/*" required={!editing?.logo} onChange={async (event) => { const file = event.target.files?.[0]; if (!file) return; const suggested = await suggestTeamColor(file); const input = document.querySelector<HTMLInputElement>('input[name="color_hex"]'); const picker = document.querySelector<HTMLInputElement>('input[data-team-color-picker]'); if (suggested && input && picker) { input.value = suggested; picker.value = suggested; setWizardRevision((value) => value + 1); } }} />} />
                     <Field label="Team color (HEX)" name="color_hex" defaultValue={editing?.color || teamColors[teams.data.length % 8]} required children={<div className="hex-color-control"><input name="color_hex" defaultValue={editing?.color || teamColors[teams.data.length % 8]} required /><input data-team-color-picker type="color" defaultValue={editing?.color || teamColors[teams.data.length % 8]} aria-label="Choose team color" onChange={(event) => { const input = document.querySelector<HTMLInputElement>('input[name="color_hex"]'); if (input) { input.value = event.target.value; input.dispatchEvent(new Event("input", { bubbles: true })); } }} /></div>} />
@@ -7568,211 +7585,28 @@ function SettingsPanel({ reload }: { reload: () => void }) {
 }
 
 function ChatPanel({ refresh }: { refresh: number }) {
-  const messages = useData("/messages", refresh, true),
-    recipients = useData("/message-recipients", refresh),
-    [selected, setSelected] = useState(""),
-    [busy, setBusy] = useState(false);
+  const messages = useData("/messages?limit=120", refresh, true), recipients = useData("/message-recipients", refresh);
   const me = JSON.parse(localStorage.getItem("phb_user") || "{}");
-  useEffect(() => {
-    if (!selected && recipients.data[0]?.id) setSelected(recipients.data[0].id);
-  }, [recipients.data, selected]);
-  const thread = messages.data
-    .filter(
-      (m: Row) =>
-        (m.sender_user_id === me.id && m.recipient_user_id === selected) ||
-        (m.sender_user_id === selected && m.recipient_user_id === me.id),
-    )
-    .sort((a: Row, b: Row) =>
-      String(a.created_at).localeCompare(String(b.created_at)),
-    );
-  const unreadFor = (id: string) =>
-    messages.data.filter(
-      (m: Row) =>
-        m.sender_user_id === id && m.recipient_user_id === me.id && !m.read_at,
-    ).length;
-  useEffect(() => {
-    if (!selected) return;
-    const unread = messages.data.filter(
-      (m: Row) =>
-        m.sender_user_id === selected &&
-        m.recipient_user_id === me.id &&
-        !m.read_at,
-    );
-    if (!unread.length) return;
-    Promise.all(
-      unread.map((m: Row) =>
-        api(`/messages/${m.id}`, {
-          method: "PUT",
-          body: JSON.stringify({ read: true }),
-        }),
-      ),
-    )
-      .then(messages.load)
-      .catch(() => {});
-  }, [
-    selected,
-    messages.data.map((m: Row) => `${m.id}:${m.read_at || ""}`).join("|"),
-  ]);
-  async function send(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!selected) return toast.error("Choose a conversation");
-    const form = e.currentTarget,
-      body = String(new FormData(form).get("body") || "").trim();
-    if (!body) return;
-    setBusy(true);
-    try {
-      const result = await api("/messages", {
-        method: "POST",
-        body: JSON.stringify({
-          recipient_user_id: selected,
-          subject: "Chat message",
-          body,
-        }),
-      });
-      form.reset();
-      await messages.load();
-      if (!result.emailSent)
-        toast.info("Message sent; email delivery is not configured");
-    } catch (err: unknown) {
-      toast.error(errorMessage(err));
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function removeConversation() {
-    if (!selected) return;
-    await api(`/messages/conversation/${selected}`, { method: "DELETE" });
-    toast.success("Conversation removed from your inbox");
-    setSelected("");
-    await messages.load();
-  }
+  const [selected, setSelected] = useState(""), [search, setSearch] = useState(""), [busy, setBusy] = useState(false), [mobileChat, setMobileChat] = useState(false);
+  const [drafts, setDrafts] = useState<Record<string, string>>({}), [replyTo, setReplyTo] = useState<Row | null>(null);
+  const historyRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (!selected && recipients.data[0]?.id) setSelected(recipients.data[0].id); }, [recipients.data, selected]);
+  const all = messages.data as Row[];
   const person = recipients.data.find((r: Row) => r.id === selected);
-  return (
-    <section className="panel chat-panel">
-      <div className="panelhead">
-        <div>
-          <h3>Messages</h3>
-          <small>
-            Chat with{" "}
-            {me.role === "ADMIN"
-              ? "teams and referees"
-              : "the tournament organization"}
-          </small>
-        </div>
-      </div>
-      <div className="chat-layout">
-        <aside className="chat-contacts">
-          <b>Conversations</b>
-          {recipients.data.map((r: Row) => {
-            const unread = unreadFor(r.id),
-              last = messages.data.find(
-                (m: Row) =>
-                  m.sender_user_id === r.id || m.recipient_user_id === r.id,
-              );
-            return (
-              <button
-                key={r.id}
-                className={selected === r.id ? "active" : ""}
-                onClick={() => setSelected(r.id)}
-              >
-                <span className="member-avatar">
-                  {r.name
-                    .split(" ")
-                    .map((x: string) => x[0])
-                    .join("")
-                    .slice(0, 2)}
-                </span>
-                <span>
-                  <b>{r.name}</b>
-                  <small>{last?.body || r.role}</small>
-                </span>
-                {unread > 0 && <em>{unread}</em>}
-              </button>
-            );
-          })}
-        </aside>
-        <div className="chat-thread">
-          <header>
-            <span className="member-avatar">
-              {person?.name
-                ?.split(" ")
-                .map((x: string) => x[0])
-                .join("")
-                .slice(0, 2) || "?"}
-            </span>
-            <span>
-              <b>{person?.name || "Choose a conversation"}</b>
-              <small>
-                {person?.role &&
-                !String(person?.name || "")
-                  .toLowerCase()
-                  .includes(String(person.role).toLowerCase())
-                  ? person.role
-                  : ""}
-              </small>
-            </span>
-            {selected && (
-              <Confirm
-                title="Delete conversation"
-                text="Remove this conversation from your inbox? The other participant keeps their copy."
-                onConfirm={removeConversation}
-              >
-                <button
-                  className="chat-delete"
-                  aria-label="Delete conversation"
-                >
-                  <Trash2 /> Delete
-                </button>
-              </Confirm>
-            )}
-          </header>
-          <div className="chat-history">
-            {thread.length ? (
-              thread.map((m: Row) => (
-                <div
-                  key={m.id}
-                  className={`chat-bubble ${m.sender_user_id === me.id ? "mine" : "theirs"}`}
-                >
-                  <p>{m.body}</p>
-                  <time>
-                    {new Date(m.created_at).toLocaleString("en-BE", {
-                      day: "2-digit",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </time>
-                </div>
-              ))
-            ) : (
-              <div className="chat-welcome">
-                <Mail />
-                <b>No messages yet</b>
-                <span>Start the conversation below.</span>
-              </div>
-            )}
-          </div>
-          <form className="chat-reply" onSubmit={send}>
-            <textarea
-              name="body"
-              rows={2}
-              placeholder="Write a reply…"
-              aria-label="Write a reply"
-              required
-            />
-            <button
-              className="btn primary"
-              disabled={busy || !selected}
-              aria-label="Send reply"
-            >
-              <Send />
-              {busy ? "Sending…" : "Send"}
-            </button>
-          </form>
-        </div>
-      </div>
-    </section>
-  );
+  const filtered = recipients.data.filter((r: Row) => String(r.name || "").toLowerCase().includes(search.toLowerCase()));
+  const thread = all.filter((m: Row) => (m.sender_user_id === me.id && m.recipient_user_id === selected) || (m.sender_user_id === selected && m.recipient_user_id === me.id)).sort((a: Row,b: Row)=>String(a.created_at).localeCompare(String(b.created_at)));
+  const unreadFor = (id: string) => all.filter((m: Row)=>m.sender_user_id===id && m.recipient_user_id===me.id && !m.read_at).length;
+  useEffect(() => { if (!selected) return; all.filter((m: Row)=>m.sender_user_id===selected&&m.recipient_user_id===me.id&&!m.read_at).forEach((m: Row)=>void api(`/messages/${m.id}`,{method:"PUT",body:JSON.stringify({read:true})})); }, [selected, all.map((m: Row)=>`${m.id}:${m.read_at||""}`).join("|")]);
+  async function send(e: FormEvent<HTMLFormElement>) { e.preventDefault(); if (!selected || busy) return; const form=e.currentTarget, body=String(new FormData(form).get("body")||"").trim(); if(!body)return; setBusy(true); try { await api("/messages",{method:"POST",body:JSON.stringify({recipient_user_id:selected,subject:"Chat message",body})}); form.reset(); setDrafts(d=>({...d,[selected]:""})); await messages.load(); requestAnimationFrame(()=>{const el=historyRef.current;if(el)el.scrollTop=el.scrollHeight;}); } catch(err){toast.error(errorMessage(err));} finally{setBusy(false);} }
+  async function removeConversation(){if(!selected)return;await api(`/messages/conversation/${selected}`,{method:"DELETE"});setSelected("");setMobileChat(false);await messages.load();}
+  const avatar=(name:string)=>name.split(" ").map((x:string)=>x[0]).join("").slice(0,2).toUpperCase();
+  return <section className={`panel chat-panel ${mobileChat?"chat-mobile-active":""}`}>
+    <div className="panelhead"><div><h3>Messages</h3><small>Private conversations with the tournament organisation</small></div><button className="btn primary chat-new" onClick={()=>{const first=recipients.data[0];if(first){setSelected(first.id);setMobileChat(true);}}}><Plus/> New message</button></div>
+    <div className="chat-layout">
+      <aside className="chat-contacts"><div className="chat-sidebar-head"><b>Conversations</b><span>{all.filter((m:Row)=>m.recipient_user_id===me.id&&!m.read_at).length||""}</span></div><label className="chat-search"><Search/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search conversations…" aria-label="Search conversations"/></label>{filtered.map((r:Row)=>{const unread=unreadFor(r.id), last=all.find((m:Row)=>m.sender_user_id===r.id||m.recipient_user_id===r.id);return <button key={r.id} className={selected===r.id?"active":""} onClick={()=>{setSelected(r.id);setMobileChat(true);}}><span className="member-avatar">{avatar(r.name||"?")}</span><span><b>{r.name}</b><small>{last?.body||r.role}</small></span>{unread>0&&<em>{unread}</em>}</button>})}</aside>
+      <div className="chat-thread">{person?<><header><button className="chat-mobile-back" onClick={()=>setMobileChat(false)} aria-label="Back to conversations"><ArrowLeft/></button><span className="member-avatar">{avatar(person.name||"?")}</span><span className="chat-person"><b>{person.name}</b><small>{person.role}</small></span><button className="chat-head-action" aria-label="Conversation actions"><MoreVertical/></button><Confirm title="Delete conversation" text="Remove this conversation from your inbox?" onConfirm={removeConversation}><button className="chat-delete" aria-label="Delete conversation"><Trash2/></button></Confirm></header><div className="chat-history" ref={historyRef}>{thread.length?thread.map((m:Row,i:number)=><div key={m.id} className={`chat-bubble ${m.sender_user_id===me.id?"mine":"theirs"}`}><p>{m.body}</p><div className="chat-meta"><time>{new Date(m.created_at).toLocaleTimeString("en-BE",{hour:"2-digit",minute:"2-digit"})}</time>{m.sender_user_id===me.id&&<CheckCheck size={14}/>}<button type="button" onClick={()=>setReplyTo(m)} aria-label="Reply to message"><Reply size={14}/></button></div></div>):<div className="chat-welcome"><Mail/><b>No messages yet</b><span>Start the conversation below.</span></div>}</div>{replyTo&&<div className="chat-reply-preview"><Reply size={15}/><span>Replying to {replyTo.sender_name||"message"}: {String(replyTo.body).slice(0,80)}</span><button type="button" onClick={()=>setReplyTo(null)} aria-label="Cancel reply">×</button></div>}<form className="chat-reply" onSubmit={send}><div className="chat-composer"><button type="button" aria-label="Attach file"><Paperclip/></button><textarea name="body" value={drafts[selected]||""} onChange={e=>setDrafts(d=>({...d,[selected]:e.target.value}))} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();e.currentTarget.form?.requestSubmit();}}} placeholder="Write a message…" aria-label="Write a message" required/><button type="button" aria-label="Add emoji"><Smile/></button></div><button className="btn primary" disabled={busy}>{busy?<RefreshCw className="spin"/>:<Send/>}<span className="chat-send-label">Send</span></button></form></>:<div className="chat-welcome"><Mail/><b>Select a conversation</b><span>Choose a conversation to view your messages.</span></div>}</div>
+    </div>
+  </section>;
 }
 
 const contactCardArt = {
@@ -8282,10 +8116,20 @@ function TeamInfoV2({
     return <section className="panel">Loading team information…</section>;
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setBusy(true);
     const b: any = Object.fromEntries(new FormData(e.currentTarget)),
       logoFile = b.logo_file,
       photoFile = b.team_photo_file;
+    const contactEmail = String(b.contact_email || "").trim();
+    const expectedDelegation = Number(b.expected_delegation_size);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+      toast.error("Enter a valid contact email address.");
+      return;
+    }
+    if (!Number.isInteger(expectedDelegation) || expectedDelegation < 1 || expectedDelegation > 16) {
+      toast.error("Expected delegation size must be a whole number between 1 and 16.");
+      return;
+    }
+    setBusy(true);
     try {
       if (removeLogo) b.logo = null;
       else if (logoFile instanceof File && logoFile.size) {
