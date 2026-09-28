@@ -10621,3 +10621,103 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     min-height: 0 !important;
   }
 }
+
+/* Canonical responsive modal system.
+   Every portal dialog is a viewport-bounded flex column.
+   Only its form/body region scrolls; headers and actions retain their space. */
+.portal-dialog {
+  display: flex !important;
+  flex-direction: column !important;
+  width: min(760px, calc(100vw - 32px)) !important;
+  max-width: calc(100vw - 32px) !important;
+  max-height: calc(100dvh - 32px) !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+.portal-dialog > .modal-header,
+.portal-dialog > [data-slot="dialog-header"] {
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+}
+.portal-dialog > .modal-body {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 28px 24px !important;
+}
+.portal-dialog > .modal-body > .portal-form:not(.wizard-form) {
+  display: grid !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  align-content: start !important;
+  padding: 0 4px 24px !important;
+  scrollbar-width: thin;
+}
+.portal-dialog > .modal-body > .portal-form:not(.wizard-form) .form-actions,
+.portal-dialog > .modal-body > form:not(.wizard-form) .form-actions {
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 3 !important;
+  align-self: stretch !important;
+  padding: 14px 0 4px !important;
+  background: var(--surface-1, #fff) !important;
+}
+.portal-dialog > .modal-body > .wizard-form {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+.portal-dialog > .modal-body > .wizard-form > .wizard-topbar,
+.portal-dialog > .modal-body > .wizard-form > .wizard-progress,
+.portal-dialog > .modal-body > .wizard-form > .wizard-progress-bar {
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+}
+.portal-dialog > .modal-body > .wizard-form > .wizard-content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.portal-dialog > .modal-body > .wizard-form > .wizard-footer {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  position: static !important;
+  overflow: visible !important;
+  background: var(--surface-1, #fff) !important;
+}
+.portal-dialog textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+@media (max-width: 700px) {
+  .portal-dialog {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+  }
+  .portal-dialog > .modal-body {
+    padding: 0 16px max(16px, env(safe-area-inset-bottom)) !important;
+  }
+}
+@media (max-height: 720px) {
+  .portal-dialog {
+    max-height: calc(100dvh - 16px) !important;
+  }
+  .portal-dialog > .modal-body {
+    padding-bottom: 12px !important;
+  }
+}
