@@ -9802,3 +9802,16 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     gap: 14px !important;
   }
 }
+
+/* Keep edit-team sections on the modal surface; no extra dark panels. */
+.team-editor-dialog .team-edit-section {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.team-editor-dialog .team-edit-section-heading h3,
+.team-editor-dialog .team-edit-section-heading p {
+  background: transparent !important;
+}
+.team-editor-dialog .team-edit-billing-section .team-edit-invoice-toggle {
+  background: transparent !important;
+}
