@@ -10455,3 +10455,114 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     padding-bottom: 40px !important;
   }
 }
+
+
+/* Isolated Team wizard layout. This intentionally replaces all legacy team-wizard sizing. */
+.portal-dialog.team-editor-dialog[data-slot="dialog-content"] {
+  position: fixed !important;
+  top: 20px !important;
+  right: 24px !important;
+  bottom: 20px !important;
+  left: 24px !important;
+  transform: none !important;
+  width: auto !important;
+  max-width: none !important;
+  height: auto !important;
+  max-height: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.portal-dialog.team-editor-dialog[data-slot="dialog-content"] > .modal-body {
+  display: flex !important;
+  flex: 1 1 0 !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 32px 20px !important;
+}
+
+.portal-dialog.team-editor-dialog[data-slot="dialog-content"] > .modal-body > form.team-wizard {
+  display: grid !important;
+  grid-template-rows: auto auto minmax(0, 1fr) 78px !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+
+.portal-dialog.team-editor-dialog[data-slot="dialog-content"] > .modal-body > form.team-wizard > .wizard-content {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain !important;
+  padding: 0 8px 48px !important;
+}
+
+.portal-dialog.team-editor-dialog[data-slot="dialog-content"] > .modal-body > form.team-wizard > .wizard-content > * {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.portal-dialog.team-editor-dialog[data-slot="dialog-content"] > .modal-body > form.team-wizard > .wizard-content > .wizard-question,
+.portal-dialog.team-editor-dialog[data-slot="dialog-content"] > .modal-body > form.team-wizard > .wizard-content > div:not(.wizard-question):not([hidden]) {
+  width: min(760px, 100%) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.portal-dialog.team-editor-dialog[data-slot="dialog-content"] > .modal-body > form.team-wizard > .wizard-footer {
+  display: flex !important;
+  width: 100% !important;
+  height: 78px !important;
+  min-height: 78px !important;
+  max-height: 78px !important;
+  flex: none !important;
+  position: static !important;
+  margin: 0 !important;
+  padding: 18px 8px 6px !important;
+  border-top: 1px solid var(--line) !important;
+  background: var(--surface-3, var(--card, #fff)) !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+}
+
+.portal-dialog.team-editor-dialog[data-slot="dialog-content"] > .modal-body > form.team-wizard > .wizard-footer .wizard-actions,
+.portal-dialog.team-editor-dialog[data-slot="dialog-content"] > .modal-body > form.team-wizard > .wizard-footer .form-actions {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+@media (max-width: 700px) {
+  .portal-dialog.team-editor-dialog[data-slot="dialog-content"] {
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .portal-dialog.team-editor-dialog[data-slot="dialog-content"] > .modal-body {
+    padding: 0 12px max(8px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .portal-dialog.team-editor-dialog[data-slot="dialog-content"] > .modal-body > form.team-wizard {
+    grid-template-rows: auto auto minmax(0, 1fr) 78px !important;
+  }
+
+  .portal-dialog.team-editor-dialog[data-slot="dialog-content"] > .modal-body > form.team-wizard > .wizard-content {
+    padding: 0 2px 36px !important;
+  }
+}
