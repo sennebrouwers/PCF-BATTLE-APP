@@ -11170,3 +11170,58 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
   }
 }
+
+
+/* Footer is a dedicated bottom row: content scrolls above it. */
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-footer {
+  order: 20 !important;
+  margin-top: auto !important;
+  align-self: stretch !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-shrink: 0 !important;
+  flex-grow: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  border-top: 1px solid var(--line) !important;
+  background: var(--surface-3, var(--card, #fff)) !important;
+  padding: 18px 8px 6px !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-footer > .wizard-actions,
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-footer > .form-actions {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  width: 100% !important;
+  min-height: 42px !important;
+  margin: 0 !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-footer .btn {
+  flex: 0 0 auto !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-footer .btn:first-child {
+  margin-right: auto !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-footer .btn:last-child {
+  margin-left: auto !important;
+}
+
+@media (max-width: 700px) {
+  .portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-footer {
+    padding: 16px 2px max(12px, env(safe-area-inset-bottom)) !important;
+  }
+}
