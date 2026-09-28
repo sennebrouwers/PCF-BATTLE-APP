@@ -556,15 +556,13 @@ function AddressFields({ team }: { team?: Row }) {
       <Field
         label="Country"
         name="address_country"
-        defaultValue={team?.address_country || "Belgium"}
-        required
+        defaultValue={team?.address_country || ""}
         children={
           <>
             <input
               name="address_country"
               list="country-list"
-              defaultValue={team?.address_country || "Belgium"}
-              required
+              defaultValue={team?.address_country || ""}
             />
             <datalist id="country-list">
               {[
@@ -6737,11 +6735,11 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
     const input = form.elements.namedItem("logo_file") as HTMLInputElement | null;
     let valid = true;
     if (teamStep === 1) valid = Boolean(value("name"));
-    if (teamStep === 2) valid = Boolean(value("address_country"));
+    if (teamStep === 2) valid = true;
     if (teamStep === 3) valid = Boolean(editing?.logo || input?.files?.length) && /^#[0-9a-fA-F]{6}$/.test(value("color_hex"));
     if (teamStep === 4) valid = true;
     if (teamStep === 5) valid = Boolean(value("contact_person")) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value("contact_email")) && Boolean(value("phone"));
-    if (teamStep === 6) valid = /^\d+$/.test(value("expected_delegation_size")) && Number(value("expected_delegation_size")) <= 16;
+    if (teamStep === 6) { const expected = Number(value("expected_delegation_size")); valid = Number.isInteger(expected) && expected >= 1 && expected <= 16; }
     if (teamStep === 7) valid = !invoiceRequested || (Boolean(value("billing_name")) && Boolean(value("billing_address")) && Boolean(value("billing_postal_code")) && Boolean(value("billing_city")) && Boolean(value("billing_country")));
     if (teamStep === 8) valid = Boolean(value("login_email")) && (editing?.id || String(value("login_password")).length >= 8);
     if (teamStep >= 9) valid = true;
@@ -6909,11 +6907,11 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                         <div className="team-edit-section-heading"><h3>Team details</h3><p>Update the team identity and delegation information.</p></div>
                         <div className="team-edit-section-grid">
                           <Field label="Team name" name="name" defaultValue={editing?.name} required />
-                          <Field label="Country" name="address_country" defaultValue={editing?.address_country} required />
+                          <Field label="Country" name="address_country" defaultValue={editing?.address_country} />
                           <Field label="Team logo (optional)" name="logo_file" type="file" children={<input name="logo_file" type="file" accept="image/*" />} />
                           <Field label="Team photo (optional)" name="team_photo_file" type="file" children={<input name="team_photo_file" type="file" accept="image/*" />} />
                           <Field label="Team color (HEX)" name="color_hex" defaultValue={editing?.color || "#ec4899"} required children={<div className="hex-color-control"><input name="color_hex" defaultValue={editing?.color || "#ec4899"} required /><input data-team-color-picker type="color" defaultValue={editing?.color || "#ec4899"} aria-label="Choose team color" onChange={(event) => { const input = event.target.parentElement?.querySelector<HTMLInputElement>('input[name="color_hex"]'); if (input) { input.value = event.target.value; input.dispatchEvent(new Event("input", { bubbles: true })); } }} /></div>} />
-                          <Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={0} max={16} defaultValue={editing?.expected_delegation_size || ""} required />
+                          <Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={1} max={16} defaultValue={editing?.expected_delegation_size || ""} required />
                         </div>
                       </section>
                       <section className="team-edit-section">
@@ -6972,7 +6970,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                     <Field label="Contact email address" name="contact_email" type="email" defaultValue={editing?.contact_email} required />
                     <PhoneField defaultValue={editing?.phone} defaultCode={editing?.phone_country_code || "+32"} required />
                   </div>
-                  <div hidden={teamStep !== 6}><Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={0} max={16} defaultValue={editing?.expected_delegation_size || ""} required onChange={(event) => setDelegationSize(Math.min(16, Math.max(0, Number(event.target.value || 0))))} /><p className="wizard-help">Initial rooms required: {delegationSize ? Math.ceil(delegationSize / 2) : "—"}. Room numbers remain empty until the hotel meeting.</p></div>
+                  <div hidden={teamStep !== 6}><Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={1} max={16} defaultValue={editing?.expected_delegation_size || ""} required onChange={(event) => setDelegationSize(Math.min(16, Math.max(0, Number(event.target.value || 0))))} /><p className="wizard-help">Initial rooms required: {delegationSize ? Math.ceil(delegationSize / 2) : "—"}. Room numbers remain empty until the hotel meeting.</p></div>
                   <div hidden={teamStep !== 7} className="team-invoice-options-step">
                     <label className="portal-field wide checkbox-field"><input type="checkbox" name="invoice_requested" value="1" checked={invoiceRequested} onChange={(event) => { setInvoiceRequested(event.target.checked); setWizardRevision((value) => value + 1); }} /><span>I would like to receive an invoice during payment for administration.</span></label>
                     {invoiceRequested && <div className="team-invoice-fields">
@@ -8309,7 +8307,7 @@ function TeamInfoV2({
       if (/^#[0-9a-fA-F]{6}$/.test(String(b.color_hex || ""))) b.color = b.color_hex;
       delete b.color_hex;
       b.invoice_requested = b.invoice_requested ? 1 : 0;
-      for (const key of ["contact_email", "whatsapp", "website", "billing_address", "billing_name", "vat_number", "billing_postal_code", "billing_city", "billing_country"]) {
+      for (const key of ["contact_email", "website", "billing_address", "billing_name", "vat_number", "billing_postal_code", "billing_city", "billing_country"]) {
         if (b[key] === undefined || b[key] === null) b[key] = "";
       }
       if (!b.invoice_requested) {
@@ -8322,7 +8320,7 @@ function TeamInfoV2({
       }
       const allowedTeamFields = new Set([
         "name", "contact_person", "contact_email", "phone", "phone_country_code",
-        "whatsapp", "expected_delegation_size", "website", "address",
+        "expected_delegation_size", "website", "address",
         "address_street", "address_number", "address_postal_code", "address_city",
         "address_country", "color", "logo", "team_photo", "invoice_requested",
         "billing_address", "billing_name", "vat_number", "billing_postal_code",
@@ -8368,9 +8366,8 @@ function TeamInfoV2({
           defaultCode={team.phone_country_code || "+32"}
           required
         />
-        <Field label="Contact email" name="contact_email" type="email" defaultValue={team.contact_email} />
-        <label className="portal-field whatsapp-field"><span><WhatsAppIcon /> WhatsApp</span><input name="whatsapp" type="tel" defaultValue={team.whatsapp} /></label>
-        <Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={0} max={16} defaultValue={team.expected_delegation_size ?? ""} />
+        <Field label="Contact email" name="contact_email" type="email" defaultValue={team.contact_email} required />
+        <Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={1} max={16} defaultValue={team.expected_delegation_size ?? ""} required />
         <Field
           label="Website"
           name="website"
