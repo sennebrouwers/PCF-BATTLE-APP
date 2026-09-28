@@ -9736,3 +9736,69 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   width: 100% !important;
   margin-top: 16px !important;
 }
+
+/* Clear grouped edit-team system: details, contact and billing are separate cards. */
+.team-editor-dialog .team-edit-sections {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  display: grid !important;
+  gap: 18px !important;
+  width: min(850px, 100%) !important;
+  margin-inline: auto !important;
+  padding: 0 0 28px !important;
+  align-content: start !important;
+}
+.team-editor-dialog .team-edit-section {
+  display: grid !important;
+  gap: 16px !important;
+  padding: 20px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 14px !important;
+  background: color-mix(in srgb, var(--surface-2) 72%, transparent) !important;
+}
+.team-editor-dialog .team-edit-section-heading {
+  display: grid !important;
+  gap: 4px !important;
+}
+.team-editor-dialog .team-edit-section-heading h3 {
+  margin: 0 !important;
+  font-size: 1.05rem !important;
+}
+.team-editor-dialog .team-edit-section-heading p {
+  margin: 0 !important;
+  color: var(--muted) !important;
+  font-size: .88rem !important;
+}
+.team-editor-dialog .team-edit-section-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 16px 20px !important;
+}
+.team-editor-dialog .team-edit-billing-section .team-edit-invoice-toggle {
+  width: 100% !important;
+  margin: 0 !important;
+}
+.team-editor-dialog .team-edit-billing-section .team-quick-invoice-fields {
+  max-height: none !important;
+  overflow: visible !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.team-editor-dialog .team-quick-edit-footer {
+  flex: 0 0 78px !important;
+}
+@media (max-width:700px) {
+  .team-editor-dialog .team-edit-sections {
+    width: 100% !important;
+    gap: 14px !important;
+  }
+  .team-editor-dialog .team-edit-section {
+    padding: 16px !important;
+  }
+  .team-editor-dialog .team-edit-section-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+}
