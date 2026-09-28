@@ -10560,3 +10560,31 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     overflow-y: auto !important;
   }
 }
+
+/* Compact team editing form: editing an existing team does not reopen the setup wizard. */
+.team-quick-edit {
+  display: grid;
+  gap: 20px;
+  width: min(100%, 760px);
+  margin: 0 auto;
+}
+.team-quick-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 20px;
+}
+.team-quick-edit-grid .portal-field {
+  min-width: 0;
+}
+.team-quick-invoice-fields {
+  display: grid;
+  gap: 12px;
+}
+.team-quick-edit-footer {
+  margin-top: 4px;
+}
+@media (max-width: 700px) {
+  .team-quick-edit-grid {
+    grid-template-columns: 1fr;
+  }
+}
