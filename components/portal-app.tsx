@@ -355,10 +355,12 @@ function Modal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={`portal-dialog ${className}`}>
-        <DialogHeader>
+        <DialogHeader className="modal-header">
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        {children}
+        <div className="modal-body">
+          {children}
+        </div>
       </DialogContent>
     </Dialog>
   );
