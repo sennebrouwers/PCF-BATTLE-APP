@@ -8945,3 +8945,110 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   grid-column: 1 / -1 !important;
   grid-row: 4 !important;
 }
+
+
+/* Final mobile-safe dialog shell: this wins over legacy modal/grid rules. */
+.portal-dialog[data-slot="dialog-content"] {
+  position: fixed !important;
+  inset: 50% auto auto 50% !important;
+  transform: translate(-50%, -50%) !important;
+  box-sizing: border-box !important;
+  width: min(1180px, calc(100vw - 24px)) !important;
+  max-width: calc(100vw - 24px) !important;
+  height: min(900px, calc(100dvh - 24px)) !important;
+  max-height: calc(100dvh - 24px) !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] > .modal-body {
+  display: flex !important;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  flex-direction: column !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] .wizard-form {
+  display: flex !important;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+  max-width: none !important;
+  grid-template-columns: none !important;
+  overflow: hidden !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] .wizard-form > .wizard-progress-bar,
+.portal-dialog[data-slot="dialog-content"] .wizard-form > .wizard-progress {
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] .wizard-form > .wizard-content {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain !important;
+  padding-bottom: 24px !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] .wizard-form > .wizard-footer {
+  flex: 0 0 auto !important;
+  min-height: 72px !important;
+  margin-top: 0 !important;
+}
+
+@media (max-width: 700px) {
+  .portal-dialog[data-slot="dialog-content"] {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    height: calc(100dvh - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+    padding: 16px !important;
+    border-radius: 16px !important;
+  }
+
+  .portal-dialog[data-slot="dialog-content"] .wizard-form > .wizard-progress {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 8px 0 14px !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--line) !important;
+  }
+
+  .portal-dialog[data-slot="dialog-content"] .wizard-form > .wizard-progress::before {
+    display: none !important;
+  }
+
+  .portal-dialog[data-slot="dialog-content"] .wizard-form > .wizard-progress button {
+    flex: 0 0 auto !important;
+    min-width: max-content !important;
+    width: auto !important;
+    min-height: 44px !important;
+    padding: 8px 10px !important;
+  }
+
+  .portal-dialog[data-slot="dialog-content"] .wizard-form > .wizard-progress-bar {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-inline: 0 !important;
+  }
+}
