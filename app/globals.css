@@ -11268,3 +11268,39 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     flex-shrink: 0 !important;
   }
 }
+
+
+/* Final containment: explicitly reserve the middle viewport for the scroll area. */
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form {
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-content {
+  flex: 0 1 auto !important;
+  height: auto !important;
+  max-height: calc(100dvh - 390px) !important;
+  min-height: 80px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-footer {
+  flex: 0 0 78px !important;
+  height: 78px !important;
+  min-height: 78px !important;
+  margin-top: auto !important;
+}
+
+@media (max-width: 1100px) {
+  .portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-content {
+    max-height: calc(100dvh - 360px) !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .portal-dialog[data-slot="dialog-content"] > .modal-body > form.wizard-form > .wizard-content {
+    max-height: calc(100dvh - 300px) !important;
+    min-height: 60px !important;
+  }
+}
