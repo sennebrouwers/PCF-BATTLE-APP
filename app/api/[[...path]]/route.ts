@@ -315,8 +315,9 @@ async function buildOnboardingStatus(teamId: string) {
   const selected = true;
   const portal = true;
   const hasValue = (value: unknown) => String(value || "").trim().length > 0;
-  const hasAddress = hasValue(team.address) || [team.address_street, team.address_number, team.address_postal_code, team.address_city, team.address_country].some(hasValue);
-  const setupDone = hasValue(team.contact_person) && hasValue(team.phone) && hasAddress;
+  const expectedDelegation = Number(team.expected_delegation_size);
+  const validExpectedDelegation = Number.isInteger(expectedDelegation) && expectedDelegation >= 1 && expectedDelegation <= 16;
+  const setupDone = hasValue(team.contact_person) && hasValue(team.phone) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(team.contact_email || "")) && validExpectedDelegation;
   const delegationDone = Boolean(review.members.length && !review.members.some((member: any) => !member.name || (member.member_type === "PLAYER" && !member.player_role)));
   const roomsDone = review.unassigned.length === 0 && review.members.length > 0;
   const stages = [
@@ -361,14 +362,15 @@ async function buildOnboardingStatuses(teamIds: string[]) {
     const memberIssues = members.filter((member) => member.member_type === "PLAYER" && (!member.player_role || member.classification_points === null || !Number.isFinite(Number(member.classification_points))));
     const issues = [...memberIssues];
     const hasValue = (value: unknown) => String(value || "").trim().length > 0;
-    const hasAddress = hasValue(team.address) || [team.address_street, team.address_number, team.address_postal_code, team.address_city, team.address_country].some(hasValue);
+    const expectedDelegation = Number(team.expected_delegation_size);
+    const validExpectedDelegation = Number.isInteger(expectedDelegation) && expectedDelegation >= 1 && expectedDelegation <= 16;
     if (!members.length) issues.push({});
-    if (!hasValue(team.contact_person) || !hasValue(team.phone) || !hasAddress) issues.push({});
+    if (!hasValue(team.contact_person) || !hasValue(team.phone) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(team.contact_email || "")) || !validExpectedDelegation) issues.push({});
     const total = roundMoney(members.length * unitPrice + unassigned.length * 0), depositAmount = roundMoney(total * depositPercentage / 100), balanceAmount = roundMoney(total - depositAmount);
     const invoices = invoicesByTeam.get(team.id) || [], deposit = invoices.find((item) => item.invoice_type === "DEPOSIT"), balance = invoices.find((item) => item.invoice_type === "BALANCE");
     const depositPaid = Number(paymentsByInvoice.get(deposit?.id) || 0), balancePaid = Number(paymentsByInvoice.get(balance?.id) || 0), depositTotal = Number(deposit?.total_amount || depositAmount), balanceTotal = Number(balance?.total_amount || balanceAmount);
     const depositOpen = team.review_status === "approved_payment_open" && Boolean(deposit), depositDone = depositOpen && depositPaid >= depositTotal && depositTotal > 0, balanceOpen = depositDone && Boolean(balance), balanceDone = balanceOpen && balancePaid >= balanceTotal && balanceTotal > 0;
-    const setupDone = hasValue(team.contact_person) && hasValue(team.phone) && hasAddress, delegationDone = members.length > 0 && memberIssues.length === 0, roomsDone = unassigned.length === 0 && members.length > 0, complete = issues.length === 0;
+    const setupDone = hasValue(team.contact_person) && hasValue(team.phone) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(team.contact_email || "")) && validExpectedDelegation, delegationDone = members.length > 0 && memberIssues.length === 0, roomsDone = unassigned.length === 0 && members.length > 0, complete = issues.length === 0;
     const stages = [
       { key: "registration", label: "Registration", done: true, state: "completed" },
       { key: "selection", label: "Selection", done: true, state: "completed" },
@@ -1701,12 +1703,19 @@ export async function GET(
     }
     if (path === "messages") {
       if (!u) return out({ error: "Unauthorized" }, 401);
+      const limit = Math.min(Math.max(Number(req.nextUrl.searchParams.get("limit") || 80), 1), 200);
+      const before = req.nextUrl.searchParams.get("before");
+      const query = String(req.nextUrl.searchParams.get("q") || "").trim();
+      const filters = ["((m.sender_user_id=? AND m.deleted_by_sender=0) OR (m.recipient_user_id=? AND m.deleted_by_recipient=0))"];
+      const values: unknown[] = [u.id, u.id];
+      if (before) { filters.push("m.created_at < ?"); values.push(before); }
+      if (query) { filters.push("(LOWER(m.body) LIKE ? OR LOWER(m.subject) LIKE ?)"); values.push(`%${query.toLowerCase()}%`, `%${query.toLowerCase()}%`); }
       const rows = (
         await db()
           .prepare(
-            "SELECT m.*,su.name sender_name,su.role sender_role,ru.name recipient_name,ru.role recipient_role FROM messages m JOIN users su ON su.id=m.sender_user_id JOIN users ru ON ru.id=m.recipient_user_id WHERE (m.sender_user_id=? AND m.deleted_by_sender=0) OR (m.recipient_user_id=? AND m.deleted_by_recipient=0) ORDER BY m.created_at DESC",
+            `SELECT m.*,su.name sender_name,su.role sender_role,ru.name recipient_name,ru.role recipient_role FROM messages m JOIN users su ON su.id=m.sender_user_id JOIN users ru ON ru.id=m.recipient_user_id WHERE ${filters.join(" AND ")} ORDER BY m.created_at DESC LIMIT ${limit}`,
           )
-          .bind(u.id, u.id)
+          .bind(...values)
           .all()
       ).results;
       return out(rows);
@@ -2683,10 +2692,9 @@ export async function POST(
           { error: "Teams and referees can only message the organization" },
           403,
         );
-      const subject = String(body.subject || "").trim(),
+      const subject = String(body.subject || "Chat message").trim(),
         message = String(body.body || "").trim();
-      if (!subject || !message)
-        return out({ error: "Subject and message are required" }, 422);
+      if (!message) return out({ error: "Message text is required" }, 422);
       const id = uuid();
       await db()
         .prepare(
@@ -3263,6 +3271,15 @@ export async function PUT(
   }
   if (parts[0] === "messages" && rid) {
     if (!u) return out({ error: "Unauthorized" }, 401);
+    const existing: any = await db().prepare("SELECT * FROM messages WHERE id=? AND (sender_user_id=? OR recipient_user_id=?)").bind(rid, u.id, u.id).first();
+    if (!existing) return out({ error: "Message not found" }, 404);
+    if (typeof body.body === "string") {
+      if (existing.sender_user_id !== u.id) return out({ error: "You can only edit your own messages" }, 403);
+      const message = body.body.trim();
+      if (!message) return out({ error: "Message text is required" }, 422);
+      await db().prepare("UPDATE messages SET body=? WHERE id=? AND sender_user_id=?").bind(message, rid, u.id).run();
+      return out({ ok: true, edited: true });
+    }
     const result = await db()
       .prepare(
         "UPDATE messages SET read_at=? WHERE id=? AND recipient_user_id=?",
