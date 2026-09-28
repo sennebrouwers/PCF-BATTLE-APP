@@ -6802,10 +6802,10 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                       <Field label="Login email" name="login_email" type="email" defaultValue={editing?.login_email} required />
                     </div>
                     <label className="portal-field wide checkbox-field">
-                      <input type="checkbox" name="invoice_requested" value="1" defaultChecked={Boolean(editing?.invoice_requested)} />
+                      <input type="checkbox" name="invoice_requested" value="1" checked={invoiceRequested} onChange={(event) => setInvoiceRequested(event.target.checked)} />
                       <span>I would like to receive an invoice during payment for administration.</span>
                     </label>
-                    {editing?.invoice_requested && (
+                    {invoiceRequested && (
                       <div className="team-invoice-fields team-quick-invoice-fields">
                         <div className="team-invoice-row"><Field label="Billing name / organisation" name="billing_name" defaultValue={editing?.billing_name} /><Field label="VAT / company number" name="vat_number" defaultValue={editing?.vat_number} /></div>
                         <div className="team-invoice-row"><Field label="Street and house number" name="billing_address" defaultValue={editing?.billing_address} /><Field label="Postal code" name="billing_postal_code" defaultValue={editing?.billing_postal_code} /></div>
