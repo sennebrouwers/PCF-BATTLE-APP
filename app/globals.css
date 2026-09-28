@@ -9719,3 +9719,20 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   border-color: var(--pink) !important;
   box-shadow: none !important;
 }
+
+/* Edit-team invoice choice belongs at the top of the form, before its billing fields. */
+.team-editor-dialog .team-edit-invoice-toggle {
+  order: -1 !important;
+  width: 100% !important;
+  margin: 0 0 20px !important;
+  flex: 0 0 auto !important;
+  align-self: stretch !important;
+}
+.team-editor-dialog .team-quick-edit > .team-quick-edit-grid {
+  order: 0 !important;
+}
+.team-editor-dialog .team-quick-invoice-fields {
+  order: 1 !important;
+  width: 100% !important;
+  margin-top: 16px !important;
+}
