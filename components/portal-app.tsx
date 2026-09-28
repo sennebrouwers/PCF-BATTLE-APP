@@ -6839,6 +6839,10 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                 {editing?.id ? (
                   <div className="team-quick-edit">
                     <p className="wizard-subtitle">Update the team details without going through the setup wizard.</p>
+                    <label className="portal-field wide checkbox-field team-edit-invoice-toggle">
+                      <input type="checkbox" name="invoice_requested" value="1" checked={invoiceRequested} onChange={(event) => setInvoiceRequested(event.target.checked)} />
+                      <span>I would like to receive an invoice during payment for administration.</span>
+                    </label>
                     <div className="team-quick-edit-grid">
                       <Field label="Team name" name="name" defaultValue={editing?.name} required />
                       <Field label="Country" name="address_country" defaultValue={editing?.address_country} required />
@@ -6851,10 +6855,6 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                       <PhoneField defaultValue={editing?.phone} defaultCode={editing?.phone_country_code || "+32"} required />
                       <Field label="Login email" name="login_email" type="email" defaultValue={editing?.login_email} required />
                     </div>
-                    <label className="portal-field wide checkbox-field">
-                      <input type="checkbox" name="invoice_requested" value="1" checked={invoiceRequested} onChange={(event) => setInvoiceRequested(event.target.checked)} />
-                      <span>I would like to receive an invoice during payment for administration.</span>
-                    </label>
                     {invoiceRequested && (
                       <div className="team-invoice-fields team-quick-invoice-fields">
                         <div className="team-invoice-row"><Field label="Billing name / organisation" name="billing_name" defaultValue={editing?.billing_name} /><Field label="VAT / company number" name="vat_number" defaultValue={editing?.vat_number} /></div>
