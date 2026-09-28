@@ -9820,12 +9820,12 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 
 /* Compact confirmation dialog */
 .confirm-dialog[data-slot="dialog-content"] {
-  position: fixed !important;
-  top: 50dvh !important;
-  left: 50vw !important;
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
   right: auto !important;
   bottom: auto !important;
-  transform: translate(-50%, -50%) !important;
+  transform: none !important;
   display: flex !important;
   flex-direction: column !important;
   width: min(520px, calc(100vw - 24px)) !important;
