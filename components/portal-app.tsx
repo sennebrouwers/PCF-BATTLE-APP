@@ -357,13 +357,23 @@ function Modal({
       <DialogContent
         className={`portal-dialog ${className}`}
         style={{
+          position: "fixed",
+          left: "50%",
+          top: "50%",
+          right: "auto",
+          bottom: "auto",
+          inset: "auto",
+          transform: "translate(-50%, -50%)",
+          translate: "none",
           display: "flex",
           flexDirection: "column",
-          width: "min(1180px, calc(100vw - 48px))",
-          maxWidth: "calc(100vw - 48px)",
-          height: "calc(100dvh - 40px)",
-          maxHeight: "calc(100dvh - 40px)",
+          boxSizing: "border-box",
+          width: "min(1180px, calc(100vw - 24px))",
+          maxWidth: "calc(100vw - 24px)",
+          height: "min(900px, calc(100dvh - 24px))",
+          maxHeight: "calc(100dvh - 24px)",
           minHeight: 0,
+          margin: 0,
           overflow: "hidden",
         }}
       >
