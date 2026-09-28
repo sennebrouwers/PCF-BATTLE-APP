@@ -720,7 +720,7 @@ function Confirm({
   return (
     <>
       <span onClick={() => setOpen(true)}>{children}</span>
-      <Modal title={title} open={open} onOpenChange={setOpen}>
+      <Modal title={title} open={open} onOpenChange={setOpen} className="confirm-dialog">
         <p>{text}</p>
         {passwordInput && <Field label="Admin password" name="reset-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" />}
         <div className="form-actions">
