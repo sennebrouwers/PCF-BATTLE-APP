@@ -9686,3 +9686,22 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   width: 100% !important;
   margin-inline: 0 !important;
 }
+
+/* Keep the delegation roadmap as compact as the Team roadmap. */
+.member-editor-dialog[data-slot="dialog-content"] .wizard-progress-bar {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: 82px !important;
+  align-content: center !important;
+  padding-block: 14px 16px !important;
+  margin-block: 0 !important;
+}
+.member-editor-dialog[data-slot="dialog-content"] .wizard-progress-bar button {
+  min-height: 0 !important;
+  height: 41px !important;
+}
+@media (max-width:700px) {
+  .member-editor-dialog[data-slot="dialog-content"] .wizard-progress-bar {
+    max-height: none !important;
+  }
+}
