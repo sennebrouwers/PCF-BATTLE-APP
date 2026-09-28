@@ -9325,3 +9325,29 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   border-color: var(--pink) !important;
   box-shadow: none !important;
 }
+
+
+/* Keep the Add Team roadmap fully visible: wrap steps instead of hiding them in a horizontal scroller. */
+.team-editor-dialog[data-slot="dialog-content"] .team-wizard-shell > .wizard-topbar.wizard-progress-bar {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+  column-gap: 8px !important;
+  row-gap: 8px !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  scrollbar-width: none !important;
+}
+.team-editor-dialog[data-slot="dialog-content"] .team-wizard-shell > .wizard-topbar.wizard-progress-bar::-webkit-scrollbar {
+  display: none !important;
+}
+.team-editor-dialog[data-slot="dialog-content"] .team-wizard-shell > .wizard-topbar.wizard-progress-bar button {
+  flex: 0 0 auto !important;
+}
+@media (max-width: 700px) {
+  .team-editor-dialog[data-slot="dialog-content"] .team-wizard-shell > .wizard-topbar.wizard-progress-bar {
+    justify-content: flex-start !important;
+    max-height: none !important;
+  }
+}
