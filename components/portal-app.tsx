@@ -533,25 +533,21 @@ function AddressFields({ team }: { team?: Row }) {
         label="Street"
         name="address_street"
         defaultValue={team?.address_street || ""}
-        required
       />
       <Field
         label="House/building number"
         name="address_number"
         defaultValue={team?.address_number || ""}
-        required
       />
       <Field
         label="Postal/ZIP code"
         name="address_postal_code"
         defaultValue={team?.address_postal_code || ""}
-        required
       />
       <Field
         label="City"
         name="address_city"
         defaultValue={team?.address_city || ""}
-        required
       />
       <Field
         label="Country"
