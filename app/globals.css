@@ -10838,3 +10838,26 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     padding: 0 16px max(16px, env(safe-area-inset-bottom)) !important;
   }
 }
+
+/* Give the flex layout a definite viewport-bound height so the body can scroll. */
+.portal-dialog,
+.portal-dialog[data-slot="dialog-content"] {
+  height: min(860px, calc(100dvh - 32px)) !important;
+}
+.portal-dialog > .modal-body {
+  height: 100% !important;
+}
+.portal-dialog > .modal-body > form.wizard-form > .wizard-content {
+  min-height: 1px !important;
+  flex-basis: 0 !important;
+}
+.portal-dialog > .modal-body > form:not(.wizard-form) {
+  min-height: 1px !important;
+  flex-basis: 0 !important;
+}
+@media (max-width: 700px) {
+  .portal-dialog,
+  .portal-dialog[data-slot="dialog-content"] {
+    height: calc(100dvh - 16px) !important;
+  }
+}
