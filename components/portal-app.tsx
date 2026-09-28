@@ -8351,26 +8351,20 @@ function TeamInfoV2({
           defaultValue={team.name}
           required
         />
-        <Field
-          label="Contact person"
-          name="contact_person"
-          defaultValue={team.contact_person}
-          required
-        />
-        <PhoneField
-          defaultValue={team.phone}
-          defaultCode={team.phone_country_code || "+32"}
-          required
-        />
-        <Field label="Contact email" name="contact_email" type="email" defaultValue={team.contact_email} required />
-        <Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={1} max={16} defaultValue={team.expected_delegation_size ?? ""} required />
-        <Field
-          label="Website"
-          name="website"
-          type="url"
-          defaultValue={team.website}
-        />
-        <AddressFields team={team} />
+        <div className="team-info-section">
+          <div className="team-info-section-heading"><h4>Contact details</h4><p>Keep the main team contact information up to date.</p></div>
+          <div className="team-info-section-grid">
+            <Field label="Contact person" name="contact_person" defaultValue={team.contact_person} required />
+            <Field label="Contact email" name="contact_email" type="email" defaultValue={team.contact_email} required />
+            <PhoneField defaultValue={team.phone} defaultCode={team.phone_country_code || "+32"} required />
+            <Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={1} max={16} defaultValue={team.expected_delegation_size ?? ""} required />
+            <Field label="Website" name="website" type="url" defaultValue={team.website} />
+          </div>
+        </div>
+        <div className="team-info-section">
+          <div className="team-info-section-heading"><h4>Address</h4><p>Address details are optional.</p></div>
+          <AddressFields team={team} />
+        </div>
         <Field
           label="Team color"
           name="color"
