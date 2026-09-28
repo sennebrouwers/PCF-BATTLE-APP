@@ -9647,3 +9647,42 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     width: 100% !important;
   }
 }
+
+/* Final alignment: delegation question block matches Add Team exactly. */
+.member-editor-dialog[data-slot="dialog-content"] .wizard-content-inner {
+  width: min(850px, 100%) !important;
+  min-width: 0 !important;
+  margin-inline: auto !important;
+  padding: 0 !important;
+}
+.member-editor-dialog[data-slot="dialog-content"] .wizard-content-inner > .wizard-question {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin: 0 auto 32px !important;
+  text-align: center !important;
+}
+.member-editor-dialog[data-slot="dialog-content"] .wizard-content-inner > .wizard-question .wizard-question-icon {
+  display: grid !important;
+  place-items: center !important;
+  width: 52px !important;
+  height: 52px !important;
+  margin: 0 0 16px !important;
+  border-radius: 50% !important;
+  background: color-mix(in srgb, var(--pink) 22%, transparent) !important;
+  color: var(--pink) !important;
+}
+.member-editor-dialog[data-slot="dialog-content"] .wizard-content-inner > .wizard-question .wizard-question-icon svg {
+  width: 24px !important;
+  height: 24px !important;
+}
+.member-editor-dialog[data-slot="dialog-content"] .wizard-content-inner > .wizard-question h3,
+.member-editor-dialog[data-slot="dialog-content"] .wizard-content-inner > .wizard-question p {
+  width: 100% !important;
+  text-align: center !important;
+}
+.member-editor-dialog[data-slot="dialog-content"] .wizard-content-inner > div:not(.wizard-question):not([hidden]) {
+  width: 100% !important;
+  margin-inline: 0 !important;
+}
