@@ -720,31 +720,54 @@ function Confirm({
   return (
     <>
       <span onClick={() => setOpen(true)}>{children}</span>
-      <Modal title={title} open={open} onOpenChange={setOpen} className="confirm-dialog">
-        <p>{text}</p>
-        {passwordInput && <Field label="Admin password" name="reset-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" />}
-        <div className="confirm-actions">
-          <button type="button" className="btn" onClick={() => setOpen(false)}>
-            Cancel
-          </button>
-          <button
-            className="btn danger"
-            disabled={busy || (passwordInput && !password)}
-            onClick={async () => {
-              setBusy(true);
-              try {
-                await onConfirm(passwordInput ? password : undefined);
-                setPassword("");
-                setOpen(false);
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            {busy ? "Working…" : confirmLabel || (passwordInput ? "Reset securely" : "Confirm")}
-          </button>
-        </div>
-      </Modal>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent
+          className="portal-dialog confirm-dialog"
+          style={{
+            position: "fixed",
+            left: "50%",
+            top: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "min(520px, calc(100vw - 32px))",
+            maxWidth: "calc(100vw - 32px)",
+            height: "auto",
+            maxHeight: "calc(100dvh - 32px)",
+            minHeight: 0,
+            padding: "24px",
+            overflow: "visible",
+          }}
+        >
+          <DialogHeader className="modal-header">
+            <DialogTitle>{title}</DialogTitle>
+          </DialogHeader>
+          <div className="modal-body confirm-body" style={{ display: "flex", flexDirection: "column", gap: "20px", height: "auto", minHeight: 0, overflow: "visible" }}>
+            <p>{text}</p>
+            {passwordInput && <Field label="Admin password" name="reset-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" />}
+            <div className="confirm-actions">
+              <button type="button" className="btn" onClick={() => setOpen(false)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn danger"
+                disabled={busy || (passwordInput && !password)}
+                onClick={async () => {
+                  setBusy(true);
+                  try {
+                    await onConfirm(passwordInput ? password : undefined);
+                    setPassword("");
+                    setOpen(false);
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                {busy ? "Working…" : confirmLabel || (passwordInput ? "Reset securely" : "Confirm")}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
