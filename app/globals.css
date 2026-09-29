@@ -10113,3 +10113,11 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .chat-message-menu-trigger:hover,.chat-message-menu-trigger[aria-expanded="true"]{background:#00000030!important}
 .chat-reaction-chips{margin-top:7px!important}
 @media(max-width:760px){.chat-bubble-wrap{max-width:86%}.chat-hover-actions{display:none}.chat-bubble{padding:11px 12px!important}.chat-message-line{gap:8px}.chat-inline-meta{font-size:10px}}
+
+/* Keep message action menus above adjacent bubbles and controls. */
+.chat-history{position:relative;z-index:3}
+.chat-message-row{z-index:1}
+.chat-message-row:focus-within,.chat-message-row:has(.chat-message-menu){z-index:100}
+.chat-message-menu,.chat-reaction-picker{z-index:1000!important}
+.chat-message-menu{isolation:isolate}
+.chat-thread>header{position:relative;z-index:2}
