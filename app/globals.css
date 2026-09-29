@@ -10061,7 +10061,8 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .team-portal-info-wizard > .wizard-content {
   display: block !important;
   width: 100% !important;
-  height: 0 !important;
+  height: auto !important;
+  align-self: stretch !important;
   min-width: 0 !important;
   min-height: 0 !important;
   overflow-x: hidden !important;
