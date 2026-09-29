@@ -5165,16 +5165,7 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .chat-message-menu button{display:flex;align-items:center;gap:7px;padding:8px 9px;border:0;border-radius:6px;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}
 .chat-message-menu button:hover{background:var(--surface-hover)}
 .chat-bubble time{display:inline}
-.chat-bubble time {
-  display: block;
-  margin-top: 5px;
-  font-size: 10px;
-  color: var(--muted);
-  text-align: right;
-}
-.chat-bubble.mine time {
-  color: #ffe4f1;
-}
+.chat-bubble time { display: inline; }
 .chat-welcome {
   margin: auto;
   display: grid;
