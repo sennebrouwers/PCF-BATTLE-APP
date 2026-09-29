@@ -670,7 +670,7 @@ function PreRegistrationDialog() {
       >
         <Users /> Preregister your club
       </button>
-      <DialogContent className="portal-dialog registration-dialog">
+      <DialogContent\n        className="portal-dialog registration-dialog"\n        centerInOverlay\n      >
         <DialogHeader>
           <DialogTitle>Pre-register for PCF Battle</DialogTitle>
         </DialogHeader>

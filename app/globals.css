@@ -10333,3 +10333,27 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     padding: 20px !important;
   }
 }
+
+
+/* Center the public pre-registration form within a viewport-sized overlay. */
+[data-slot="dialog-overlay"]:has(> .registration-dialog) {
+  position: fixed !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  padding: 16px !important;
+}
+
+.registration-dialog[data-slot="dialog-content"] {
+  position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  width: min(560px, calc(100vw - 32px)) !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: calc(100dvh - 32px) !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+}
