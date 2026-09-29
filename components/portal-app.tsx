@@ -8180,6 +8180,7 @@ function TeamInfoV2({
         String(team.contact_person || "").trim() &&
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(team.contact_email || "").trim()) &&
         String(team.phone || "").trim() &&
+        String(team.logo || "").trim() &&
         Number.isInteger(Number(team.expected_delegation_size)) &&
         Number(team.expected_delegation_size) >= 1 &&
         Number(team.expected_delegation_size) <= 16
@@ -8196,7 +8197,11 @@ function TeamInfoV2({
     const value = (name: string) => String(formData.get(name) || "").trim();
     let valid = true;
     if (teamStep === 1) valid = Boolean(value("name"));
-    if (teamStep === 3) valid = /^#[0-9a-fA-F]{6}$/.test(value("color_hex"));
+    if (teamStep === 3) {
+      const logoFile = formData.get("logo_file");
+      const hasLogo = (Boolean(team.logo) && !removeLogo) || (logoFile instanceof File && logoFile.size > 0);
+      valid = /^#[0-9a-fA-F]{6}$/.test(value("color_hex")) && hasLogo;
+    }
     if (teamStep === 5) {
       valid = Boolean(value("contact_person")) &&
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value("contact_email")) &&
@@ -8217,7 +8222,7 @@ function TeamInfoV2({
     }
     setStepValid(valid);
   }
-  useEffect(() => { readStepValidity(); }, [teamStep, invoiceRequested, wizardRevision, team]);
+  useEffect(() => { readStepValidity(); }, [teamStep, invoiceRequested, wizardRevision, team, removeLogo, logoSelected]);
   function handleWizardInput() {
     const form = wizardFormRef.current;
     if (form) {
@@ -8239,6 +8244,11 @@ function TeamInfoV2({
       photoFile = b.team_photo_file;
     const contactEmail = String(b.contact_email || "").trim();
     const expectedDelegation = Number(b.expected_delegation_size);
+    const hasLogoFile = logoFile instanceof File && logoFile.size > 0;
+    if ((!team.logo || removeLogo) && !hasLogoFile) {
+      toast.error("A team logo is required. Upload one before saving.");
+      return;
+    }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
       toast.error("Enter a valid contact email address.");
       return;
@@ -8337,7 +8347,7 @@ function TeamInfoV2({
             <Field label="City" name="billing_city" defaultValue={team.billing_city || ""} required />
             <Field label="Country" name="billing_country" defaultValue={team.billing_country || ""} required />
           </>}
-          <Field label="Team logo file" name="logo_file" children={<div className="file-picker-control"><input ref={logoInputRef} name="logo_file" type="file" accept="image/*" onChange={(event) => { setLogoSelected(Boolean(event.target.files?.length)); setRemoveLogo(false); }} />{logoSelected && <button className="btn small icon-only" type="button" title="Clear selected logo file" aria-label="Clear selected logo file" onClick={() => { if (logoInputRef.current) logoInputRef.current.value = ""; setLogoSelected(false); }}><Trash2 /></button>}</div>} />
+          <Field label="Team logo" name="logo_file" required={!team.logo || removeLogo} children={<div className="file-picker-control"><input ref={logoInputRef} name="logo_file" type="file" accept="image/*" required={!team.logo || removeLogo} onChange={(event) => { setLogoSelected(Boolean(event.target.files?.length)); setRemoveLogo(false); }} />{logoSelected && <button className="btn small icon-only" type="button" title="Clear selected logo file" aria-label="Clear selected logo file" onClick={() => { if (logoInputRef.current) logoInputRef.current.value = ""; setLogoSelected(false); }}><Trash2 /></button>}</div>} />
           {(team.logo || removeLogo) && <div className="team-media-control">{team.logo && <img className="logo-preview" src={team.logo} alt="Current team logo" />}<button className="btn danger small" type="button" onClick={() => setRemoveLogo(true)}>{removeLogo ? "Logo will be removed" : "Remove logo"}</button></div>}
           <Field label="Team photo file" name="team_photo_file" children={<div className="file-picker-control"><input ref={photoInputRef} name="team_photo_file" type="file" accept="image/*" onChange={(event) => { setPhotoSelected(Boolean(event.target.files?.length)); setRemovePhoto(false); }} />{photoSelected && <button className="btn small icon-only" type="button" title="Clear selected team photo file" aria-label="Clear selected team photo file" onClick={() => { if (photoInputRef.current) photoInputRef.current.value = ""; setPhotoSelected(false); }}><Trash2 /></button>}</div>} />
           {team.team_photo && <div className="team-media-control"><img className="team-photo-preview" src={team.team_photo} alt="Current team photo" /><button className="btn danger small" type="button" onClick={() => setRemovePhoto(true)}>{removePhoto ? "Photo will be removed" : "Remove team photo"}</button></div>}
@@ -8374,7 +8384,7 @@ function TeamInfoV2({
             </div>
             <div hidden={teamStep !== 3} className="team-identity-step">
               <Field label="Team color (HEX)" name="color_hex" defaultValue={team.color || "#ec4899"} required children={<div className="hex-color-control"><input name="color_hex" defaultValue={team.color || "#ec4899"} required /><input data-team-color-picker type="color" defaultValue={team.color || "#ec4899"} aria-label="Choose team color" onChange={(event) => { const input = event.target.parentElement?.querySelector<HTMLInputElement>('input[name="color_hex"]'); if (input) { input.value = event.target.value; input.dispatchEvent(new Event("input", { bubbles: true })); } }} /></div>} />
-              <Field label="Team logo (optional)" name="logo_file" type="file" children={<div className="file-picker-control"><input ref={logoInputRef} name="logo_file" type="file" accept="image/*" onChange={(event) => { setLogoSelected(Boolean(event.target.files?.length)); setRemoveLogo(false); }} />{logoSelected && <button className="btn small icon-only" type="button" title="Clear selected logo file" aria-label="Clear selected logo file" onClick={() => { if (logoInputRef.current) logoInputRef.current.value = ""; setLogoSelected(false); }}><Trash2 /></button>}</div>} />
+              <Field label="Team logo" name="logo_file" type="file" required={!team.logo || removeLogo} children={<div className="file-picker-control"><input ref={logoInputRef} name="logo_file" type="file" accept="image/*" required={!team.logo || removeLogo} onChange={(event) => { setLogoSelected(Boolean(event.target.files?.length)); setRemoveLogo(false); }} />{logoSelected && <button className="btn small icon-only" type="button" title="Clear selected logo file" aria-label="Clear selected logo file" onClick={() => { if (logoInputRef.current) logoInputRef.current.value = ""; setLogoSelected(false); }}><Trash2 /></button>}</div>} />
               {(team.logo || removeLogo) && <div className="team-media-control"><img className="logo-preview" src={team.logo || undefined} alt={team.logo ? "Current team logo" : ""} />{team.logo && <button className="btn danger small" type="button" onClick={() => setRemoveLogo(true)}>{removeLogo ? "Logo will be removed" : "Remove team logo"}</button>}</div>}
             </div>
             <div hidden={teamStep !== 4}>
