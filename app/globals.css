@@ -5132,8 +5132,8 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 }
 .chat-bubble {
   width: max-content;
-  max-width: min(72%, 620px);
-  padding: 11px 13px;
+  max-width: min(88%, 760px);
+  padding: 12px 15px;
   border-radius: 16px;
   background: #fff;
   border: 1px solid var(--line);
@@ -5155,6 +5155,16 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
   white-space: pre-wrap;
   line-height: 1.45;
 }
+.chat-message-line{display:flex;align-items:flex-end;gap:10px}
+.chat-inline-meta{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;white-space:nowrap;color:var(--muted);font-size:10px;line-height:1;padding-bottom:1px}
+.chat-bubble.mine .chat-inline-meta{color:#ffe4f1}
+.chat-message-menu-wrap{position:relative;display:inline-flex}
+.chat-message-menu-trigger{display:inline-grid;place-items:center;width:22px;height:22px;padding:0;border:0;border-radius:6px;background:transparent;color:inherit;cursor:pointer;opacity:.72}
+.chat-message-menu-trigger:hover,.chat-message-menu-trigger[aria-expanded="true"]{background:#00000014;opacity:1}
+.chat-message-menu{position:absolute;right:0;bottom:calc(100% + 6px);z-index:15;display:grid;min-width:130px;gap:2px;padding:5px;border:1px solid var(--line);border-radius:9px;background:var(--surface-3);color:var(--ink);box-shadow:0 10px 24px #0004}
+.chat-message-menu button{display:flex;align-items:center;gap:7px;padding:8px 9px;border:0;border-radius:6px;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.chat-message-menu button:hover{background:var(--surface-hover)}
+.chat-bubble time{display:inline}
 .chat-bubble time {
   display: block;
   margin-top: 5px;
