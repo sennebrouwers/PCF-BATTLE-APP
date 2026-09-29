@@ -1016,6 +1016,7 @@ export default function PortalApp({ role }: { role: Role }) {
           <Team
             active={active}
             refresh={refresh}
+            accountEmail={user?.email || ""}
             onNavigate={navigate}
             reload={reload}
           />
@@ -7857,11 +7858,13 @@ function ContactsPanel({
 function Team({
   active,
   refresh,
+  accountEmail,
   onNavigate,
   reload,
 }: {
   active: string;
   refresh: number;
+  accountEmail: string;
   onNavigate: (page: string) => void;
   reload: () => void;
 }) {
@@ -7871,7 +7874,7 @@ function Team({
   else if (active === "delegation") content = <Delegation refresh={refresh} />;
   else if (active === "rooms") content = <RoomsPanelV2 refresh={refresh} />;
   else if (active === "info")
-    content = <TeamInfoV2 refresh={refresh} reload={reload} />;
+    content = <TeamInfoV2 refresh={refresh} reload={reload} accountEmail={accountEmail} />;
   else if (active === "documents") content = <Documents refresh={refresh} />;
   else if (active === "review") content = <TeamReview refresh={refresh} />;
   else if (active === "finance") content = <Finance refresh={refresh} />;
@@ -8139,9 +8142,11 @@ function TeamOverview({
 function TeamInfoV2({
   refresh,
   reload,
+  accountEmail,
 }: {
   refresh: number;
   reload: () => void;
+  accountEmail: string;
 }) {
   const teams = useData("/teams", refresh),
     team = teams.data[0],
@@ -8323,7 +8328,7 @@ function TeamInfoV2({
             <div className="team-info-section-heading"><h4>Contact details</h4><p>Keep the main team contact information up to date.</p></div>
             <div className="team-info-section-grid">
               <Field label="Contact person" name="contact_person" defaultValue={team.contact_person} required />
-              <Field label="Contact email" name="contact_email" type="email" defaultValue={team.contact_email} required />
+              <Field label="Contact email" name="contact_email" type="email" defaultValue={team.contact_email || accountEmail} required />
               <PhoneField defaultValue={team.phone} defaultCode={team.phone_country_code || "+32"} required />
               <Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={1} max={16} defaultValue={team.expected_delegation_size ?? ""} required />
               <Field label="Website" name="website" type="url" defaultValue={team.website || ""} />
@@ -8393,7 +8398,7 @@ function TeamInfoV2({
             </div>
             <div hidden={teamStep !== 5} className="team-contact-details-step">
               <Field label="Contact full name" name="contact_person" defaultValue={team.contact_person} required />
-              <Field label="Contact email address" name="contact_email" type="email" defaultValue={team.contact_email} required />
+              <Field label="Contact email address" name="contact_email" type="email" defaultValue={team.contact_email || accountEmail} required />
               <PhoneField defaultValue={team.phone} defaultCode={team.phone_country_code || "+32"} required />
               <Field label="Website (optional)" name="website" type="url" defaultValue={team.website || ""} />
             </div>
@@ -8425,7 +8430,7 @@ function TeamInfoV2({
                 <div><dt>Team name</dt><dd>{reviewData.name || team.name || "Not provided"}</dd></div>
                 <div><dt>Country</dt><dd>{reviewData.address_country || team.address_country || "Not provided"}</dd></div>
                 <div><dt>Contact person</dt><dd>{reviewData.contact_person || team.contact_person || "Not provided"}</dd></div>
-                <div><dt>Contact email</dt><dd>{reviewData.contact_email || team.contact_email || "Not provided"}</dd></div>
+                <div><dt>Contact email</dt><dd>{reviewData.contact_email || team.contact_email || accountEmail || "Not provided"}</dd></div>
                 <div><dt>Phone</dt><dd>{reviewData.phone || team.phone || "Not provided"}</dd></div>
                 <div><dt>Expected delegation</dt><dd>{reviewData.expected_delegation_size || String(team.expected_delegation_size || "Not provided")}</dd></div>
                 <div><dt>Team logo</dt><dd>{removeLogo ? "Will be removed" : logoSelected ? "New logo selected" : team.logo ? "Uploaded" : "Not uploaded"}</dd></div>
