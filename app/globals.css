@@ -10238,7 +10238,7 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   position: relative;
   z-index: 1;
   align-self: flex-start;
-  width: min(100% - 16px, 560px) !important;
+  width: min(calc(100% - 16px), 560px) !important;
   margin: 0 0 -4px 10px !important;
   padding: 7px 11px !important;
   border: 0 !important;
@@ -10270,7 +10270,7 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 }
 @media (max-width: 760px) {
   .chat-message-row .chat-bubble-wrap > .chat-quoted-reply {
-    width: min(100% - 10px, 92vw) !important;
+    width: min(calc(100% - 10px), 92vw) !important;
     margin-left: 5px !important;
   }
   .chat-message-row.mine .chat-bubble-wrap > .chat-quoted-reply {
