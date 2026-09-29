@@ -1064,11 +1064,15 @@ function useData<T = Row[]>(path: string, refresh = 0, poll = false) {
   );
   useEffect(() => {
     load();
-    if (!poll) return;
-    const t = setInterval(() => {
-      if (!document.hidden) load();
-    }, 10000);
-    return () => { clearInterval(t); abortRef.current?.abort(); };
+    const t = poll
+      ? setInterval(() => {
+          if (!document.hidden) load();
+        }, 10000)
+      : undefined;
+    return () => {
+      if (t) clearInterval(t);
+      abortRef.current?.abort();
+    };
   }, [load, refresh, poll]);
   return { data, loading, error, load };
 }
