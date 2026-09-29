@@ -10128,3 +10128,46 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .chat-message-row.theirs .chat-message-menu{left:0!important}
 .chat-message-row,.chat-message-row .chat-bubble-wrap{overflow:visible!important}
 .chat-history{overflow-y:auto;overflow-x:visible!important}
+
+
+/* Persistent reply previews and body-level floating menus. */
+.chat-portal-menu {
+  position: fixed !important;
+  z-index: 10000 !important;
+  max-width: min(240px, calc(100vw - 24px));
+  max-height: min(280px, calc(100dvh - 24px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  isolation: isolate;
+}
+.chat-quoted-reply {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  margin: 0 0 9px;
+  padding: 7px 9px;
+  border: 0;
+  border-left: 3px solid var(--pink);
+  border-radius: 7px;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.chat-quoted-reply b { font-size: .72rem; opacity: .85; }
+.chat-quoted-reply span {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: .76rem;
+  line-height: 1.25;
+  opacity: .78;
+}
+.chat-message-highlight .chat-bubble {
+  animation: chat-reply-highlight 1.4s ease;
+}
+@keyframes chat-reply-highlight {
+  0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--pink) 0%, transparent); }
+  35% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--pink) 48%, transparent); }
+}
