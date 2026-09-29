@@ -2,17 +2,19 @@
 
 ## Production configuration
 
-The application requires the Sites runtime bindings for D1 and R2 plus these
-runtime secrets:
+The Vercel runtime uses Turso/libSQL and private Vercel Blob storage. Configure
+these values in the Vercel project's environment settings:
 
-- `SESSION_SECRET`: a long, randomly generated signing secret. Rotate it by
-  changing the value and redeploying; existing sessions will be invalidated.
-- `RESEND_API_KEY` and `RESEND_FROM`: optional email delivery configuration.
-- `SITE_ORIGIN`: the public HTTPS origin used in generated email links.
+- `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`: production database connection.
+- `SESSION_SECRET`: at least 32 random characters for HMAC session signing.
+  Rotating it invalidates existing sessions.
+- `BLOB_READ_WRITE_TOKEN`: private upload and download access.
+- `RESEND_API_KEY` and `RESEND_FROM`: transactional confirmation, selection,
+  waiting-list and portal invitation emails.
+- `SITE_ORIGIN`: canonical HTTPS origin for generated email links and images.
 
-Never commit runtime values, tokens, database credentials or local `.env` files.
-Use the hosting provider's secret store and issue a new repository credential
-for each deployment session.
+Use separate credentials and databases for Preview and Development. Never
+commit runtime values, tokens, database credentials or local `.env` files.
 
 ## Roles
 
@@ -30,15 +32,31 @@ authenticated user on the server.
 
 ## Data and uploads
 
-Uploads are limited to authenticated operational roles, 20 MB, and validated
-against file signatures for supported images and PDFs. Do not add a new upload
-type without validating its binary signature and access policy.
+Uploads are limited to authenticated operational roles and 4 MB per file, so
+multipart requests stay below Vercel Functions' 4.5 MB request-body limit.
+Supported raster images and PDFs are validated against file signatures. SVG is
+not accepted. File reads require the owner or an administrator unless the
+object is linked from a published public resource. PDF responses are private
+attachments. Use a client-to-Blob upload flow before raising this limit.
+Public participant names require privacy consent; participant photos also
+require photo consent.
 
 Do not log passwords, session tokens, email contents, medical notes or other
 unnecessary personal data. API errors shown to users must be actionable but
 must not expose stack traces or database errors.
 
 ## Deployment checks
+
+Before the first production API request after deployment, check for existing
+case-insensitive duplicate emails. The API creates unique normalized email
+indexes lazily, and those migrations will fail until duplicate rows are
+resolved according to the organisation's account policy:
+
+```sql
+SELECT lower(email), COUNT(*) FROM users GROUP BY lower(email) HAVING COUNT(*) > 1;
+SELECT tournament_id, lower(email), COUNT(*) FROM preregistrations
+GROUP BY tournament_id, lower(email) HAVING COUNT(*) > 1;
+```
 
 Run before every production deployment:
 
@@ -47,11 +65,11 @@ npx tsc --noEmit --pretty false
 npm run lint
 npm test
 npm audit --omit=dev --audit-level=high
-npm run build
+npm run build:vercel
 ```
 
 The current automated tests cover mutation protection, login throttling,
-session revocation, public-data consistency, tournament invariants, recovery
-checks and scoreboard protection. A staging rehearsal is still required for
-real backup restore, concurrent operators, email delivery, browser/device
-coverage and network recovery.
+session revocation, public-data consistency, atomic payments and idempotency,
+tournament invariants, recovery checks and scoreboard protection. A staging
+rehearsal is still required for real backup restore, concurrent operators,
+email delivery, browser/device coverage and network recovery.

@@ -1,4 +1,4 @@
-import { createClient, type Client, type InStatement, type ResultSet } from "@libsql/client";
+import { createClient, type Client, type InStatement, type ResultSet, type Transaction } from "@libsql/client";
 
 type PreparedStatement = { sql: string; args: unknown[] };
 
@@ -10,7 +10,7 @@ type D1Result<T = Record<string, unknown>> = {
 class TursoStatement {
   private readonly statement: PreparedStatement;
 
-  constructor(private readonly client: Client, sql: string, args: unknown[] = []) {
+  constructor(private readonly client: Pick<Client, "execute"> | Pick<Transaction, "execute">, sql: string, args: unknown[] = []) {
     this.statement = { sql, args };
   }
 
@@ -18,8 +18,12 @@ class TursoStatement {
     return new TursoStatement(this.client, this.statement.sql, args);
   }
 
+  toInStatement(): InStatement {
+    return this.statement as InStatement;
+  }
+
   private async execute(): Promise<ResultSet> {
-    return this.client.execute(this.statement as InStatement);
+    return this.client.execute(this.toInStatement());
   }
 
   async all<T = Record<string, unknown>>(): Promise<D1Result<T>> {
@@ -53,7 +57,30 @@ class TursoDatabase {
   }
 
   async batch(statements: TursoStatement[]) {
-    return Promise.all(statements.map((statement) => statement.run()));
+    const results = await this.client.batch(statements.map((statement) => statement.toInStatement()), "write");
+    return results.map((result) => ({ results: [], meta: resultToMeta(result) }));
+  }
+
+  async transaction<T>(work: (transaction: TursoTransaction) => Promise<T>): Promise<T> {
+    const transaction = await this.client.transaction("write");
+    try {
+      const result = await work(new TursoTransaction(transaction));
+      await transaction.commit();
+      return result;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    } finally {
+      transaction.close();
+    }
+  }
+}
+
+class TursoTransaction {
+  constructor(private readonly transaction: Transaction) {}
+
+  prepare(sql: string) {
+    return new TursoStatement(this.transaction, sql);
   }
 }
 

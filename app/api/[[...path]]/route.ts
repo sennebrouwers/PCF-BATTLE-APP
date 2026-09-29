@@ -22,6 +22,87 @@ const securityHeaders = {
   "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
 };
 const MAX_JSON_BODY_BYTES = 2 * 1024 * 1024;
+// Vercel rejects function request bodies above 4.5 MB before this handler runs.
+// Leave room for multipart boundaries and headers under that platform limit.
+const MAX_UPLOAD_FILE_BYTES = 4 * 1024 * 1024;
+const MAX_UPLOAD_BODY_BYTES = MAX_UPLOAD_FILE_BYTES + 64 * 1024;
+async function readJsonObject(req: NextRequest): Promise<
+  | { ok: true; value: Record<string, unknown> }
+  | { ok: false; status: 400 | 413 | 422; error: string }
+> {
+  if (!req.body) return { ok: true, value: {} };
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > MAX_JSON_BODY_BYTES) {
+        await reader.cancel();
+        return { ok: false, status: 413, error: "Request body is too large" };
+      }
+      chunks.push(value);
+    }
+  } catch {
+    return { ok: false, status: 400, error: "Could not read request body" };
+  } finally {
+    reader.releaseLock();
+  }
+  if (!total) return { ok: true, value: {} };
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+  } catch {
+    return { ok: false, status: 400, error: "Request body must be valid JSON" };
+  }
+  if (!isRecord(parsed)) return { ok: false, status: 422, error: "Request body must be a JSON object" };
+  return { ok: true, value: parsed };
+}
+async function readBoundedFormData(req: NextRequest): Promise<
+  | { ok: true; value: FormData }
+  | { ok: false; status: 400 | 413; error: string }
+> {
+  if (!req.body) return { ok: false, status: 400, error: "Choose a file to upload" };
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > MAX_UPLOAD_BODY_BYTES) {
+        await reader.cancel();
+        return { ok: false, status: 413, error: "Upload must be 4 MB or smaller" };
+      }
+      chunks.push(value);
+    }
+  } catch {
+    return { ok: false, status: 400, error: "Could not read upload" };
+  } finally {
+    reader.releaseLock();
+  }
+  try {
+    const bytes = new Uint8Array(total);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    const request = new Request(req.url, { method: "POST", headers: req.headers, body: bytes });
+    return { ok: true, value: await request.formData() };
+  } catch {
+    return { ok: false, status: 400, error: "Upload must use valid multipart form data" };
+  }
+}
 type ScheduleRecord = {
   id: string;
   label?: string;
@@ -60,23 +141,17 @@ function parseSessionUser(value: unknown): SessionUser | null {
 const out = (data: unknown, status = 200) =>
   NextResponse.json(data, { status, headers: securityHeaders });
 function logServerError(request: NextRequest, error: unknown) {
-  const requestId = request.headers.get("cf-ray") || crypto.randomUUID();
-  const message = error instanceof Error ? error.message : String(error);
+  const requestId = crypto.randomUUID();
   console.error(JSON.stringify({
     event: "api_error",
     requestId,
     path: new URL(request.url).pathname,
     error: error instanceof Error ? error.name : "UnknownError",
-    message,
   }));
   return requestId;
 }
 
 async function hasAllowedFileSignature(file: File) {
-  if (file.type === "image/svg+xml") {
-    const text = await file.slice(0, 4096).text();
-    return /^\s*(?:<\?xml[^>]*>\s*)?(?:<!--[^>]*-->\s*)?<svg(?:\s|>)/i.test(text) && !/<script\b/i.test(text);
-  }
   const bytes = new Uint8Array(await file.slice(0, 16).arrayBuffer());
   const startsWith = (signature: number[]) => signature.every((value, index) => bytes[index] === value);
   if (file.type === "application/pdf") return startsWith([0x25, 0x50, 0x44, 0x46]);
@@ -86,10 +161,120 @@ async function hasAllowedFileSignature(file: File) {
   if (file.type === "image/webp") return startsWith([0x52, 0x49, 0x46, 0x46]) && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50;
   return false;
 }
+function isOwnedUploadReference(value: unknown, ownerId: string) {
+  const match = String(value || "").match(/^\/api\/files\/([A-Za-z0-9._-]{1,180})$/);
+  return Boolean(match && match[1].startsWith(`${ownerId}-`));
+}
 let scheduleSchemaReady: Promise<void> | null = null;
 let contactsSchemaReady: Promise<void> | null = null;
 let mvpSchemaReady: Promise<void> | null = null;
 let financeSchemaReady: Promise<void> | null = null;
+let preregistrationSchemaReady: Promise<void> | null = null;
+let securitySchemaReady: Promise<void> | null = null;
+let mediaSchemaReady: Promise<void> | null = null;
+let consentSchemaReady: Promise<void> | null = null;
+let rateLimitCleanupAt = 0;
+async function ensureConsentSchema() {
+  if (consentSchemaReady) return consentSchemaReady;
+  consentSchemaReady = (async () => {
+    for (const statement of [
+      "ALTER TABLE delegation_members ADD COLUMN privacy_consent integer DEFAULT 0 NOT NULL",
+      "ALTER TABLE delegation_members ADD COLUMN photo_consent integer DEFAULT 0 NOT NULL",
+    ]) {
+      try {
+        await db().prepare(statement).run();
+      } catch (error) {
+        if (!/duplicate column|already exists/i.test(String(error instanceof Error ? error.message : error))) throw error;
+      }
+    }
+  })();
+  try {
+    await consentSchemaReady;
+  } catch (error) {
+    consentSchemaReady = null;
+    throw error;
+  }
+}
+async function ensureMediaSchema() {
+  if (mediaSchemaReady) return mediaSchemaReady;
+  mediaSchemaReady = (async () => {
+    await ensureConsentSchema();
+    for (const statement of [
+      "ALTER TABLE teams ADD COLUMN team_photo text",
+      "ALTER TABLE users ADD COLUMN photo text",
+      "ALTER TABLE links ADD COLUMN dark_url text",
+    ]) {
+      try {
+        await db().prepare(statement).run();
+      } catch (error) {
+        if (!/duplicate column|already exists/i.test(String(error instanceof Error ? error.message : error))) throw error;
+      }
+    }
+  })();
+  try {
+    await mediaSchemaReady;
+  } catch (error) {
+    mediaSchemaReady = null;
+    throw error;
+  }
+}
+async function ensureSecuritySchema() {
+  if (securitySchemaReady) return securitySchemaReady;
+  securitySchemaReady = (async () => {
+    await db().prepare("CREATE TABLE IF NOT EXISTS login_attempts (identifier text PRIMARY KEY NOT NULL,attempts integer NOT NULL DEFAULT 0,locked_until text,updated_at text NOT NULL)").run();
+    await db().prepare("CREATE INDEX IF NOT EXISTS idx_login_attempts_updated_at ON login_attempts(updated_at)").run();
+    await db().prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_normalized ON users(lower(email))").run();
+    await db().prepare("DELETE FROM login_attempts WHERE updated_at<?").bind(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()).run();
+    rateLimitCleanupAt = Date.now();
+  })();
+  try {
+    await securitySchemaReady;
+  } catch (error) {
+    securitySchemaReady = null;
+    throw error;
+  }
+}
+async function isRateLimited(scope: string, req: NextRequest, limit: number, windowMs: number) {
+  await ensureSecuritySchema();
+  if (Date.now() - rateLimitCleanupAt > 60 * 60 * 1000) {
+    rateLimitCleanupAt = Date.now();
+    await db().prepare("DELETE FROM login_attempts WHERE updated_at<?").bind(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()).run();
+  }
+  const bucket = Math.floor(Date.now() / windowMs);
+  const identifier = await sha(`rate:${scope}:${clientAddress(req)}:${bucket}`);
+  const timestamp = now();
+  await db().prepare("INSERT INTO login_attempts (identifier,attempts,locked_until,updated_at) VALUES (?,1,NULL,?) ON CONFLICT(identifier) DO UPDATE SET attempts=login_attempts.attempts+1,updated_at=excluded.updated_at").bind(identifier, timestamp).run();
+  const row = await db().prepare("SELECT attempts FROM login_attempts WHERE identifier=?").bind(identifier).first<{ attempts: number }>();
+  return Number(row?.attempts || 0) > limit;
+}
+async function ensurePreregistrationSchema() {
+  if (preregistrationSchemaReady) return preregistrationSchemaReady;
+  preregistrationSchemaReady = (async () => {
+    for (const statement of [
+      "ALTER TABLE preregistrations ADD COLUMN selected integer DEFAULT 0 NOT NULL",
+      "ALTER TABLE preregistrations ADD COLUMN registration_confirmation_sent_at text",
+      "ALTER TABLE preregistrations ADD COLUMN registration_confirmation_claimed_at text",
+      "ALTER TABLE preregistrations ADD COLUMN selection_email_sent_at text",
+      "ALTER TABLE preregistrations ADD COLUMN portal_invitation_sent_at text",
+      "ALTER TABLE preregistrations ADD COLUMN decision_email_claimed_at text",
+      "ALTER TABLE preregistrations ADD COLUMN portal_invitation_claimed_at text",
+      "ALTER TABLE preregistrations ADD COLUMN waiting_list integer DEFAULT 0 NOT NULL",
+    ]) {
+      try {
+        await db().prepare(statement).run();
+      } catch (error) {
+        if (!/duplicate column|already exists/i.test(String(error instanceof Error ? error.message : error))) throw error;
+      }
+    }
+    await db().prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_preregistrations_tournament_email_normalized ON preregistrations(tournament_id,lower(email))").run();
+  })();
+  try {
+    await preregistrationSchemaReady;
+  } catch (error) {
+    preregistrationSchemaReady = null;
+    throw error;
+  }
+}
 async function ensureFinanceSchema() {
   if (financeSchemaReady) return financeSchemaReady;
   financeSchemaReady = (async () => {
@@ -424,6 +609,11 @@ function acceptsMutation(req: NextRequest) {
     fetchSite = req.headers.get("sec-fetch-site");
   return fetchSite !== "cross-site" && (!origin || origin === new URL(req.url).origin);
 }
+function clientAddress(req: NextRequest) {
+  const forwarded = req.headers.get("x-forwarded-for");
+  const value = req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip") || forwarded?.split(",").at(-1)?.trim() || `unknown:${(req.headers.get("user-agent") || "").slice(0, 96)}`;
+  return value.slice(0, 128);
+}
 const scheduleMinutes = (value: unknown, fallback = 15) => {
   const n = Number(value);
   return Number.isFinite(n) && n > 0 ? Math.min(180, Math.round(n)) : fallback;
@@ -686,24 +876,33 @@ function pack(v: unknown) {
   const bytes = new TextEncoder().encode(JSON.stringify(v));
   return btoa(String.fromCharCode(...bytes)).replace(/=/g, "");
 }
-async function sign(payload: string) {
-  const configuredSecret = runtimeEnv.SESSION_SECRET;
-  if (!configuredSecret)
-    throw new Error("SESSION_SECRET is required");
-  const secret = String(configuredSecret),
-    key = await crypto.subtle.importKey(
+let sessionSigningKey: Promise<CryptoKey> | null = null;
+function getSessionSigningKey() {
+  if (!sessionSigningKey) {
+    const secret = String(runtimeEnv.SESSION_SECRET || "");
+    if (secret.trim().length < 32) throw new Error("SESSION_SECRET must contain at least 32 characters");
+    sessionSigningKey = crypto.subtle.importKey(
       "raw",
       new TextEncoder().encode(secret),
       { name: "HMAC", hash: "SHA-256" },
       false,
-      ["sign"],
-    ),
-    sig = await crypto.subtle.sign(
-      "HMAC",
-      key,
-      new TextEncoder().encode(payload),
-    );
+      ["sign", "verify"],
+    ).catch((error) => {
+      sessionSigningKey = null;
+      throw error;
+    });
+  }
+  return sessionSigningKey;
+}
+async function sign(payload: string) {
+  const key = await getSessionSigningKey();
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
   return hex(new Uint8Array(sig));
+}
+async function verifySignature(payload: string, signature: string) {
+  if (!/^[a-f0-9]{64}$/i.test(signature)) return false;
+  const bytes = Uint8Array.from(signature.match(/.{2}/g) || [], (value) => parseInt(value, 16));
+  return crypto.subtle.verify("HMAC", await getSessionSigningKey(), bytes, new TextEncoder().encode(payload));
 }
 async function session(req: NextRequest): Promise<SessionUser | null> {
   const raw =
@@ -711,7 +910,7 @@ async function session(req: NextRequest): Promise<SessionUser | null> {
     req.headers.get("authorization")?.replace(/^Bearer /i, "");
   try {
     const [payload, sig] = (raw || "").split(".");
-    if (!payload || sig !== (await sign(payload))) return null;
+    if (!payload || !sig || !(await verifySignature(payload, sig))) return null;
     const bytes = Uint8Array.from(atob(payload), (c) => c.charCodeAt(0)),
       u = parseSessionUser(JSON.parse(new TextDecoder().decode(bytes)));
     if (!u || u.exp <= Date.now()) return null;
@@ -727,6 +926,21 @@ async function session(req: NextRequest): Promise<SessionUser | null> {
 function permit(u: SessionUser | null, roles: string[]) {
   return u && roles.includes(u.role);
 }
+const AUDIT_REDACTED_KEY = /password|secret|token|api.?key|authorization|cookie|session|email|phone|whatsapp|address|contact|name|message|body|note|photo|image|iban|bic|bank|reference|url|ip|reason/i;
+function redactAuditDetails(value: unknown, key = ""): unknown {
+  if (AUDIT_REDACTED_KEY.test(key)) return "[REDACTED]";
+  if (Array.isArray(value)) return value.slice(0, 64).map((item) => redactAuditDetails(item));
+  if (isRecord(value)) {
+    return Object.fromEntries(
+      Object.entries(value).slice(0, 64).map(([childKey, childValue]) => [
+        childKey,
+        redactAuditDetails(childValue, childKey),
+      ]),
+    );
+  }
+  if (typeof value === "string") return value.slice(0, 256);
+  return value;
+}
 async function log(
   u: SessionUser | null,
   action: string,
@@ -739,11 +953,11 @@ async function log(
     .bind(
       uuid(),
       u?.id || null,
-      u?.name || "System",
+      u?.role || "System",
       action,
       type,
       entity || null,
-      details ? JSON.stringify(details) : null,
+      details ? JSON.stringify(redactAuditDetails(details)) : null,
       now(),
     )
     .run();
@@ -756,6 +970,8 @@ async function sendEmail(
   const key = runtimeEnv.RESEND_API_KEY,
     from = runtimeEnv.RESEND_FROM;
   if (!key || !from || !to) return false;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8_000);
   try {
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -764,11 +980,24 @@ async function sendEmail(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ from, to, subject, html }),
+      signal: controller.signal,
     });
     return r.ok;
   } catch {
     return false;
+  } finally {
+    clearTimeout(timeout);
   }
+}
+function emailOrigin(req: NextRequest) {
+  const configured = runtimeEnv.SITE_ORIGIN?.trim();
+  if (!configured && process.env.NODE_ENV === "production") throw new Error("SITE_ORIGIN is required in production");
+  const origin = new URL(configured || new URL(req.url).origin);
+  if (!/^https?:$/.test(origin.protocol) || origin.username || origin.password)
+    throw new Error("SITE_ORIGIN must be an HTTP or HTTPS origin without credentials");
+  if (process.env.NODE_ENV === "production" && origin.protocol !== "https:")
+    throw new Error("SITE_ORIGIN must use HTTPS in production");
+  return origin.origin;
 }
 function escapeEmailHtml(value: unknown) {
   return String(value ?? "").replace(
@@ -785,7 +1014,7 @@ function teamInviteEmail(origin: string, code: string) {
   const safeCode = escapeEmailHtml(code);
   const inviteUrl = `${origin}/signup?code=${encodeURIComponent(code)}`;
   const safeInviteUrl = escapeEmailHtml(inviteUrl);
-  const logoUrl = `${origin}/PFB_Logo_Pink.svg`;
+  const logoUrl = `${safeOrigin}/PFB_Logo_Pink.svg`;
 
   return `<!doctype html>
 <html lang="en">
@@ -851,7 +1080,7 @@ function teamInviteEmail(origin: string, code: string) {
   </body>
 </html>`;
 }
-function registrationEmail(clubName: string, selected = false, waitingList = false) {
+function registrationEmail(origin: string, clubName: string, selected = false, waitingList = false) {
   const title = selected ? "Your team has been selected" : waitingList ? "Your team was not selected" : "Registration received";
   const intro = selected
     ? `Congratulations — <strong>${escapeEmailHtml(clubName)}</strong> has been selected to participate in PCF BATTLE.`
@@ -863,8 +1092,16 @@ function registrationEmail(clubName: string, selected = false, waitingList = fal
     : waitingList
     ? "If you would like your team to be considered for the waiting list, simply reply to this email and let us know. We will contact you if a place becomes available."
     : "Our team will review the registration and contact you with the next steps. Sending this registration does not yet guarantee a place in the tournament.";
-  const logoUrl = `${new URL(runtimeEnv.SITE_ORIGIN || "https://pch-battle.senne-brouwers.chatgpt.site").origin}/PFB_Logo_Pink.svg`;
+  const logoUrl = `${escapeEmailHtml(origin)}/PFB_Logo_Pink.svg`;
   return `<!doctype html><html lang="en"><body style="margin:0;background:#f5f5f7;color:#18181b;font-family:Arial,Helvetica,sans-serif"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f7"><tr><td align="center" style="padding:32px 14px"><table role="presentation" width="100%" style="max-width:680px;background:#fff;border:1px solid #e4e4e7;border-radius:18px;overflow:hidden"><tr><td align="center" style="padding:32px 32px 24px;border-top:6px solid #ec4899"><img src="${logoUrl}" width="82" alt="PCF BATTLE" style="display:block;width:82px;height:auto;margin:0 auto 18px"><div style="font-size:13px;font-weight:700;letter-spacing:1.8px;color:#ec4899">PCF BATTLE</div><h1 style="margin:8px 0 0;font-size:28px;line-height:1.2;color:#18181b">Powerchair Floorball Battle</h1></td></tr><tr><td style="padding:34px 40px 38px"><h2 style="margin:0 0 14px;font-size:22px;line-height:1.3;color:#18181b">${title}</h2><div style="font-size:16px;line-height:1.65;color:#52525b"><p>${intro}</p><p>${next}</p><p style="margin-bottom:0">Questions? Contact <a href="mailto:hello@pcfbattle.be" style="color:#db2777">hello@pcfbattle.be</a>.</p></div></td></tr><tr><td style="padding:0;background:#fafafa;border-top:1px solid #e4e4e7"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td width="31%" align="center" valign="middle" style="padding:26px 22px"><img src="${logoUrl}" width="112" alt="Powerchair Floorball Battle Belgium" style="display:block;width:100%;max-width:112px;height:auto;margin:0 auto"></td><td width="2" style="width:2px;background:#ec1970;font-size:0;line-height:0">&nbsp;</td><td valign="middle" style="padding:26px 24px 26px 28px"><div style="font-size:21px;font-weight:800;line-height:1.25;color:#18181b">Senne Brouwers &amp;<br>Seppe Hemerijckx</div><div style="margin-top:8px;font-size:13px;font-weight:800;letter-spacing:1.2px;color:#ec4899">ORGANIZERS</div><div style="margin-top:18px;font-size:15px;font-weight:800;line-height:1.35;letter-spacing:.4px;color:#27272a">POWERCHAIR FLOORBALL BATTLE</div><div style="margin-top:10px;font-size:14px;font-weight:700"><a href="mailto:hello@pcfbattle.be" style="color:#db2777;text-decoration:none">hello@pcfbattle.be</a></div></td></tr></table></td></tr></table></td></tr></table></body></html>`;
+}
+async function sendAppEmail(req: NextRequest, to: string | undefined, subject: string, template: (origin: string) => string) {
+  try {
+    return await sendEmail(to, subject, template(emailOrigin(req)));
+  } catch (error) {
+    console.error(JSON.stringify({ event: "email_delivery_error", error: error instanceof Error ? error.name : "UnknownError" }));
+    return false;
+  }
 }
 async function syncAccommodation(teamId: string) {
   if (!teamId) return;
@@ -1390,9 +1627,10 @@ export async function GET(
     if (path === "mvp/candidates") {
       if (!permit(u, ["ADMIN", "REFEREE"])) return out({ error: u ? "Forbidden" : "Unauthorized" }, u ? 403 : 401);
       await ensureMvpSchema();
+      await ensureConsentSchema();
       const tournament: any = await db().prepare("SELECT id FROM tournaments WHERE active=1 LIMIT 1").first();
       const settings: any = await db().prepare("SELECT * FROM mvp_settings WHERE tournament_id=?").bind(tournament?.id || "").first();
-      const rows: any = (await db().prepare("SELECT dm.id,dm.name,dm.member_type,dm.player_role,dm.classification_points,dm.staff_role,dm.custom_staff_role,t.id team_id,t.name team_name FROM delegation_members dm JOIN teams t ON t.id=dm.team_id WHERE dm.member_type IN ('PLAYER','COACH','STAFF') ORDER BY t.name,dm.name").all()).results;
+      const rows: any = (await db().prepare("SELECT dm.id,dm.name,dm.member_type,dm.player_role,dm.classification_points,dm.staff_role,dm.custom_staff_role,t.id team_id,t.name team_name FROM delegation_members dm JOIN teams t ON t.id=dm.team_id WHERE dm.member_type IN ('PLAYER','COACH','STAFF') AND dm.privacy_consent=1 ORDER BY t.name,dm.name").all()).results;
       const candidates = rows.flatMap((member: any) => {
         if (member.member_type === "PLAYER" && member.player_role === "KEEPER") return [{ ...member, category: "BEST_KEEPER" }];
         if (member.member_type === "PLAYER" && member.player_role === "T_STICK") return [{ ...member, category: "BEST_T_STICK" }];
@@ -1400,7 +1638,7 @@ export async function GET(
         if (member.member_type === "COACH" || (member.member_type === "STAFF" && (member.staff_role === "HEAD_COACH" || (member.staff_role === "ASSISTANT_COACH" && settings?.assistant_coach_eligible !== 0)))) return [{ ...member, category: "BEST_COACH" }];
         return [];
       });
-      const referees: any = (await db().prepare("SELECT id,name,'REFEREE' member_type,NULL team_id,NULL team_name FROM users WHERE role='REFEREE' AND active=1 UNION ALL SELECT id,name,member_type,team_id,NULL team_name FROM delegation_members WHERE member_type='REFEREE'").all()).results;
+      const referees: any = (await db().prepare("SELECT id,name,'REFEREE' member_type,NULL team_id,NULL team_name FROM users WHERE role='REFEREE' AND active=1 UNION ALL SELECT id,name,member_type,team_id,NULL team_name FROM delegation_members WHERE member_type='REFEREE' AND privacy_consent=1").all()).results;
       const votes: any = (await db().prepare("SELECT category,candidate_id,COUNT(*) votes FROM mvp_votes WHERE tournament_id=? GROUP BY category,candidate_id").bind(tournament?.id || "").all()).results;
       const voteSummary = votes.reduce((result: Record<string, Record<string, number>>, vote: any) => { (result[vote.category] ||= {})[vote.candidate_id] = Number(vote.votes || 0); return result; }, {});
       const voted: any = await db().prepare("SELECT COUNT(DISTINCT referee_id) count FROM mvp_votes WHERE tournament_id=?").bind(tournament?.id || "").first();
@@ -1414,13 +1652,23 @@ export async function GET(
     if (parts[0] === "files" && parts[1]) {
       const objectKey = parts.slice(1).join("/");
       if (!/^[A-Za-z0-9._-]{1,180}$/.test(objectKey)) return out({ error: "Invalid file reference" }, 400);
+      await ensureMediaSchema();
+      const fileUrl = `/api/files/${objectKey}`;
+      const sharedResource = await db().prepare("SELECT id FROM links WHERE active=1 AND (url=? OR dark_url=?) UNION ALL SELECT id FROM teams WHERE logo=? OR team_photo=? UNION ALL SELECT id FROM delegation_members WHERE photo=? AND privacy_consent=1 AND photo_consent=1 UNION ALL SELECT id FROM users WHERE photo=? AND role='REFEREE' AND active=1 LIMIT 1").bind(fileUrl, fileUrl, fileUrl, fileUrl, fileUrl, fileUrl).first();
+      let teamResource: unknown = null;
+      if (u?.role === "TEAM" && u.teamId) {
+        teamResource = await db().prepare("SELECT id FROM teams WHERE id=? AND (logo=? OR team_photo=?) UNION ALL SELECT id FROM delegation_members WHERE team_id=? AND photo=? LIMIT 1").bind(u.teamId, fileUrl, fileUrl, u.teamId, fileUrl).first();
+      }
+      const keyOwned = Boolean(u && objectKey.startsWith(`${u.id}-`));
+      if (!sharedResource && !teamResource && !(u?.role === "ADMIN") && !keyOwned)
+        return out({ error: u ? "Forbidden" : "Unauthorized" }, u ? 403 : 401);
       const object = await readBlob(objectKey);
       if (!object) return new NextResponse("Not found", { status: 404 });
-      if (object.contentType === "application/pdf") {
-        const sharedResource = (await db().prepare("SELECT id FROM links WHERE url=? AND active=1 LIMIT 1").bind(`/api/files/${objectKey}`).first()) as any;
-        if (!u || (!sharedResource && u.role !== "ADMIN" && object.customMetadata?.owner !== u.id && !objectKey.startsWith(`${u.id}-`)))
-          return out({ error: u ? "Forbidden" : "Unauthorized" }, u ? 403 : 401);
-      }
+      const owned = Boolean(u && (object.customMetadata?.owner === u.id || (!object.customMetadata?.owner && keyOwned)));
+      if (keyOwned && object.customMetadata?.owner && object.customMetadata.owner !== u?.id && !sharedResource && !teamResource && u?.role !== "ADMIN")
+        return out({ error: "Forbidden" }, 403);
+      if (!sharedResource && !teamResource && u?.role !== "ADMIN" && !owned)
+        return out({ error: u ? "Forbidden" : "Unauthorized" }, u ? 403 : 401);
       return new NextResponse(object.body, {
         headers: {
           "Content-Type": object.contentType || "application/octet-stream",
@@ -1492,7 +1740,7 @@ export async function GET(
           : await db().prepare("SELECT * FROM matches WHERE status='live' ORDER BY updated_at DESC LIMIT 1").first();
       if (!match) return out({ match: null, teams: [], goals: [] });
       match.referee_ids = JSON.parse(match.referee_ids || "[]");
-      const teams = await list("teams", "WHERE id IN (?,?)", [match.home_team_id, match.away_team_id]);
+      const teams = (await db().prepare("SELECT id,name,color,logo,team_photo,group_id FROM teams WHERE id IN (?,?)").bind(match.home_team_id, match.away_team_id).all()).results;
       const goals = (await db().prepare("SELECT ge.*,dm.name player_name,dm.number player_number,t.name team_name FROM goal_events ge JOIN delegation_members dm ON dm.id=ge.player_id JOIN teams t ON t.id=ge.team_id WHERE ge.match_id=? ORDER BY ge.created_at").bind(match.id).all()).results;
       const incidents = (await db().prepare("SELECT me.*,dm.name player_name,t.name team_name FROM match_events me LEFT JOIN delegation_members dm ON dm.id=me.player_id LEFT JOIN teams t ON t.id=me.team_id WHERE me.match_id=? AND me.type IN ('CARD','PENALTY') ORDER BY me.created_at").bind(match.id).all()).results;
       const settings = await db().prepare("SELECT match_duration_minutes,halftime_duration_minutes,scoreboard_background,scoreboard_accent,scoreboard_logo_scale,scoreboard_show_sponsors FROM tournaments WHERE id=?").bind(match.tournament_id).first();
@@ -1500,6 +1748,7 @@ export async function GET(
       return NextResponse.json({ match, teams, goals, incidents, settings, sponsors }, { headers: { "Cache-Control": "private, no-store" } });
     }
     if (path === "public-data") {
+      await ensureMediaSchema();
       const cached = publicDataCache;
       if (cached && cached.expiresAt > Date.now()) {
         return NextResponse.json(cached.payload, { headers: { "Cache-Control": "public, max-age=5, s-maxage=15, stale-while-revalidate=60" } });
@@ -1532,17 +1781,17 @@ export async function GET(
         safe("schedule", db().prepare("SELECT id,tournament_id,item_type,match_id,label,match_date,start_time,duration_minutes,court,sort_order,active,created_at,updated_at FROM schedule_items WHERE active=1 AND tournament_id=(SELECT id FROM tournaments WHERE active=1 LIMIT 1) ORDER BY sort_order,id").all().then((r: any) => r.results), []),
         safe("referees", db()
           .prepare(
-            "SELECT id,name,country,photo,NULL team_id,'USER' source FROM users WHERE role='REFEREE' AND active=1 UNION ALL SELECT dm.id,dm.name,NULL country,dm.photo,dm.team_id,'DELEGATION' source FROM delegation_members dm WHERE dm.role='REFEREE' AND dm.id NOT IN (SELECT id FROM users) ORDER BY name",
+            "SELECT id,name,country,photo,NULL team_id,'USER' source FROM users WHERE role='REFEREE' AND active=1 UNION ALL SELECT dm.id,dm.name,NULL country,CASE WHEN dm.photo_consent=1 THEN dm.photo ELSE NULL END photo,dm.team_id,'DELEGATION' source FROM delegation_members dm WHERE dm.role='REFEREE' AND dm.privacy_consent=1 AND dm.id NOT IN (SELECT id FROM users) ORDER BY name",
           )
           .all()
           .then((r: any) => r.results), []),
         safe("scorers", db()
           .prepare(
-            "SELECT dm.id player_id,dm.name player_name,dm.number player_number,t.id team_id,t.name team_name,t.logo team_logo,COUNT(ge.id) goals FROM goal_events ge JOIN delegation_members dm ON dm.id=ge.player_id JOIN teams t ON t.id=ge.team_id JOIN matches m ON m.id=ge.match_id WHERE m.status IN ('live','finished') GROUP BY dm.id,dm.name,dm.number,t.id,t.name,t.logo ORDER BY goals DESC,dm.name ASC",
+            "SELECT dm.id player_id,dm.name player_name,dm.number player_number,t.id team_id,t.name team_name,t.logo team_logo,COUNT(ge.id) goals FROM goal_events ge JOIN delegation_members dm ON dm.id=ge.player_id JOIN teams t ON t.id=ge.team_id JOIN matches m ON m.id=ge.match_id WHERE m.status IN ('live','finished') AND dm.privacy_consent=1 GROUP BY dm.id,dm.name,dm.number,t.id,t.name,t.logo ORDER BY goals DESC,dm.name ASC",
           )
           .all()
           .then((r: any) => r.results), []),
-        safe("players", db().prepare("SELECT id,team_id,name,number,photo,role,staff_role FROM delegation_members WHERE role IN ('PLAYER','COACH') OR staff_role IN ('COACH','ASSISTANT_COACH') ORDER BY team_id,number,name").all().then((r: any) => r.results), []),
+        safe("players", db().prepare("SELECT id,team_id,name,number,CASE WHEN photo_consent=1 THEN photo ELSE NULL END photo,role,staff_role FROM delegation_members WHERE privacy_consent=1 AND (role IN ('PLAYER','COACH') OR staff_role IN ('COACH','ASSISTANT_COACH')) ORDER BY team_id,number,name").all().then((r: any) => r.results), []),
       ]);
       const groupRows = (group: string) => (table as any[]).filter((row) => String(row.group_id || "").replace(/^group-/i, "").toUpperCase() === group);
       const groupA = groupRows("A"), groupB = groupRows("B");
@@ -1779,6 +2028,7 @@ export async function GET(
     }
     if (path === "standings") return out(await standings());
     if (path === "goal-events") {
+      if (!permit(u, ["ADMIN", "SCOREBOARD"])) return out({ error: u ? "Forbidden" : "Unauthorized" }, u ? 403 : 401);
       const rows = (
         await db()
           .prepare(
@@ -1789,6 +2039,8 @@ export async function GET(
       return out(rows);
     }
     if (parts[0] === "goal-events" && parts[1]) {
+      if (!u) return out({ error: "Unauthorized" }, 401);
+      if (!(await mayViewMatch(u, parts[1]))) return out({ error: "Forbidden" }, 403);
       const rows = (
         await db()
           .prepare(
@@ -1814,41 +2066,55 @@ export async function GET(
       return out(rows);
     }
     if (path === "scorers") {
+      await ensureConsentSchema();
       const rows = (
         await db()
           .prepare(
-            "SELECT dm.id player_id,dm.name player_name,dm.number player_number,t.id team_id,t.name team_name,t.logo team_logo,COUNT(ge.id) goals FROM goal_events ge JOIN delegation_members dm ON dm.id=ge.player_id JOIN teams t ON t.id=ge.team_id JOIN matches m ON m.id=ge.match_id WHERE m.status IN ('live','finished') GROUP BY dm.id,dm.name,dm.number,t.id,t.name,t.logo ORDER BY goals DESC,dm.name ASC",
+            "SELECT dm.id player_id,dm.name player_name,dm.number player_number,t.id team_id,t.name team_name,t.logo team_logo,COUNT(ge.id) goals FROM goal_events ge JOIN delegation_members dm ON dm.id=ge.player_id JOIN teams t ON t.id=ge.team_id JOIN matches m ON m.id=ge.match_id WHERE m.status IN ('live','finished') AND dm.privacy_consent=1 GROUP BY dm.id,dm.name,dm.number,t.id,t.name,t.logo ORDER BY goals DESC,dm.name ASC",
           )
           .all()
       ).results;
       return out(rows);
     }
     if (path === "referees") {
+      await ensureConsentSchema();
       const rows = (
         await db()
           .prepare(
-            "SELECT id,name,country,photo,NULL team_id,'USER' source FROM users WHERE role='REFEREE' AND active=1 UNION ALL SELECT dm.id,dm.name,NULL country,dm.photo,dm.team_id,'DELEGATION' source FROM delegation_members dm WHERE dm.role='REFEREE' AND dm.id NOT IN (SELECT id FROM users) ORDER BY name",
+            "SELECT id,name,country,photo,NULL team_id,'USER' source FROM users WHERE role='REFEREE' AND active=1 UNION ALL SELECT dm.id,dm.name,NULL country,CASE WHEN dm.photo_consent=1 THEN dm.photo ELSE NULL END photo,dm.team_id,'DELEGATION' source FROM delegation_members dm WHERE dm.role='REFEREE' AND dm.privacy_consent=1 AND dm.id NOT IN (SELECT id FROM users) ORDER BY name",
           )
           .all()
       ).results;
       return out(rows);
     }
+    if (path === "delegation") {
+      const matchId = String(req.nextUrl.searchParams.get("matchId") || "");
+      if (!matchId && permit(u, ["ADMIN"])) return out(await list("delegation_members"));
+      if (!matchId && permit(u, ["TEAM"])) return out(await list("delegation_members", "WHERE team_id=?", [u.teamId]));
+      if (!permit(u, ["ADMIN", "SCOREBOARD"])) return out({ error: u ? "Forbidden" : "Unauthorized" }, u ? 403 : 401);
+      if (!matchId) return out({ error: "Select a match to view its roster" }, 422);
+      const match: any = await db().prepare("SELECT home_team_id,away_team_id FROM matches WHERE id=?").bind(matchId).first();
+      if (!match) return out({ error: "Match not found" }, 404);
+      const teamIds = [match.home_team_id, match.away_team_id].filter((id: unknown): id is string => typeof id === "string" && !/^(source:|dependency:|placeholder:)/.test(id));
+      if (!teamIds.length) return out([]);
+      const placeholders = teamIds.map(() => "?").join(",");
+      const rows = await db().prepare(`SELECT id,team_id,name,number,role FROM delegation_members WHERE role='PLAYER' AND team_id IN (${placeholders}) ORDER BY team_id,number,name`).bind(...teamIds).all();
+      return out(rows.results);
+    }
     if (path === "team-selection") {
-      if (!u) return out({ error: "Unauthorized" }, 401);
-      const where = u.role === "TEAM" ? "AND dm.team_id=?" : "",
-        values = u.role === "TEAM" ? [u.teamId] : [];
+      if (!permit(u, ["ADMIN"])) return out({ error: u ? "Forbidden" : "Unauthorized" }, u ? 403 : 401);
       const rows = (
         await db()
           .prepare(
-            `SELECT dm.*,t.name team_name,t.logo team_logo FROM delegation_members dm JOIN teams t ON t.id=dm.team_id WHERE dm.role='PLAYER' ${where} ORDER BY t.name,dm.number,dm.name`,
+            "SELECT dm.*,t.name team_name,t.logo team_logo FROM delegation_members dm JOIN teams t ON t.id=dm.team_id WHERE dm.role='PLAYER' ORDER BY t.name,dm.number,dm.name",
           )
-          .bind(...values)
           .all()
       ).results;
       return out(rows);
     }
     if (path === "rooms") {
-      if (!u) return out({ error: "Unauthorized" }, 401);
+      if (!permit(u, ["ADMIN", "TEAM"])) return out({ error: u ? "Forbidden" : "Unauthorized" }, u ? 403 : 401);
+      await ensureScheduleSchema();
       const rooms: any[] = await list(
           "rooms",
           u.role === "TEAM"
@@ -2017,28 +2283,42 @@ export async function GET(
     }
     const table = mapName(parts[0]);
     if (resources[table]) {
-      if (table === "delegation_members" && !u)
-        return out({ error: "Unauthorized" }, 401);
-      if (
-        ["users", "payments", "invites"].includes(table) &&
-        !permit(u, ["ADMIN"])
-      )
+      if (!u) return out({ error: "Unauthorized" }, 401);
+      if (["users", "payments", "invites", "preregistrations"].includes(table) && !permit(u, ["ADMIN"]))
         return out({ error: "Forbidden" }, 403);
-      if (
-        u?.role === "TEAM" &&
-        ["teams", "delegation_members", "payments"].includes(table)
-      )
-        return out(
-          await list(table, `WHERE ${table === "teams" ? "id" : "team_id"}=?`, [
-            u.teamId,
-          ]),
-        );
+      if (["teams", "users", "links"].includes(table)) await ensureMediaSchema();
+      if (table === "delegation_members") await ensureConsentSchema();
+      if (table === "teams") {
+        if (u.role === "TEAM") return out(await list(table, "WHERE id=?", [u.teamId]));
+        if (u.role === "ADMIN") return out(await list(table));
+        if (["SCOREBOARD", "REFEREE"].includes(u.role))
+          return out((await db().prepare("SELECT id,name,color,logo,team_photo,group_id FROM teams ORDER BY name").all()).results);
+        return out({ error: "Forbidden" }, 403);
+      }
+      if (table === "delegation_members") {
+        if (u.role === "TEAM") return out(await list(table, "WHERE team_id=?", [u.teamId]));
+        if (u.role === "ADMIN") return out(await list(table));
+        return out({ error: "Forbidden" }, 403);
+      }
+      if (table === "matches") {
+        if (u.role === "REFEREE") {
+          const assigned = (await list(table)).filter(
+            (match: any) => Array.isArray(match.referee_ids) && match.referee_ids.includes(u.id),
+          );
+          return out(assigned);
+        }
+        if (u.role === "TEAM" || u.role === "SCOREBOARD") return out(await list(table, "WHERE tournament_id=(SELECT id FROM tournaments WHERE active=1 LIMIT 1)"));
+        if (u.role !== "ADMIN") return out({ error: "Forbidden" }, 403);
+      }
+      if (table === "tournaments") {
+        if (u.role === "SCOREBOARD") return out((await db().prepare("SELECT id,name,active,match_duration_minutes,halftime_duration_minutes,scoreboard_background,scoreboard_accent,scoreboard_logo_scale,scoreboard_show_sponsors,show_livestream,livestream_url FROM tournaments WHERE active=1").all()).results);
+        if (u.role !== "ADMIN") return out({ error: "Forbidden" }, 403);
+      }
+      if (table === "links" && u.role !== "ADMIN")
+        return out((await list(table, "WHERE active=1 ORDER BY sort_order,title", [], "id,title,url,dark_url,target_url,description,category,sort_order,active")));
+      if (u.role !== "ADMIN") return out({ error: "Forbidden" }, 403);
       if (table === "users")
         return out((await db().prepare("SELECT u.id,u.email,u.role,u.name,u.team_id,u.country,u.photo,NULL AS phone,NULL AS whatsapp,u.active,u.created_at,u.updated_at,t.name team_name,t.phone team_phone FROM users u LEFT JOIN teams t ON t.id=u.team_id ORDER BY u.role,u.name").all()).results);
-      if (u?.role === "REFEREE" && table === "matches")
-        return out(
-          await list(table, "WHERE referee_ids LIKE ?", [`%${u.id}%`]),
-        );
       const rows = await list(table);
       if (table !== "matches") return out(rows);
       const referees = await list("users", "WHERE role='REFEREE' AND active=1");
@@ -2062,7 +2342,10 @@ export async function POST(
     path = parts.join("/"),
     contentLength = Number(req.headers.get("content-length") || 0);
   if (path !== "uploads" && contentLength > MAX_JSON_BODY_BYTES) return out({ error: "Request body is too large" }, 413);
-  const body: any = path === "uploads" ? {} : await req.json().catch(() => ({})),
+  if (path === "uploads" && contentLength > MAX_UPLOAD_BODY_BYTES) return out({ error: "Upload must be 4 MB or smaller" }, 413);
+  const bodyResult = path === "uploads" ? { ok: true as const, value: {} } : await readJsonObject(req);
+  if (!bodyResult.ok) return out({ error: bodyResult.error }, bodyResult.status);
+  const body: any = bodyResult.value,
     u = (await session(req)) as SessionUser;
   try {
     if (parts[0] === "teams" && parts[2] === "confirmation" && parts[1]) {
@@ -2145,7 +2428,7 @@ export async function POST(
       }
       if (action === "request_changes") {
         await db().prepare("UPDATE teams SET review_status='changes_requested',review_message=?,updated_at=? WHERE id=?").bind(String(body.message || "Please review your information."), now(), teamId).run();
-        await log(u, "TEAM_REVIEW_CHANGES_REQUESTED", "team", teamId, { message: body.message });
+      await log(u, "TEAM_REVIEW_CHANGES_REQUESTED", "team", teamId);
         return out({ ok: true, status: "changes_requested" });
       }
       if (action !== "approve") return out({ error: "Choose approve or request_changes" }, 422);
@@ -2174,7 +2457,7 @@ export async function POST(
       const fields = ["price_per_person","deposit_percentage","deposit_due_days","final_due_days","legal_name","address","vat_number","email","iban","bic","bank_name"];
       const values = fields.map((field) => ["price_per_person","deposit_percentage","deposit_due_days","final_due_days"].includes(field) ? Number(body[field] || 0) : String(body[field] || "").trim() || null);
       await db().prepare(`UPDATE finance_settings SET ${fields.map((field) => `${field}=?`).join(",")},updated_at=? WHERE id='default'`).bind(...values, now()).run();
-      await log(u, "UPDATE", "finance_settings", "default", body);
+      await log(u, "UPDATE", "finance_settings", "default", { fields: Object.keys(body).sort() });
       return out({ ok: true });
     }
     if (path === "finance/record-payment") {
@@ -2184,48 +2467,73 @@ export async function POST(
       await ensureFinanceSchema();
       const idempotencyKey = String(body.idempotency_key || req.headers.get("Idempotency-Key") || "").trim();
       if (!idempotencyKey || idempotencyKey.length > 128) return out({ error: "A valid payment request key is required" }, 422);
-      const existingPayment: any = await db().prepare("SELECT id,invoice_id FROM finance_payments WHERE idempotency_key=? LIMIT 1").bind(idempotencyKey).first();
-      if (existingPayment) {
-        const existingPaid: any = await db().prepare("SELECT COALESCE(SUM(amount),0) total FROM finance_payments WHERE invoice_id=?").bind(existingPayment.invoice_id).first();
-        const existingInvoice: any = await db().prepare("SELECT total_amount FROM invoices WHERE id=?").bind(existingPayment.invoice_id).first();
-        return out({ ok: true, duplicate: true, payment_id: existingPayment.id, paid: roundMoney(Number(existingPaid?.total || 0)), outstanding: roundMoney(Math.max(0, Number(existingInvoice?.total_amount || 0) - Number(existingPaid?.total || 0))) });
-      }
-      const invoice: any = await db().prepare("SELECT * FROM invoices WHERE id=?").bind(invoiceId).first();
-      if (!invoice) return out({ error: "Invoice not found" }, 404);
-      const paymentId = uuid();
+      const reference = String(body.reference || "").trim();
+      const note = String(body.note || "").trim();
+      if (reference.length > 160 || note.length > 1000)
+        return out({ error: "Payment reference or note is too long" }, 422);
+      const receivedAt = body.received_at ? new Date(String(body.received_at)) : new Date();
+      if (Number.isNaN(receivedAt.getTime())) return out({ error: "Enter a valid payment date" }, 422);
       const timestamp = now();
-      const payment = db().prepare("INSERT INTO finance_payments (id,invoice_id,team_id,amount,method,reference,received_at,note,idempotency_key,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)").bind(paymentId, invoiceId, invoice.team_id, amount, "BANK_TRANSFER", String(body.reference || "").trim() || null, body.received_at || timestamp, String(body.note || "").trim() || null, idempotencyKey, timestamp, timestamp);
-      const paid: any = await db().prepare("SELECT COALESCE(SUM(amount),0) total FROM finance_payments WHERE invoice_id=?").bind(invoiceId).first();
-      const paidTotal = roundMoney(Number(paid?.total || 0) + amount), status = paidTotal >= roundMoney(Number(invoice.total_amount)) ? "paid" : "partially_paid";
-      try {
-        await db().batch([payment, db().prepare("UPDATE invoices SET status=?,updated_at=? WHERE id=?").bind(status, timestamp, invoiceId)]);
-      } catch (error) {
-        // A concurrent administrator may have won the same idempotency key.
-        // Return the existing result instead of reporting a misleading failure.
-        if (/unique|constraint/i.test(String(error instanceof Error ? error.message : error))) {
-          const concurrent: any = await db().prepare("SELECT id,invoice_id FROM finance_payments WHERE idempotency_key=? LIMIT 1").bind(idempotencyKey).first();
-          if (concurrent) {
-            const currentPaid: any = await db().prepare("SELECT COALESCE(SUM(amount),0) total FROM finance_payments WHERE invoice_id=?").bind(concurrent.invoice_id).first();
-            const currentInvoice: any = await db().prepare("SELECT total_amount FROM invoices WHERE id=?").bind(concurrent.invoice_id).first();
-            return out({ ok: true, duplicate: true, payment_id: concurrent.id, paid: roundMoney(Number(currentPaid?.total || 0)), outstanding: roundMoney(Math.max(0, Number(currentInvoice?.total_amount || 0) - Number(currentPaid?.total || 0))) });
+      const outcome = await db().transaction(async (transaction) => {
+        const existingPayment: any = await transaction.prepare("SELECT id,invoice_id,amount FROM finance_payments WHERE idempotency_key=? LIMIT 1").bind(idempotencyKey).first();
+        if (existingPayment) {
+          if (existingPayment.invoice_id !== invoiceId || roundMoney(Number(existingPayment.amount)) !== amount)
+            return { kind: "idempotency_conflict" as const };
+          const existingPaid: any = await transaction.prepare("SELECT COALESCE(SUM(amount),0) total FROM finance_payments WHERE invoice_id=?").bind(invoiceId).first();
+          const existingInvoice: any = await transaction.prepare("SELECT total_amount FROM invoices WHERE id=?").bind(invoiceId).first();
+          const paid = roundMoney(Number(existingPaid?.total || 0));
+          return {
+            kind: "duplicate" as const,
+            paymentId: existingPayment.id,
+            paid,
+            outstanding: roundMoney(Math.max(0, Number(existingInvoice?.total_amount || 0) - paid)),
+          };
+        }
+        const invoice: any = await transaction.prepare("SELECT * FROM invoices WHERE id=?").bind(invoiceId).first();
+        if (!invoice) return { kind: "not_found" as const };
+        if (invoice.status === "cancelled") return { kind: "cancelled" as const };
+        const paid: any = await transaction.prepare("SELECT COALESCE(SUM(amount),0) total FROM finance_payments WHERE invoice_id=?").bind(invoiceId).first();
+        const total = roundMoney(Number(invoice.total_amount));
+        const paidBefore = roundMoney(Number(paid?.total || 0));
+        const outstandingBefore = roundMoney(Math.max(0, total - paidBefore));
+        if (amount > outstandingBefore)
+          return { kind: "overpayment" as const, outstanding: outstandingBefore };
+        const paymentId = uuid();
+        const paidTotal = roundMoney(paidBefore + amount);
+        const status = paidTotal >= total ? "paid" : "partially_paid";
+        await transaction.prepare("INSERT INTO finance_payments (id,invoice_id,team_id,amount,method,reference,received_at,note,idempotency_key,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)").bind(paymentId, invoiceId, invoice.team_id, amount, "BANK_TRANSFER", reference || null, receivedAt.toISOString(), note || null, idempotencyKey, timestamp, timestamp).run();
+        await transaction.prepare("UPDATE invoices SET status=?,updated_at=? WHERE id=?").bind(status, timestamp, invoiceId).run();
+        if (invoice.invoice_type === "DEPOSIT" && paidTotal >= total) {
+          const existingBalance: any = await transaction.prepare("SELECT id FROM invoices WHERE team_id=? AND invoice_type='BALANCE' AND status!='cancelled' LIMIT 1").bind(invoice.team_id).first();
+          if (!existingBalance) {
+            let snapshot: any = {};
+            try { snapshot = JSON.parse(String(invoice.snapshot || "{}")); } catch { snapshot = {}; }
+            const approved = snapshot.approved_snapshot || {};
+            const pricing = approved.pricing || {};
+            const balanceAmount = roundMoney(Number(pricing.balance || 0));
+            if (balanceAmount > 0) {
+              const settings: any = await transaction.prepare("SELECT final_due_days FROM finance_settings WHERE id='default'").first();
+              const balanceId = uuid();
+              const balanceNumber = `${invoice.invoice_number}-BAL`;
+              const due = new Date(Date.now() + Number(settings?.final_due_days || 30) * 86400000).toISOString().slice(0, 10);
+              await transaction.prepare("INSERT INTO invoices (id,team_id,invoice_number,invoice_type,participant_count,unit_price,subtotal,deposit_percentage,total_amount,issued_at,due_at,status,snapshot,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(balanceId, invoice.team_id, balanceNumber, "BALANCE", invoice.participant_count, invoice.unit_price, balanceAmount, invoice.deposit_percentage, balanceAmount, timestamp, due, "issued", invoice.snapshot, timestamp, timestamp).run();
+            }
           }
         }
-        throw error;
-      }
-      if (invoice.invoice_type === "DEPOSIT" && paidTotal >= roundMoney(Number(invoice.total_amount))) {
-        const existingBalance: any = await db().prepare("SELECT id FROM invoices WHERE team_id=? AND invoice_type='BALANCE' AND status!='cancelled' LIMIT 1").bind(invoice.team_id).first();
-        if (!existingBalance) {
-          let snapshot: any = {};
-          try { snapshot = JSON.parse(String(invoice.snapshot || "{}")); } catch { snapshot = {}; }
-          const approved = snapshot.approved_snapshot || {}, pricing = approved.pricing || {}, balanceAmount = roundMoney(Number(pricing.balance || 0));
-          if (balanceAmount > 0) {
-            const settings: any = await db().prepare("SELECT final_due_days FROM finance_settings WHERE id='default'").first();
-            const balanceId = uuid(), balanceNumber = `${invoice.invoice_number}-BAL`, due = new Date(Date.now() + Number(settings?.final_due_days || 30) * 86400000).toISOString().slice(0, 10);
-            await db().prepare("INSERT INTO invoices (id,team_id,invoice_number,invoice_type,participant_count,unit_price,subtotal,deposit_percentage,total_amount,issued_at,due_at,status,snapshot,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(balanceId, invoice.team_id, balanceNumber, "BALANCE", invoice.participant_count, invoice.unit_price, balanceAmount, invoice.deposit_percentage, balanceAmount, timestamp, due, "issued", invoice.snapshot, timestamp, timestamp).run();
-          }
-        }
-      }
-      return out({ ok: true, payment_id: paymentId, paid: paidTotal, outstanding: roundMoney(Math.max(0, Number(invoice.total_amount) - paidTotal)) }, 201);
+        return {
+          kind: "created" as const,
+          paymentId,
+          paid: paidTotal,
+          outstanding: roundMoney(Math.max(0, total - paidTotal)),
+        };
+      });
+      if (outcome.kind === "not_found") return out({ error: "Invoice not found" }, 404);
+      if (outcome.kind === "cancelled") return out({ error: "This invoice has been cancelled" }, 409);
+      if (outcome.kind === "overpayment") return out({ error: "Payment exceeds the remaining invoice balance", outstanding: outcome.outstanding }, 422);
+      if (outcome.kind === "idempotency_conflict") return out({ error: "This payment request key was already used for a different invoice or amount" }, 409);
+      if (outcome.kind === "duplicate") return out({ ok: true, duplicate: true, payment_id: outcome.paymentId, paid: outcome.paid, outstanding: outcome.outstanding });
+      await log(u, "RECORD_PAYMENT", "invoice", invoiceId, { paymentId: outcome.paymentId, amount });
+      return out({ ok: true, payment_id: outcome.paymentId, paid: outcome.paid, outstanding: outcome.outstanding }, 201);
     }
     if (path === "finance/reset") {
       if (!permit(u, ["ADMIN"])) return out({ error: u ? "Forbidden" : "Unauthorized" }, u ? 403 : 401);
@@ -2337,14 +2645,22 @@ export async function POST(
         .first();
       if (!t || t.registration_mode !== 1 || t.registration_enabled === 0)
         return out({ error: "Registrations are currently closed" }, 403);
-      const clubName = String(body.club_name || "").trim(),
+      const clubName = String(body.club_name || "").trim().replace(/\s+/g, " "),
         email = String(body.email || "")
           .trim()
           .toLowerCase();
-      if (clubName.length < 2 || !/^\S+@\S+\.\S+$/.test(email))
+      if (clubName.length < 2 || clubName.length > 120 || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
         return out({ error: "Enter a club name and valid email address" }, 422);
       if (body.terms_accepted !== true)
         return out({ error: "You must accept the Terms & Conditions before registering" }, 422);
+      if (await isRateLimited("preregister", req, 10, 60 * 60 * 1000))
+        return out({ error: "Too many registration attempts. Please try again later." }, 429);
+      try {
+        await ensurePreregistrationSchema();
+      } catch (error) {
+        logServerError(req, error);
+        return out({ error: "Registration is temporarily unavailable. Please try again shortly." }, 503);
+      }
       try {
         const id = uuid();
         await db()
@@ -2353,63 +2669,115 @@ export async function POST(
           )
           .bind(id, t.id, clubName, email, now())
           .run();
-        const emailSent = await sendEmail(email, "Registration received — PCF BATTLE", registrationEmail(clubName));
+        const emailSent = await sendAppEmail(req, email, "Registration received — PCF BATTLE", (origin) => registrationEmail(origin, clubName));
         if (emailSent) await db().prepare("UPDATE preregistrations SET registration_confirmation_sent_at=? WHERE id=?").bind(now(), id).run();
         return out({ ok: true, id, emailSent }, 201);
       } catch (e: any) {
-        if (String(e.message).includes("UNIQUE"))
+        if (/unique|constraint failed/i.test(String(e instanceof Error ? e.message : e)))
           return out({ error: "This email is already registered" }, 409);
         throw e;
       }
     }
-    if (parts[0] === "preregistrations" && parts[2] === "select" && parts[1]) {
+    if (parts[0] === "preregistrations" && parts[2] === "confirmation" && parts[1]) {
       if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
+      await ensurePreregistrationSchema();
       const row: any = await db().prepare("SELECT * FROM preregistrations WHERE id=?").bind(parts[1]).first();
       if (!row) return out({ error: "Registration not found" }, 404);
-      if (row.selection_email_sent_at) return out({ error: "The selection email has already been sent" }, 409);
-      const sent = await sendEmail(row.email, "Your team has been selected — PCF BATTLE", registrationEmail(row.club_name, true));
-      if (!sent) return out({ error: "Email could not be sent. Check the email service configuration." }, 502);
-      try { await db().prepare("ALTER TABLE preregistrations ADD COLUMN waiting_list integer DEFAULT 0").run(); } catch {}
-      await db().prepare("UPDATE preregistrations SET selected=1,waiting_list=0,selection_email_sent_at=? WHERE id=?").bind(now(), row.id).run();
-      await log(u, "SEND_SELECTION_EMAIL", "preregistration", row.id, { email: row.email });
+      if (row.registration_confirmation_sent_at) return out({ error: "The confirmation email has already been sent" }, 409);
+      const claimedAt = now(), staleClaim = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      const claim = await db().prepare("UPDATE preregistrations SET registration_confirmation_claimed_at=? WHERE id=? AND registration_confirmation_sent_at IS NULL AND (registration_confirmation_claimed_at IS NULL OR registration_confirmation_claimed_at<?)").bind(claimedAt, row.id, staleClaim).run();
+      if (!claim.meta.changes) return out({ error: "The confirmation email is already being sent" }, 409);
+      const emailSent = await sendAppEmail(req, row.email, "Registration received — PCF BATTLE", (origin) => registrationEmail(origin, row.club_name));
+      if (!emailSent) {
+        await db().prepare("UPDATE preregistrations SET registration_confirmation_claimed_at=NULL WHERE id=? AND registration_confirmation_claimed_at=?").bind(row.id, claimedAt).run();
+        return out({ error: "Email could not be sent. Check the email service configuration." }, 502);
+      }
+      await db().prepare("UPDATE preregistrations SET registration_confirmation_sent_at=?,registration_confirmation_claimed_at=NULL WHERE id=? AND registration_confirmation_claimed_at=?").bind(now(), row.id, claimedAt).run();
+      await log(u, "RESEND_REGISTRATION_CONFIRMATION", "preregistration", row.id);
+      return out({ ok: true, emailSent: true });
+    }
+    if (parts[0] === "preregistrations" && parts[2] === "select" && parts[1]) {
+      if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
+      await ensurePreregistrationSchema();
+      const row: any = await db().prepare("SELECT * FROM preregistrations WHERE id=?").bind(parts[1]).first();
+      if (!row) return out({ error: "Registration not found" }, 404);
+      if (row.selected || row.selection_email_sent_at) return out({ error: "This team has already been selected" }, 409);
+      const claimedAt = now(), staleClaim = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      const claim = await db().prepare("UPDATE preregistrations SET decision_email_claimed_at=? WHERE id=? AND selected=0 AND selection_email_sent_at IS NULL AND (decision_email_claimed_at IS NULL OR decision_email_claimed_at<?)").bind(claimedAt, row.id, staleClaim).run();
+      if (!claim.meta.changes) return out({ error: "Another registration update is already being sent" }, 409);
+      const sent = await sendAppEmail(req, row.email, "Your team has been selected — PCF BATTLE", (origin) => registrationEmail(origin, row.club_name, true));
+      if (!sent) {
+        await db().prepare("UPDATE preregistrations SET decision_email_claimed_at=NULL WHERE id=? AND decision_email_claimed_at=?").bind(row.id, claimedAt).run();
+        return out({ error: "Email could not be sent. Check the email service configuration." }, 502);
+      }
+      await db().prepare("UPDATE preregistrations SET selected=1,waiting_list=0,selection_email_sent_at=?,decision_email_claimed_at=NULL WHERE id=? AND decision_email_claimed_at=?").bind(now(), row.id, claimedAt).run();
+      await log(u, "SEND_SELECTION_EMAIL", "preregistration", row.id);
       return out({ ok: true, emailSent: true });
     }
     if (parts[0] === "preregistrations" && parts[2] === "waiting-list" && parts[1]) {
       if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
-      try { await db().prepare("ALTER TABLE preregistrations ADD COLUMN waiting_list integer DEFAULT 0").run(); } catch {}
+      await ensurePreregistrationSchema();
       const row: any = await db().prepare("SELECT * FROM preregistrations WHERE id=?").bind(parts[1]).first();
       if (!row) return out({ error: "Registration not found" }, 404);
       if (row.selected || row.selection_email_sent_at) return out({ error: "This team has already been selected" }, 409);
-      const sent = await sendEmail(row.email, "Update on your PCF BATTLE registration", registrationEmail(row.club_name, false, true));
-      if (!sent) return out({ error: "Email could not be sent. Check the email service configuration." }, 502);
-      await db().prepare("UPDATE preregistrations SET waiting_list=1 WHERE id=?").bind(row.id).run();
-      await log(u, "SEND_NON_SELECTION_EMAIL", "preregistration", row.id, { email: row.email });
+      if (row.waiting_list) return out({ error: "The waiting-list email has already been sent" }, 409);
+      const claimedAt = now(), staleClaim = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      const claim = await db().prepare("UPDATE preregistrations SET decision_email_claimed_at=? WHERE id=? AND selected=0 AND selection_email_sent_at IS NULL AND waiting_list=0 AND (decision_email_claimed_at IS NULL OR decision_email_claimed_at<?)").bind(claimedAt, row.id, staleClaim).run();
+      if (!claim.meta.changes) return out({ error: "Another registration update is already being sent" }, 409);
+      const sent = await sendAppEmail(req, row.email, "Update on your PCF BATTLE registration", (origin) => registrationEmail(origin, row.club_name, false, true));
+      if (!sent) {
+        await db().prepare("UPDATE preregistrations SET decision_email_claimed_at=NULL WHERE id=? AND decision_email_claimed_at=?").bind(row.id, claimedAt).run();
+        return out({ error: "Email could not be sent. Check the email service configuration." }, 502);
+      }
+      await db().prepare("UPDATE preregistrations SET waiting_list=1,decision_email_claimed_at=NULL WHERE id=? AND decision_email_claimed_at=?").bind(row.id, claimedAt).run();
+      await log(u, "SEND_NON_SELECTION_EMAIL", "preregistration", row.id);
       return out({ ok: true, emailSent: true });
     }
     if (parts[0] === "preregistrations" && parts[2] === "invite" && parts[1]) {
       if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
+      await ensurePreregistrationSchema();
       const row: any = await db().prepare("SELECT * FROM preregistrations WHERE id=?").bind(parts[1]).first();
       if (!row || !(row.selected || row.selection_email_sent_at)) return out({ error: "Select this team before creating an invite" }, 409);
       if (row.portal_invitation_sent_at) return out({ error: "The portal invitation has already been sent" }, 409);
-      let team: any = await db().prepare("SELECT * FROM teams WHERE lower(name)=lower(?) LIMIT 1").bind(row.club_name).first();
-      if (!team) {
-        team = { id: uuid(), name: row.club_name, color: "#ec4899" };
-        await db().prepare("INSERT INTO teams (id,name,contact_person,color,created_at,updated_at) VALUES (?,?,?,?,?,?)").bind(team.id, team.name, null, team.color, now(), now()).run();
+      const claimedAt = now(), staleClaim = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      const claim = await db().prepare("UPDATE preregistrations SET portal_invitation_claimed_at=? WHERE id=? AND portal_invitation_sent_at IS NULL AND (portal_invitation_claimed_at IS NULL OR portal_invitation_claimed_at<?)").bind(claimedAt, row.id, staleClaim).run();
+      if (!claim.meta.changes) return out({ error: "Another portal invitation is already being sent" }, 409);
+      let inviteData: { teamId: string; inviteId: string; code: string };
+      try {
+        inviteData = await db().transaction(async (transaction) => {
+          const team: any = await transaction.prepare("SELECT id FROM teams WHERE lower(name)=lower(?) ORDER BY created_at,id LIMIT 1").bind(row.club_name).first();
+          const teamId = team?.id || uuid(), timestamp = now();
+          if (!team) await transaction.prepare("INSERT INTO teams (id,name,contact_person,color,created_at,updated_at) VALUES (?,?,?,?,?,?)").bind(teamId, row.club_name, null, "#ec4899", timestamp, timestamp).run();
+          const existingInvite: any = await transaction.prepare("SELECT id,code FROM invites WHERE team_id=? AND lower(recipient_email)=lower(?) AND used=0 AND (expires_at IS NULL OR expires_at>?) ORDER BY created_at DESC LIMIT 1").bind(teamId, row.email, timestamp).first();
+          const inviteId = existingInvite?.id || uuid(), code = existingInvite?.code || secureToken(10);
+          if (!existingInvite) {
+            const expires = new Date(Date.now() + 604800000).toISOString();
+            await transaction.prepare("INSERT INTO invites (id,code,team_id,recipient_email,used,expires_at,created_at) VALUES (?,?,?,?,?,?,?)").bind(inviteId, code, teamId, row.email, 0, expires, timestamp).run();
+          }
+          return { teamId, inviteId, code };
+        });
+      } catch (error) {
+        await db().prepare("UPDATE preregistrations SET portal_invitation_claimed_at=NULL WHERE id=? AND portal_invitation_claimed_at=?").bind(row.id, claimedAt).run();
+        throw error;
       }
-      const code = secureToken(10), id = uuid(), expires = new Date(Date.now() + 604800000).toISOString();
-      await db().prepare("INSERT INTO invites (id,code,team_id,recipient_email,used,expires_at,created_at) VALUES (?,?,?,?,?,?,?)").bind(id, code, team.id, row.email, 0, expires, now()).run();
-      const emailSent = await sendEmail(row.email, "Your invitation to Powerchair Floorball Battle", teamInviteEmail(new URL(req.url).origin, code));
-      if (!emailSent) { await db().prepare("DELETE FROM invites WHERE id=?").bind(id).run(); return out({ error: "Email could not be sent. Check the email service configuration." }, 502); }
-      await db().prepare("UPDATE preregistrations SET portal_invitation_sent_at=?,selected=1 WHERE id=?").bind(now(), row.id).run();
-      await log(u, "SEND_PORTAL_INVITE", "preregistration", row.id, { teamId: team.id, inviteId: id });
-      return out({ ok: true, emailSent: true, inviteId: id, teamId: team.id });
+      const emailSent = await sendAppEmail(req, row.email, "Your invitation to Powerchair Floorball Battle", (origin) => teamInviteEmail(origin, inviteData.code));
+      if (!emailSent) {
+        await db().prepare("UPDATE preregistrations SET portal_invitation_claimed_at=NULL WHERE id=? AND portal_invitation_claimed_at=?").bind(row.id, claimedAt).run();
+        return out({ error: "Email could not be sent. Check the email service configuration." }, 502);
+      }
+      await db().prepare("UPDATE preregistrations SET portal_invitation_sent_at=?,portal_invitation_claimed_at=NULL,selected=1 WHERE id=? AND portal_invitation_claimed_at=?").bind(now(), row.id, claimedAt).run();
+      await log(u, "SEND_PORTAL_INVITE", "preregistration", row.id, { teamId: inviteData.teamId, inviteId: inviteData.inviteId });
+      return out({ ok: true, emailSent: true, inviteId: inviteData.inviteId, teamId: inviteData.teamId });
     }
     if (path === "auth/login") {
       const email = String(body.email || "").trim().toLowerCase(),
         password = String(body.password || "");
-      const
-        ip = req.headers.get("cf-connecting-ip") || "unknown",
-        identifier = await sha(`${email}|${ip}`),
+      await ensureSecuritySchema();
+      if (await isRateLimited("login-ip", req, 30, 15 * 60 * 1000))
+        return out({ error: "Too many login attempts. Try again in 15 minutes." }, 429);
+      if (email.length > 254 || password.length > 256)
+        return out({ error: "Invalid email or password" }, 401);
+      const identifier = await sha(`${email}|${clientAddress(req)}`),
         attempt: any = await db()
           .prepare("SELECT attempts,locked_until FROM login_attempts WHERE identifier=?")
           .bind(identifier)
@@ -2417,18 +2785,17 @@ export async function POST(
       if (attempt?.locked_until && new Date(attempt.locked_until).getTime() > Date.now())
         return out({ error: "Too many login attempts. Try again in 15 minutes." }, 429);
       const row = await db()
-        .prepare("SELECT * FROM users WHERE email=? AND active=1")
+        .prepare("SELECT * FROM users WHERE lower(email)=? AND active=1")
         .bind(email)
         .first<any>();
       if (
         !row ||
         !(await verifyPassword(password, row.password))
       ) {
-        const attempts = Number(attempt?.attempts || 0) + 1,
-          lockedUntil = attempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000).toISOString() : null;
+        const timestamp = now(), lockedUntil = new Date(Date.now() + 15 * 60 * 1000).toISOString();
         await db()
-          .prepare("INSERT INTO login_attempts (identifier,attempts,locked_until,updated_at) VALUES (?,?,?,?) ON CONFLICT(identifier) DO UPDATE SET attempts=excluded.attempts,locked_until=excluded.locked_until,updated_at=excluded.updated_at")
-          .bind(identifier, attempts >= 5 ? 0 : attempts, lockedUntil, now())
+          .prepare("INSERT INTO login_attempts (identifier,attempts,locked_until,updated_at) VALUES (?,1,NULL,?) ON CONFLICT(identifier) DO UPDATE SET attempts=CASE WHEN login_attempts.locked_until IS NOT NULL THEN 1 ELSE login_attempts.attempts+1 END,locked_until=CASE WHEN login_attempts.locked_until IS NOT NULL AND login_attempts.locked_until>? THEN login_attempts.locked_until WHEN (CASE WHEN login_attempts.locked_until IS NOT NULL THEN 1 ELSE login_attempts.attempts+1 END)>=5 THEN ? ELSE NULL END,updated_at=?")
+          .bind(identifier, timestamp, timestamp, lockedUntil, timestamp)
           .run();
         return out({ error: "Invalid email or password" }, 401);
       }
@@ -2456,7 +2823,7 @@ export async function POST(
       const res = out({ user });
       res.cookies.set("phb_token", token, {
         httpOnly: true,
-        secure: true,
+        secure: process.env.NODE_ENV === "production" || new URL(req.url).protocol === "https:",
         sameSite: "lax",
         path: "/",
         maxAge: 86400,
@@ -2465,12 +2832,13 @@ export async function POST(
     }
     if (path === "uploads") {
       if (!permit(u, ["ADMIN", "TEAM", "REFEREE"])) return out({ error: u ? "Forbidden" : "Unauthorized" }, u ? 403 : 401);
-      const form = await req.formData(),
-        file = form.get("file");
+      const formResult = await readBoundedFormData(req);
+      if (!formResult.ok) return out({ error: formResult.error }, formResult.status);
+      const file = formResult.value.get("file");
       if (!(file instanceof File) || !file.size)
         return out({ error: "Choose a file to upload" }, 422);
-      if (file.size > 20 * 1024 * 1024)
-        return out({ error: "File must be 20 MB or smaller" }, 413);
+      if (file.size > MAX_UPLOAD_FILE_BYTES)
+        return out({ error: "File must be 4 MB or smaller" }, 413);
       if (!(file.type.startsWith("image/") || file.type === "application/pdf") || !(await hasAllowedFileSignature(file)))
         return out({ error: "Only valid images and PDF files are supported" }, 415);
       const clean = file.name.replace(/[^a-zA-Z0-9._-]/g, "-").slice(-80),
@@ -2502,12 +2870,13 @@ export async function POST(
       if (
         !body.currentPassword ||
         !body.newPassword ||
-        String(body.newPassword).length < 8
+        String(body.newPassword).length < 8 ||
+        String(body.newPassword).length > 256
       )
         return out(
           {
             error:
-              "A current password and a new password of at least 8 characters are required",
+              "A current password and a new password between 8 and 256 characters are required",
           },
           422,
         );
@@ -2545,7 +2914,14 @@ export async function POST(
         color = (value: any, fallback: string) => /^#[0-9a-f]{6}$/i.test(String(value || "")) ? String(value) : fallback;
       await db().prepare("UPDATE tournaments SET match_duration_minutes=?,halftime_duration_minutes=?,scoreboard_background=?,scoreboard_accent=?,scoreboard_logo_scale=?,scoreboard_show_sponsors=?,updated_at=? WHERE id=?")
         .bind(matchDuration, halftimeDuration, color(body.scoreboard_background, "#100d12"), color(body.scoreboard_accent, "#f72585"), logoScale, body.scoreboard_show_sponsors ? 1 : 0, now(), tournament.id).run();
-      await log(u, "UPDATE_SCOREBOARD_SETTINGS", "tournament", tournament.id, body);
+      await log(u, "UPDATE_SCOREBOARD_SETTINGS", "tournament", tournament.id, {
+        match_duration_minutes: matchDuration,
+        halftime_duration_minutes: halftimeDuration,
+        scoreboard_background: color(body.scoreboard_background, "#100d12"),
+        scoreboard_accent: color(body.scoreboard_accent, "#f72585"),
+        scoreboard_logo_scale: logoScale,
+        scoreboard_show_sponsors: Boolean(body.scoreboard_show_sponsors),
+      });
       return out({ ok: true });
     }
     if (path === "scoreboard-mode") {
@@ -2640,7 +3016,7 @@ export async function POST(
       const id = uuid();
       await db().prepare("INSERT INTO match_events (id,match_id,team_id,player_id,type,period,clock,details,created_by,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)")
         .bind(id, matchId, body.team_id || null, body.player_id || null, type, body.period || null, body.clock || null, String(body.details || "").trim() || null, u.id, now()).run();
-      await log(u, `MATCH_${type}`, "match", matchId, { eventId: id, teamId: body.team_id, playerId: body.player_id, details: body.details });
+      await log(u, `MATCH_${type}`, "match", matchId, { eventId: id, teamId: body.team_id, playerId: body.player_id });
       return out({ id }, 201);
     }
     if (path === "chat") {
@@ -2760,7 +3136,7 @@ export async function POST(
           now(),
         )
         .run();
-      await log(u, "CREATE", "organization_contact", id, body);
+      await log(u, "CREATE", "organization_contact", id, { fields: Object.keys(body).sort() });
       return out({ id, ...body }, 201);
     }
     if (path === "rooms/assign") {
@@ -2776,7 +3152,7 @@ export async function POST(
       if (!body.roomId) {
         await db().prepare("DELETE FROM room_assignments WHERE member_id=?").bind(body.memberId).run();
         await syncAccommodation(member.team_id);
-        await log(u, "UNASSIGN_ROOM", "room", body.memberId, body);
+        await log(u, "UNASSIGN_ROOM", "room", body.memberId, { memberId: body.memberId });
         return out({ ok: true, roomId: null });
       }
       const room = await db()
@@ -2820,7 +3196,7 @@ export async function POST(
         .bind(uuid(), body.roomId, body.memberId, now(), now())
         .run();
       await syncAccommodation(member.team_id);
-      await log(u, "ASSIGN_ROOM", "room", body.roomId, body);
+      await log(u, "ASSIGN_ROOM", "room", body.roomId, { roomId: body.roomId, memberId: body.memberId });
       return out({ ok: true });
     }
     if (/^payments\/[^/]+\/remind$/.test(path)) {
@@ -2860,65 +3236,61 @@ export async function POST(
       });
     }
     if (path === "invites/verify") {
+      const code = String(body.code || "").trim().toUpperCase();
+      if (!/^[A-Z0-9]{12,64}$/.test(code)) return out({ error: "Invalid or expired invite" }, 404);
       const invite = await db()
         .prepare(
           "SELECT i.*,t.name team_name FROM invites i LEFT JOIN teams t ON t.id=i.team_id WHERE i.code=? AND i.used=0 AND (i.expires_at IS NULL OR i.expires_at>?)",
         )
-        .bind(body.code, now())
+        .bind(code, now())
         .first();
       return invite
         ? out({ valid: true, team_id: invite.team_id, team_name: invite.team_name, recipient_email: invite.recipient_email, expires_at: invite.expires_at })
         : out({ error: "Invalid or expired invite" }, 404);
     }
     if (path === "invites/redeem") {
-      const invite: any = await db()
-        .prepare(
-          "SELECT * FROM invites WHERE code=? AND used=0 AND (expires_at IS NULL OR expires_at>?)",
-        )
-        .bind(body.code, now())
-        .first();
-      if (!invite) return out({ error: "Invalid or expired invite" }, 404);
+      const code = String(body.code || "").trim().toUpperCase();
+      if (!/^[A-Z0-9]{12,64}$/.test(code)) return out({ error: "Invalid or expired invite" }, 404);
       const email = String(body.email || "").trim().toLowerCase();
       const name = String(body.name || "").trim();
       const password = String(body.password || "");
       if (!email || !password || !name)
         return out({ error: "Name, email and password are required" }, 422);
-      if (password.length < 8)
+      if (email.length > 254 || !/^\S+@\S+\.\S+$/.test(email))
+        return out({ error: "Enter a valid email address" }, 422);
+      if (name.length > 120) return out({ error: "Name must be 120 characters or fewer" }, 422);
+      if (password.length < 8 || password.length > 256)
         return out({ error: "Choose a password of at least 8 characters" }, 422);
-      const existing: any = await db().prepare("SELECT id,team_id FROM users WHERE lower(email)=?").bind(email).first();
-      if (existing) {
-        const canAttach = existing.team_id === invite.team_id || String(invite.recipient_email || "").trim().toLowerCase() === email;
-        if (!canAttach) return out({ error: "An account already exists with this email address. Please use another email or sign in." }, 409);
-        await db().batch([
-          db().prepare("UPDATE users SET password=?,role='TEAM',name=?,team_id=?,active=1,updated_at=? WHERE id=?").bind(await hashPassword(password), name, invite.team_id, now(), existing.id),
-          db().prepare("UPDATE invites SET used=1 WHERE id=?").bind(invite.id),
-          db().prepare("UPDATE teams SET contact_person=COALESCE(NULLIF(contact_person,''),?),updated_at=? WHERE id=?").bind(name, now(), invite.team_id),
-        ]);
-        return out({ ok: true, existingAccount: true });
+      const passwordHash = await hashPassword(password);
+      try {
+        const result = await db().transaction(async (transaction) => {
+          const invite: any = await transaction.prepare("SELECT i.*,t.id valid_team FROM invites i JOIN teams t ON t.id=i.team_id WHERE i.code=? AND i.used=0 AND (i.expires_at IS NULL OR i.expires_at>?)").bind(code, now()).first();
+          if (!invite) return { status: "invalid" as const };
+          if (String(invite.recipient_email || "").trim().toLowerCase() !== email)
+            return { status: "recipient_mismatch" as const };
+          const existing: any = await transaction.prepare("SELECT id,team_id,role FROM users WHERE lower(email)=?").bind(email).first();
+          if (existing && (existing.role !== "TEAM" || existing.team_id !== invite.team_id))
+            return { status: "account_conflict" as const };
+          const claimed = await transaction.prepare("UPDATE invites SET used=1 WHERE id=? AND used=0 AND (expires_at IS NULL OR expires_at>?)").bind(invite.id, now()).run();
+          if (!claimed.meta.changes) return { status: "invalid" as const };
+          const timestamp = now();
+          if (existing) {
+            await transaction.prepare("UPDATE users SET password=?,name=?,active=1,updated_at=? WHERE id=? AND role='TEAM' AND team_id=?").bind(passwordHash, name, timestamp, existing.id, invite.team_id).run();
+          } else {
+            await transaction.prepare("INSERT INTO users (id,email,password,role,name,team_id,country,photo,active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)").bind(uuid(), email, passwordHash, "TEAM", name, invite.team_id, null, null, 1, timestamp, timestamp).run();
+          }
+          await transaction.prepare("UPDATE teams SET contact_person=COALESCE(NULLIF(contact_person,''),?),updated_at=? WHERE id=?").bind(name, timestamp, invite.team_id).run();
+          return { status: existing ? "existing" as const : "created" as const };
+        });
+        if (result.status === "invalid") return out({ error: "Invalid, expired or already used invite" }, 404);
+        if (result.status === "recipient_mismatch") return out({ error: "This invitation was sent to a different email address" }, 403);
+        if (result.status === "account_conflict") return out({ error: "This email already belongs to another account. Sign in or ask the organization to invite the correct account." }, 409);
+        return out({ ok: true, existingAccount: result.status === "existing" });
+      } catch (error) {
+        if (/unique|constraint/i.test(String(error instanceof Error ? error.message : error)))
+          return out({ error: "An account already exists with this email address" }, 409);
+        throw error;
       }
-      const uid = uuid();
-      await db().batch([
-        db()
-          .prepare(
-            "INSERT INTO users (id,email,password,role,name,team_id,country,photo,active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-          )
-          .bind(
-            uid,
-            email,
-            await hashPassword(password),
-            "TEAM",
-            name,
-            invite.team_id,
-            null,
-            null,
-            1,
-            now(),
-            now(),
-          ),
-        db().prepare("UPDATE invites SET used=1 WHERE id=?").bind(invite.id),
-        db().prepare("UPDATE teams SET contact_person=COALESCE(NULLIF(contact_person,''),?),updated_at=? WHERE id=?").bind(name, now(), invite.team_id),
-      ]);
-      return out({ ok: true });
     }
     if (/^invites\/[^/]+\/resend$/.test(path)) {
       if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
@@ -2926,13 +3298,7 @@ export async function POST(
         .prepare("SELECT * FROM invites WHERE id=?")
         .bind(parts[1])
         .first();
-      const origin = new URL(req.url).origin;
-      const emailSent = await sendEmail(
-        invite?.recipient_email,
-        "Your invitation to Powerchair Floorball Battle",
-        invite ? teamInviteEmail(origin, invite.code) : "",
-      );
-      if (emailSent) await db().prepare("UPDATE preregistrations SET portal_invitation_sent_at=? WHERE lower(email)=lower(?) AND selection_email_sent_at IS NOT NULL").bind(now(), invite?.recipient_email || "").run();
+      const emailSent = invite ? await sendAppEmail(req, invite.recipient_email, "Your invitation to Powerchair Floorball Battle", (origin) => teamInviteEmail(origin, invite.code)) : false;
       await log(u, "RESEND", "invite", parts[1], { emailSent });
       return out({
         ok: true,
@@ -3068,12 +3434,14 @@ export async function POST(
       return out({ id: bid, data }, 201);
     }
     const table = mapName(parts[0]);
-    if (table === "rooms" || table === "tournaments" || table === "teams") await ensureScheduleSchema();
     if (
       !resources[table] ||
       !permit(u, table === "delegation_members" ? ["ADMIN", "TEAM"] : ["ADMIN"])
     )
       return out({ error: "Forbidden" }, 403);
+    if (table === "delegation_members") await ensureConsentSchema();
+    if (table === "teams") await ensureMediaSchema();
+    if (table === "rooms" || table === "tournaments" || table === "teams") await ensureScheduleSchema();
     if (table === "delegation_members") {
       if (u.role === "TEAM") body.team_id = u.teamId;
       body.member_type = String(body.member_type || body.role || "STAFF").toUpperCase();
@@ -3081,6 +3449,8 @@ export async function POST(
       body.player_role = body.player_role ? String(body.player_role).toUpperCase() : null;
       body.staff_role = body.staff_role ? String(body.staff_role).toUpperCase() : null;
       body.classification_points = body.classification_points === "" || body.classification_points === undefined ? null : Number(body.classification_points);
+      if (u.role === "TEAM" && body.photo && !isOwnedUploadReference(body.photo, u.id))
+        return out({ error: "Upload a new photo before assigning it to a delegation member" }, 403);
       if (!["PLAYER", "COACH", "STAFF", "REFEREE", "TEAM_MANAGER", "ASSISTANT"].includes(body.member_type)) return out({ error: "Choose a valid delegation role" }, 422);
       if (body.member_type === "PLAYER" && !["KEEPER", "T_STICK", "HANDSTICK"].includes(body.player_role)) return out({ error: "Players require a valid playing role" }, 422);
       if (["COACH", "STAFF", "TEAM_MANAGER", "ASSISTANT"].includes(body.member_type)) { body.player_role = null; body.classification_points = null; body.staff_role = body.member_type; body.custom_staff_role = null; }
@@ -3137,15 +3507,23 @@ export async function POST(
     }
     if (table === "matches") body.court = "Court 1";
     if (table === "invites") {
-      body.code = body.code || secureToken(10);
-      body.expires_at =
-        body.expires_at || new Date(Date.now() + 604800000).toISOString();
+      const recipientEmail = String(body.recipient_email || "").trim().toLowerCase();
+      if (recipientEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail))
+        return out({ error: "Enter a valid invite email address" }, 422);
+      const team = await db().prepare("SELECT id FROM teams WHERE id=?").bind(String(body.team_id || "")).first();
+      if (!team) return out({ error: "Choose an existing team for this invite" }, 422);
+      body.recipient_email = recipientEmail;
+      body.code = String(body.code || secureToken(10)).trim().toUpperCase();
+      if (!/^[A-Z0-9]{12,64}$/.test(body.code)) return out({ error: "Invite code must contain 12 to 64 letters or numbers" }, 422);
+      const expiresAt = body.expires_at ? new Date(String(body.expires_at)) : new Date(Date.now() + 604800000);
+      if (Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() <= Date.now()) return out({ error: "Invite expiry must be a future date" }, 422);
+      body.expires_at = expiresAt.toISOString();
     }
     if (table === "users") {
       const email = String(body.email || "").trim().toLowerCase();
       const name = String(body.name || "").trim();
       const role = String(body.role || "TEAM").toUpperCase();
-      if (!email || !email.includes("@") || !name)
+      if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !name || name.length > 120)
         return out({ error: "Name and a valid email are required" }, 422);
       if (!["ADMIN", "TEAM", "REFEREE", "SCOREBOARD"].includes(role))
         return out({ error: "Invalid user role" }, 422);
@@ -3154,22 +3532,27 @@ export async function POST(
         .bind(email)
         .first();
       if (existing) return out({ error: "An account already exists with this email address" }, 409);
-      if (!body.password || String(body.password).length < 8)
+      if (!body.password || String(body.password).length < 8 || String(body.password).length > 256)
         return out({ error: "Choose a password of at least 8 characters" }, 422);
       body.email = email;
       body.name = name;
       body.role = role;
       body.password = await hashPassword(String(body.password));
     }
-    if (table === "teams" && (!body.login_password || String(body.login_password).length < 8))
+    if (table === "teams" && (!body.login_password || String(body.login_password).length < 8 || String(body.login_password).length > 256))
       return out({ error: "Choose a temporary password of at least 8 characters" }, 422);
     if (table === "teams") {
       const contactEmail = String(body.contact_email || "").trim().toLowerCase();
       const expectedDelegation = Number(body.expected_delegation_size);
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) return out({ error: "A valid contact email address is required" }, 422);
+      const teamName = String(body.name || "").trim();
+      if (teamName.length < 2 || teamName.length > 120) return out({ error: "Team name must be between 2 and 120 characters" }, 422);
+      if (contactEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) return out({ error: "A valid contact email address is required" }, 422);
       if (!Number.isInteger(expectedDelegation) || expectedDelegation < 1 || expectedDelegation > 16) return out({ error: "Expected delegation size must be a whole number between 1 and 16" }, 422);
+      body.logo = String(body.logo || "").trim();
+      if (!body.logo || body.logo.length > 2048) return out({ error: "A team logo is required" }, 422);
       body.contact_email = contactEmail;
       const loginEmail = String(body.login_email || `team-${uuid().slice(0, 8)}@phb.app`).toLowerCase().trim();
+      if (loginEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail)) return out({ error: "A valid login email address is required" }, 422);
       const existingUser: any = await db().prepare("SELECT id FROM users WHERE lower(email)=lower(?) LIMIT 1").bind(loginEmail).first();
       if (existingUser) return out({ error: "A user with this login email already exists" }, 409);
       body.login_email = loginEmail;
@@ -3191,64 +3574,43 @@ export async function POST(
           ? JSON.stringify(body[k])
           : body[k],
       ),
-      hasUpdated = table !== "invites";
-    await db()
-      .prepare(
-        `INSERT INTO ${table} (id,${cols.join(",")},created_at${hasUpdated ? ",updated_at" : ""}) VALUES (?,${cols.map(() => "?").join(",")},?${hasUpdated ? ",?" : ""})`,
-      )
-      .bind(rid, ...vals, now(), ...(hasUpdated ? [now()] : []))
-      .run();
+      hasUpdated = table !== "invites",
+      insertSql = `INSERT INTO ${table} (id,${cols.join(",")},created_at${hasUpdated ? ",updated_at" : ""}) VALUES (?,${cols.map(() => "?").join(",")},?${hasUpdated ? ",?" : ""})`,
+      insertedAt = now(),
+      insertValues = [rid, ...vals, insertedAt, ...(hasUpdated ? [insertedAt] : [])];
     if (table === "teams") {
       const email = String(
         body.login_email || `team-${rid.slice(0, 8)}@phb.app`,
       ).toLowerCase();
-      await db()
-        .prepare(
-          "INSERT INTO users (id,email,password,role,name,team_id,country,photo,active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-        )
-        .bind(
-          uuid(),
-          email,
-          await hashPassword(String(body.login_password)),
-          "TEAM",
-          body.name || "Team manager",
-          rid,
-          null,
-          null,
-          1,
-          now(),
-          now(),
-        )
-        .run();
+      const passwordHash = await hashPassword(String(body.login_password));
       const expected = Math.min(16, Math.max(0, Number(body.expected_delegation_size || 0)));
       const requiredRooms = Math.ceil(expected / 2);
-      for (let index = 0; index < requiredRooms; index++) {
-        await db()
-          .prepare("INSERT INTO rooms (id,number,capacity,locked,team_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?)")
-          .bind(uuid(), "", 2, 0, rid, now(), now())
-          .run();
-      }
+      await db().transaction(async (transaction) => {
+        await transaction.prepare(insertSql).bind(...insertValues).run();
+        await transaction.prepare("INSERT INTO users (id,email,password,role,name,team_id,country,photo,active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)").bind(uuid(), email, passwordHash, "TEAM", body.name || "Team manager", rid, null, null, 1, insertedAt, insertedAt).run();
+        for (let index = 0; index < requiredRooms; index++) {
+          await transaction.prepare("INSERT INTO rooms (id,number,capacity,locked,team_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?)").bind(uuid(), "", 2, 0, rid, insertedAt, insertedAt).run();
+        }
+      });
+    } else {
+      await db().prepare(insertSql).bind(...insertValues).run();
     }
     let emailSent = false;
     if (table === "invites" && body.recipient_email) {
-      const origin = new URL(req.url).origin;
-      emailSent = await sendEmail(
-        body.recipient_email,
-        "Your invitation to Powerchair Floorball Battle",
-        teamInviteEmail(origin, String(body.code || "")),
-      );
-      if (emailSent) await db().prepare("UPDATE preregistrations SET portal_invitation_sent_at=? WHERE lower(email)=lower(?) AND selection_email_sent_at IS NOT NULL").bind(now(), body.recipient_email).run();
+      emailSent = await sendAppEmail(req, String(body.recipient_email), "Your invitation to Powerchair Floorball Battle", (origin) => teamInviteEmail(origin, String(body.code || "")));
     }
-    const auditBody = table === "users" ? { ...body, password: undefined } : body;
+    const auditBody = {
+      changedFields: cols.filter((field) => !["password", "login_password", "code"].includes(field)).sort(),
+      ...(table === "users" ? { role: body.role } : {}),
+      ...(table === "delegation_members" ? { teamId: body.team_id, memberType: body.member_type } : {}),
+      ...(table === "invites" ? { teamId: body.team_id } : {}),
+    };
     await log(u, "CREATE", table, rid, auditBody);
-    return out({ id: rid, ...body, emailSent }, 201);
+    const responseBody = table === "users" || table === "teams" ? { ...body, password: undefined, login_password: undefined } : body;
+    return out({ id: rid, ...responseBody, emailSent }, 201);
   } catch (error: unknown) {
     const requestId = logServerError(req, error);
-    const message = error instanceof Error ? error.message : String(error);
-    const safeMessage = /SQLITE|Libsql|column|table|constraint|unique|not null|foreign key/i.test(message)
-      ? message
-      : "We could not complete that change. Please check the values and try again.";
-    return new NextResponse(JSON.stringify({ error: safeMessage, requestId }), {
+    return new NextResponse(JSON.stringify({ error: "We could not complete that change. Please try again." , requestId }), {
       status: 500,
       headers: { ...securityHeaders, "Content-Type": "application/json", "X-Request-ID": requestId },
     });
@@ -3266,8 +3628,11 @@ export async function PUT(
     rid = parts[1],
     contentLength = Number(req.headers.get("content-length") || 0);
   if (contentLength > MAX_JSON_BODY_BYTES) return out({ error: "Request body is too large" }, 413);
-  const body: any = await req.json().catch(() => ({})),
+  const bodyResult = await readJsonObject(req);
+  if (!bodyResult.ok) return out({ error: bodyResult.error }, bodyResult.status);
+  const body: any = bodyResult.value,
     u = (await session(req)) as SessionUser;
+  try {
   if (path === "schedule/reorder") {
     if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
     await ensureScheduleSchema();
@@ -3335,14 +3700,8 @@ export async function PUT(
       )
       .bind(...vals, now(), rid)
       .run();
-    await log(u, "UPDATE", "organization_contact", rid, body);
+    await log(u, "UPDATE", "organization_contact", rid, { fields: fields.sort() });
     return out({ ok: true });
-  }
-  if (table === "matches") {
-    const locked: any = await db().prepare("SELECT confirmed FROM matches WHERE id=?").bind(rid).first();
-    if (locked?.confirmed) return out({ error: "This match is confirmed and locked" }, 423);
-    const current: any = await db().prepare("SELECT home_team_id,away_team_id FROM matches WHERE id=?").bind(rid).first();
-    if ((body.home_team_id || current?.home_team_id) && (body.away_team_id || current?.away_team_id) && (body.home_team_id || current?.home_team_id) === (body.away_team_id || current?.away_team_id)) return out({ error: "A team cannot play against itself" }, 422);
   }
   if (!rid || !resources[table] || !u) return out({ error: "Forbidden" }, 403);
   if (u.role === "TEAM") {
@@ -3366,16 +3725,39 @@ export async function PUT(
   } else if (u.role === "SCOREBOARD") {
     if (table !== "matches") return out({ error: "Forbidden" }, 403);
   } else if (u.role !== "ADMIN") return out({ error: "Forbidden" }, 403);
-  if (table === "teams") {
-    await db().prepare("UPDATE teams SET review_status='information_incomplete',review_snapshot=NULL,approved_snapshot=NULL,admin_reviewed_at=NULL,admin_reviewed_by=NULL,review_message=NULL,updated_at=? WHERE id=? AND review_status!='information_incomplete'").bind(now(), rid).run();
+  if (table === "teams") await ensureMediaSchema();
+  if (table === "delegation_members") await ensureConsentSchema();
+  if (table === "tournaments" || table === "rooms" || table === "teams") await ensureScheduleSchema();
+  if (table === "matches") {
+    const locked: any = await db().prepare("SELECT confirmed FROM matches WHERE id=?").bind(rid).first();
+    if (locked?.confirmed) return out({ error: "This match is confirmed and locked" }, 423);
+    const current: any = await db().prepare("SELECT home_team_id,away_team_id FROM matches WHERE id=?").bind(rid).first();
+    if ((body.home_team_id || current?.home_team_id) && (body.away_team_id || current?.away_team_id) && (body.home_team_id || current?.home_team_id) === (body.away_team_id || current?.away_team_id)) return out({ error: "A team cannot play against itself" }, 422);
   }
   if (table === "delegation_members") {
     const member: any = await db().prepare("SELECT team_id FROM delegation_members WHERE id=?").bind(rid).first();
   }
-  if (table === "users" && body.password) {
-    if (String(body.password).length < 8)
-      return out({ error: "Password must contain at least 8 characters" }, 422);
+  if (table === "users" && body.password !== undefined) {
+    if (String(body.password).length < 8 || String(body.password).length > 256)
+      return out({ error: "Password must contain between 8 and 256 characters" }, 422);
     body.password = await hashPassword(String(body.password));
+  }
+  if (table === "users") {
+    if (body.email !== undefined) {
+      const email = String(body.email || "").trim().toLowerCase();
+      if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return out({ error: "Enter a valid email address" }, 422);
+      const conflict: any = await db().prepare("SELECT id FROM users WHERE lower(email)=? AND id<>? LIMIT 1").bind(email, rid).first();
+      if (conflict) return out({ error: "An account already exists with this email address" }, 409);
+      body.email = email;
+    }
+    if (body.name !== undefined) {
+      body.name = String(body.name || "").trim();
+      if (!body.name || body.name.length > 120) return out({ error: "Name must be between 1 and 120 characters" }, 422);
+    }
+    if (body.role !== undefined) {
+      body.role = String(body.role).toUpperCase();
+      if (!["ADMIN", "TEAM", "REFEREE", "SCOREBOARD"].includes(body.role)) return out({ error: "Invalid user role" }, 422);
+    }
   }
   if (table === "delegation_members" && body.role !== undefined) {
     body.member_type = String(body.member_type || body.role || "STAFF").toUpperCase();
@@ -3456,8 +3838,28 @@ export async function PUT(
         409,
       );
   }
-  if (table === "tournaments" || table === "rooms" || table === "teams") await ensureScheduleSchema();
   if (table === "teams") {
+    const currentTeam: any = await db().prepare("SELECT logo,team_photo FROM teams WHERE id=?").bind(rid).first();
+    const logo = body.logo === undefined ? String(currentTeam?.logo || "").trim() : String(body.logo || "").trim();
+    if (!logo || logo.length > 2048) return out({ error: "A team logo is required" }, 422);
+    if (body.logo !== undefined) body.logo = logo;
+    if (u.role === "TEAM") {
+      for (const field of ["logo", "team_photo"] as const) {
+        if (body[field] === undefined) continue;
+        const next = String(body[field] || "").trim(), current = String(currentTeam?.[field] || "").trim();
+        if (next && next !== current && !isOwnedUploadReference(next, u.id))
+          return out({ error: "Upload a new image before changing team media" }, 403);
+        body[field] = next || null;
+      }
+    }
+    if (body.name !== undefined) {
+      body.name = String(body.name || "").trim();
+      if (body.name.length < 2 || body.name.length > 120) return out({ error: "Team name must be between 2 and 120 characters" }, 422);
+    }
+    if (body.contact_person !== undefined) {
+      body.contact_person = String(body.contact_person || "").trim();
+      if (body.contact_person.length > 120) return out({ error: "Contact name must be 120 characters or fewer" }, 422);
+    }
     const contactEmail = String(body.contact_email || "").trim().toLowerCase();
     const expectedDelegation = Number(body.expected_delegation_size);
     if (body.contact_email !== undefined && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) return out({ error: "A valid contact email address is required" }, 422);
@@ -3466,11 +3868,21 @@ export async function PUT(
     const parts = [body.address_street, body.address_number, body.address_postal_code, body.address_city, body.address_country].filter((value) => String(value || "").trim());
     if (parts.length) body.address = parts.join(" ");
   }
+  if (table === "delegation_members" && u.role === "TEAM" && body.photo !== undefined) {
+    const current: any = await db().prepare("SELECT photo FROM delegation_members WHERE id=? AND team_id=?").bind(rid, u.teamId).first();
+    const next = String(body.photo || "").trim(), currentPhoto = String(current?.photo || "").trim();
+    if (next && next !== currentPhoto && !isOwnedUploadReference(next, u.id))
+      return out({ error: "Upload a new photo before assigning it to a delegation member" }, 403);
+    body.photo = next || null;
+  }
   if (table === "matches") body.court = "Court 1";
   const cols = resources[table].filter(
     (k) => body[k] !== undefined && k !== "version",
   );
   if (!cols.length) return out({ error: "No changes supplied" }, 422);
+  if (table === "teams") {
+    await db().prepare("UPDATE teams SET review_status='information_incomplete',review_snapshot=NULL,approved_snapshot=NULL,admin_reviewed_at=NULL,admin_reviewed_by=NULL,review_message=NULL,updated_at=? WHERE id=? AND review_status!='information_incomplete'").bind(now(), rid).run();
+  }
   const vals = cols.map((k) =>
     ["team_ids", "referee_ids", "data"].includes(k)
       ? JSON.stringify(body[k])
@@ -3519,8 +3931,18 @@ export async function PUT(
     for (const x of affected) await syncAccommodation(x.team_id);
     if (body.team_id) await syncAccommodation(body.team_id);
   }
-  await log(u, "UPDATE", table, rid, body);
+  await log(u, "UPDATE", table, rid, {
+    changedFields: cols.filter((field) => field !== "password").sort(),
+    ...(table === "users" && body.password ? { credentialReset: true } : {}),
+  });
   return out({ ok: true, id: rid });
+  } catch (error: unknown) {
+    const requestId = logServerError(req, error);
+    return new NextResponse(JSON.stringify({ error: "We could not complete that update. Please try again.", requestId }), {
+      status: 500,
+      headers: { ...securityHeaders, "Content-Type": "application/json", "X-Request-ID": requestId },
+    });
+  }
 }
 export async function DELETE(
   req: NextRequest,
@@ -3530,8 +3952,13 @@ export async function DELETE(
   const parts = (await params).path || [],
     table = mapName(parts[0]),
     rid = parts[1],
-    u = (await session(req)) as SessionUser,
-    body: any = await req.json().catch(() => ({}));
+    contentLength = Number(req.headers.get("content-length") || 0);
+  if (contentLength > MAX_JSON_BODY_BYTES) return out({ error: "Request body is too large" }, 413);
+  const bodyResult = await readJsonObject(req);
+  if (!bodyResult.ok) return out({ error: bodyResult.error }, bodyResult.status);
+  const u = (await session(req)) as SessionUser,
+    body: any = bodyResult.value;
+  try {
   if (parts[0] === "tournaments" && rid) {
     if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
     const tournament: any = await db().prepare("SELECT id,name,active FROM tournaments WHERE id=?").bind(rid).first();
@@ -3650,6 +4077,7 @@ export async function DELETE(
     return out({ ok: true });
   }
   if (!rid || !resources[table] || !u) return out({ error: "Forbidden" }, 403);
+  if (table === "delegation_members") await ensureConsentSchema();
   if (u.role === "TEAM" && table === "delegation_members") {
     const member = await db()
       .prepare("SELECT team_id FROM delegation_members WHERE id=?")
@@ -3682,4 +4110,11 @@ export async function DELETE(
   await db().prepare(`DELETE FROM ${table} WHERE id=?`).bind(rid).run();
   await log(u, "DELETE", table, rid);
   return out({ ok: true });
+  } catch (error: unknown) {
+    const requestId = logServerError(req, error);
+    return new NextResponse(JSON.stringify({ error: "We could not complete that deletion. Please try again.", requestId }), {
+      status: 500,
+      headers: { ...securityHeaders, "Content-Type": "application/json", "X-Request-ID": requestId },
+    });
+  }
 }

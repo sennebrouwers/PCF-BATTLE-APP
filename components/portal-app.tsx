@@ -311,6 +311,8 @@ async function prepareUploadFile(file: File) {
 }
 async function uploadFile(file: File) {
   const upload = await prepareUploadFile(file);
+  if (upload.size > 4 * 1024 * 1024)
+    throw new Error("Files must be 4 MB or smaller. Choose a smaller file and try again.");
   const body = new FormData();
   body.append("file", upload);
   const res = await fetch("/api/uploads", {
@@ -1097,7 +1099,7 @@ function Admin({
       <OperationsHub refresh={refresh} onOpenGameControl={onOpenGameControl} />
     );
   if (active === "messages") return <ChatPanel refresh={refresh} />;
-  if (active === "contacts") return <ContactsPanel refresh={refresh} admin onOpenTeam={() => onNavigate("teams")} />;
+  if (active === "contacts") return <ContactsPanel refresh={refresh} admin />;
   if (active === "teams") return <TeamsAdminV2 refresh={refresh} />;
   if (active === "tournament") return <TournamentManager refresh={refresh} />;
   if (active === "matches") return <MatchesAdmin refresh={refresh} />;
@@ -2886,6 +2888,18 @@ function PreRegistrations({ refresh }: { refresh: number }) {
   const rows = useData("/preregistrations", refresh);
   const [busy, setBusy] = useState<string | null>(null);
   const [decisions, setDecisions] = useState<Record<string, "selected" | "rejected">>({});
+  async function sendConfirmation(row: Row) {
+    setBusy(row.id);
+    try {
+      await api(`/preregistrations/${row.id}/confirmation`, { method: "POST" });
+      toast.success(`Confirmation email sent to ${row.club_name}`);
+      rows.load();
+    } catch (error: unknown) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusy(null);
+    }
+  }
   async function selectTeam(row: Row) {
     if (row.selection_email_sent_at) return;
     setBusy(row.id);
@@ -2951,12 +2965,14 @@ function PreRegistrations({ refresh }: { refresh: number }) {
                   {r.email} · Registered {fmtDate(r.created_at)}
                 </small>
               </span>
-              <div className="registration-statuses">
-                <span className="status-chip">
-                  {r.registration_confirmation_sent_at
-                    ? "Confirmation sent"
-                    : "Confirmation pending"}
-                </span>
+                <div className="registration-statuses">
+                {r.registration_confirmation_sent_at ? (
+                  <span className="status-chip">Confirmation sent</span>
+                ) : (
+                  <button className="status-chip" type="button" disabled={busy === r.id} onClick={() => sendConfirmation(r)}>
+                    {busy === r.id ? "Sending confirmation…" : "Send confirmation"}
+                  </button>
+                )}
                 <span className="status-chip">
                   {r.selection_email_sent_at
                     ? "Selection sent"
@@ -2995,14 +3011,20 @@ function PreRegistrations({ refresh }: { refresh: number }) {
                     text={`Send ${r.club_name} an email explaining that they were not selected and offering the waiting list?`}
                     onConfirm={() => notifyNotSelected(r)}
                   >
-                    <button
-                      className="btn small registration-action"
-                      disabled={busy === r.id}
-                    >
-                      {busy === r.id
-                        ? "Sending…"
-                        : "Not selected / waiting list"}
-                    </button>
+                    {r.waiting_list ? (
+                      <button className="btn small registration-action" disabled>
+                        Waiting-list email sent
+                      </button>
+                    ) : (
+                      <button
+                        className="btn small registration-action"
+                        disabled={busy === r.id}
+                      >
+                        {busy === r.id
+                          ? "Sending…"
+                          : "Not selected / waiting list"}
+                      </button>
+                    )}
                   </Confirm>
                 </>
               )}
@@ -3806,7 +3828,7 @@ export function MatchCard({
     setGoalTeam(teamId);
     setPlayerId("");
     try {
-      const rows = await api("/delegation");
+      const rows = await api(`/delegation?matchId=${encodeURIComponent(match.id)}`);
       setPlayers(
         rows.filter((p: Row) => p.team_id === teamId && p.role === "PLAYER"),
       );
@@ -3860,7 +3882,7 @@ export function MatchCard({
     setIncidentPlayer("");
     setIncidentDetails("");
     try {
-      setPlayers(await api("/delegation"));
+      setPlayers(await api(`/delegation?matchId=${encodeURIComponent(match.id)}`));
     } catch (error: unknown) {
       toast.error(errorMessage(error));
     }

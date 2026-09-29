@@ -22,14 +22,18 @@ export class ClientApiError extends Error {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function clientApi<T = any>(path: string, options: RequestInit = {}): Promise<T> {
   const method = String(options.method || "GET").toUpperCase();
-  const key = method === "GET" ? path : "";
+  const key = method === "GET" && !options.signal ? path : "";
   if (key && pendingGets.has(key)) return pendingGets.get(key) as Promise<T>;
   const headers = new Headers(options.headers);
   if (options.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   const controller = new AbortController();
   const timeout = method === "GET" ? window.setTimeout(() => controller.abort(), GET_TIMEOUT_MS) : undefined;
+  const callerSignal = options.signal;
+  const abortFromCaller = () => controller.abort(callerSignal?.reason);
+  if (callerSignal?.aborted) abortFromCaller();
+  else callerSignal?.addEventListener("abort", abortFromCaller, { once: true });
   const startedAt = typeof performance !== "undefined" ? performance.now() : 0;
-  const request = fetch(`/api${path}`, { ...options, headers, credentials: "same-origin", signal: options.signal || controller.signal })
+  const request = fetch(`/api${path}`, { ...options, headers, credentials: "same-origin", signal: controller.signal })
     .then(async (response) => {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -42,6 +46,7 @@ export async function clientApi<T = any>(path: string, options: RequestInit = {}
     })
     .finally(() => {
       if (timeout) window.clearTimeout(timeout);
+      callerSignal?.removeEventListener("abort", abortFromCaller);
       if (key) pendingGets.delete(key);
       if (typeof performance !== "undefined" && typeof performance.measure === "function") {
         try { performance.measure(`pcf-api:${method}:${path}`, { duration: performance.now() - startedAt }); } catch {}

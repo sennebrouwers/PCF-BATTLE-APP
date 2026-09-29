@@ -311,6 +311,8 @@ function Signup() {
                 toolparamdescription="The account holder's full name."
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                maxLength={120}
+                autoComplete="name"
                 required
               />
             </label>
@@ -321,7 +323,9 @@ function Signup() {
                 toolparamdescription="The account holder's email address."
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                readOnly
+                autoComplete="email"
+                maxLength={254}
                 required
               />
             </label>
@@ -333,7 +337,9 @@ function Signup() {
                 type="password"
                 value={pass}
                 onChange={(e) => setPass(e.target.value)}
-                minLength={6}
+                minLength={8}
+                maxLength={256}
+                autoComplete="new-password"
                 required
               />
             </label>

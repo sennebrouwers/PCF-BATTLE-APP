@@ -27,8 +27,20 @@ conflict with immediate deletion.
 ## Current technical safeguards
 
 - Analytics is loaded only after cookie consent.
-- Passwords are hashed and sessions use an HttpOnly, Secure, SameSite cookie.
+- Account passwords use PBKDF2 hashes; production sessions use an HttpOnly,
+  Secure, SameSite cookie.
 - Normal public API lists remove password fields.
-- Private PDF downloads require the owner or an administrator.
+- Public player and coach listings and scorer names require a delegation
+  member's privacy consent. Participant photos additionally require photo
+  consent.
+- Uploaded files are private by default and require the owner or an
+  administrator, except objects linked from public team or sponsor content.
+- Match event endpoints require an authorized admin, scoreboard operator or
+  assigned referee.
 - Team, referee and administrator permissions are checked server-side.
 - Important changes are written to the audit log.
+
+The production application stores structured records in Turso/libSQL and
+uploaded files in private Vercel Blob storage. This map does not establish legal
+retention periods; those still need an organizational decision and should be
+implemented only after the decision is recorded.

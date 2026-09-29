@@ -3,5 +3,10 @@ import { defineConfig } from "vite";
 import { nitro } from "nitro/vite";
 
 export default defineConfig({
-  plugins: [vinext(), nitro()],
+  plugins: [
+    vinext(),
+    nitro({
+      vercel: { functions: { runtime: "nodejs22.x" } },
+    }),
+  ],
 });
