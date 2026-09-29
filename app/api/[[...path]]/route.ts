@@ -1722,7 +1722,7 @@ export async function GET(
       const rows = (
         await db()
           .prepare(
-            `SELECT m.*,su.name sender_name,su.role sender_role,ru.name recipient_name,ru.role recipient_role,rs.name reply_sender_name,rm.body reply_body FROM messages m LEFT JOIN messages rm ON rm.id=m.reply_to_message_id LEFT JOIN users rs ON rs.id=rm.sender_user_id JOIN users su ON su.id=m.sender_user_id JOIN users ru ON ru.id=m.recipient_user_id WHERE ${filters.join(" AND ")} ORDER BY m.created_at DESC LIMIT ${limit}`,
+            `SELECT m.*,su.name sender_name,su.role sender_role,ru.name recipient_name,ru.role recipient_role,rs.name reply_sender_name,rm.body reply_body,rm.deleted_by_sender reply_deleted_by_sender,rm.deleted_by_recipient reply_deleted_by_recipient FROM messages m LEFT JOIN messages rm ON rm.id=m.reply_to_message_id LEFT JOIN users rs ON rs.id=rm.sender_user_id JOIN users su ON su.id=m.sender_user_id JOIN users ru ON ru.id=m.recipient_user_id WHERE ${filters.join(" AND ")} ORDER BY m.created_at DESC LIMIT ${limit}`,
           )
           .bind(...values)
           .all()
