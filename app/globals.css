@@ -10001,3 +10001,7 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .confirm-trigger {
   display: contents;
 }
+
+/* Messaging workspace side margins */
+.chat-panel .chat-layout{margin-left:0!important;margin-right:0!important;width:100%!important}
+.chat-panel .chat-contacts,.chat-panel .chat-thread{min-width:0}
