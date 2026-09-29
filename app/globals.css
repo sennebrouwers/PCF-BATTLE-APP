@@ -10223,3 +10223,57 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .chat-portal-menu.chat-message-menu{display:grid!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important}
 
 .chat-portal-menu.chat-message-menu{position:fixed!important;top:auto;right:auto!important;bottom:auto!important;transform:none!important;display:grid!important;min-width:190px!important;width:max-content!important;max-width:calc(100vw - 24px)!important;height:auto!important;max-height:280px!important;overflow-y:auto!important}
+
+/* Messenger reply stack: the quoted message sits above the reply bubble. */
+.chat-message-row .chat-bubble-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  min-width: 0 !important;
+}
+.chat-message-row.mine .chat-bubble-wrap {
+  align-items: flex-end !important;
+}
+.chat-message-row .chat-bubble-wrap > .chat-quoted-reply {
+  position: relative;
+  z-index: 1;
+  align-self: flex-start;
+  width: min(100% - 16px, 560px) !important;
+  margin: 0 0 -4px 10px !important;
+  padding: 7px 11px !important;
+  border: 0 !important;
+  border-radius: 13px 13px 5px 5px !important;
+  background: color-mix(in srgb, var(--surface-hover) 88%, transparent) !important;
+  color: var(--muted) !important;
+  box-shadow: none !important;
+}
+.chat-message-row.mine .chat-bubble-wrap > .chat-quoted-reply {
+  align-self: flex-end;
+  margin: 0 10px -4px 0 !important;
+  border-radius: 13px 13px 5px 5px !important;
+  background: color-mix(in srgb, var(--surface-3) 72%, var(--pink) 8%) !important;
+}
+.chat-message-row .chat-bubble-wrap > .chat-bubble {
+  position: relative;
+  z-index: 2;
+}
+.chat-message-row .chat-bubble-wrap > .chat-quoted-reply .chat-quoted-label {
+  color: var(--muted) !important;
+  font-size: .7rem !important;
+}
+.chat-message-row .chat-bubble-wrap > .chat-quoted-reply .chat-quoted-label svg {
+  color: var(--pink) !important;
+}
+.chat-message-row .chat-bubble-wrap > .chat-quoted-reply .chat-quoted-preview {
+  color: var(--muted) !important;
+  -webkit-line-clamp: 2;
+}
+@media (max-width: 760px) {
+  .chat-message-row .chat-bubble-wrap > .chat-quoted-reply {
+    width: min(100% - 10px, 92vw) !important;
+    margin-left: 5px !important;
+  }
+  .chat-message-row.mine .chat-bubble-wrap > .chat-quoted-reply {
+    margin-right: 5px !important;
+  }
+}
