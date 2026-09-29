@@ -10032,6 +10032,153 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   display: contents;
 }
 
+/* Team portal information editor follows the Team setup wizard used by Admin. */
+.team-portal-info-wizard {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: auto minmax(0, 1fr) 78px !important;
+  gap: 0 !important;
+  width: 100% !important;
+  height: clamp(560px, calc(100dvh - 300px), 720px) !important;
+  min-height: 560px !important;
+  max-height: 720px !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+.team-portal-info-wizard > .wizard-topbar {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 14px 2px 16px !important;
+  overflow: visible !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+.team-portal-info-wizard > .wizard-content {
+  display: block !important;
+  width: 100% !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  padding: 30px 8px 36px !important;
+}
+.team-portal-info-wizard > .wizard-content > .wizard-content-inner {
+  width: min(850px, 100%) !important;
+  min-width: 0 !important;
+  margin: 0 auto !important;
+}
+.team-portal-info-wizard .wizard-question {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin: 0 auto 28px !important;
+  text-align: center !important;
+}
+.team-portal-info-wizard .wizard-question-icon {
+  display: grid !important;
+  place-items: center !important;
+  width: 52px !important;
+  height: 52px !important;
+  margin-bottom: 14px !important;
+  border-radius: 50% !important;
+  background: color-mix(in srgb, var(--pink) 22%, transparent) !important;
+  color: var(--pink) !important;
+}
+.team-portal-info-wizard .wizard-question h3,
+.team-portal-info-wizard .wizard-question p {
+  width: 100% !important;
+  text-align: center !important;
+}
+.team-portal-info-wizard .wizard-content-inner > div:not(.wizard-question):not([hidden]) {
+  display: grid !important;
+  gap: 16px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+.team-portal-info-wizard [hidden] { display: none !important; }
+.team-portal-info-wizard .team-media-control { margin-top: 4px; }
+.team-portal-info-wizard .address-fields,
+.team-portal-info-wizard .team-contact-details-step,
+.team-portal-info-wizard .team-invoice-fields {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  min-width: 0 !important;
+}
+.team-portal-info-wizard .team-address-step .team-info-section-heading {
+  grid-column: 1 / -1;
+  margin-bottom: 2px;
+}
+.team-portal-info-wizard .team-invoice-row {
+  display: contents !important;
+}
+.team-portal-info-wizard .wizard-footer {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: 78px !important;
+  min-height: 78px !important;
+  margin: 0 !important;
+  padding: 16px 8px 10px !important;
+  border-top: 1px solid var(--line) !important;
+  background: var(--surface-3, var(--card, #fff)) !important;
+}
+.team-portal-info-wizard .wizard-footer-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  min-height: 44px !important;
+}
+.team-portal-info-wizard .wizard-footer-back,
+.team-portal-info-wizard .wizard-footer-next {
+  display: flex !important;
+  align-items: center !important;
+  min-width: 112px !important;
+  min-height: 44px !important;
+}
+.team-portal-info-wizard .wizard-footer-next {
+  justify-content: flex-end !important;
+  margin-left: auto !important;
+}
+.team-portal-info-wizard .team-wizard-review {
+  display: grid;
+  gap: 14px;
+}
+.team-info-review-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 22px;
+  margin: 0;
+}
+.team-info-review-list > div {
+  min-width: 0;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+}
+.team-info-review-list dt { color: var(--muted); font-size: .8rem; }
+.team-info-review-list dd { margin: 4px 0 0; font-weight: 700; overflow-wrap: anywhere; }
+@media (max-width: 700px) {
+  .team-portal-info-wizard {
+    height: clamp(560px, calc(100dvh - 250px), 720px) !important;
+  }
+  .team-portal-info-wizard > .wizard-topbar { justify-content: flex-start !important; }
+  .team-portal-info-wizard > .wizard-content { padding: 24px 2px 32px !important; }
+  .team-portal-info-wizard .address-fields,
+  .team-portal-info-wizard .team-contact-details-step,
+  .team-portal-info-wizard .team-invoice-fields,
+  .team-info-review-list { grid-template-columns: 1fr !important; }
+}
+
 /* Messaging workspace side margins */
 .chat-panel .chat-layout{margin-left:0!important;margin-right:0!important;width:100%!important}
 .chat-panel .chat-contacts,.chat-panel .chat-thread{min-width:0}

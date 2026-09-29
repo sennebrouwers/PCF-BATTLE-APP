@@ -8146,13 +8146,73 @@ function TeamInfoV2({
   const teams = useData("/teams", refresh),
     team = teams.data[0],
     [busy, setBusy] = useState(false),
+    [teamStep, setTeamStep] = useState(1),
     [removeLogo, setRemoveLogo] = useState(false),
     [removePhoto, setRemovePhoto] = useState(false),
     [logoSelected, setLogoSelected] = useState(false),
     [photoSelected, setPhotoSelected] = useState(false),
-    [invoiceRequested, setInvoiceRequested] = useState(Boolean(team?.invoice_requested));
+    [invoiceRequested, setInvoiceRequested] = useState(Boolean(team?.invoice_requested)),
+    [stepValid, setStepValid] = useState(false),
+    [wizardRevision, setWizardRevision] = useState(0);
+  const [reviewData, setReviewData] = useState<Record<string, string>>({});
+  const wizardFormRef = useRef<HTMLFormElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null),
     photoInputRef = useRef<HTMLInputElement>(null);
+  const teamSteps = [
+    "Team name",
+    "Country",
+    "Team identity",
+    "Team photo",
+    "Contact details",
+    "Delegation",
+    "Address",
+    "Invoice options",
+    "Review",
+  ];
+  useEffect(() => {
+    setInvoiceRequested(Boolean(team?.invoice_requested));
+  }, [team?.id, team?.invoice_requested]);
+  function readStepValidity() {
+    const form = wizardFormRef.current;
+    if (!form) return;
+    const formData = new FormData(form);
+    const value = (name: string) => String(formData.get(name) || "").trim();
+    let valid = true;
+    if (teamStep === 1) valid = Boolean(value("name"));
+    if (teamStep === 3) valid = /^#[0-9a-fA-F]{6}$/.test(value("color_hex"));
+    if (teamStep === 5) {
+      valid = Boolean(value("contact_person")) &&
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value("contact_email")) &&
+        Boolean(value("phone"));
+    }
+    if (teamStep === 6) {
+      const expected = Number(value("expected_delegation_size"));
+      valid = Number.isInteger(expected) && expected >= 1 && expected <= 16;
+    }
+    if (teamStep === 8) {
+      valid = !invoiceRequested || (
+        Boolean(value("billing_name")) &&
+        Boolean(value("billing_address")) &&
+        Boolean(value("billing_postal_code")) &&
+        Boolean(value("billing_city")) &&
+        Boolean(value("billing_country"))
+      );
+    }
+    setStepValid(valid);
+  }
+  useEffect(() => { readStepValidity(); }, [teamStep, invoiceRequested, wizardRevision, team]);
+  function handleWizardInput() {
+    const form = wizardFormRef.current;
+    if (form) {
+      const values = Object.fromEntries(new FormData(form).entries());
+      setReviewData(Object.fromEntries(Object.entries(values).map(([key, value]) => [
+        key,
+        value instanceof File ? value.name : String(value),
+      ])));
+    }
+    setWizardRevision((value) => value + 1);
+    readStepValidity();
+  }
   if (!team)
     return <section className="panel">Loading team information…</section>;
   async function save(e: FormEvent<HTMLFormElement>) {
@@ -8217,6 +8277,7 @@ function TeamInfoV2({
       setRemovePhoto(false);
       setLogoSelected(false);
       setPhotoSelected(false);
+      setTeamStep(1);
       reload();
     } catch (err: unknown) {
       toast.error(errorMessage(err));
@@ -8229,139 +8290,89 @@ function TeamInfoV2({
       <div className="panelhead">
         <h3>Team information</h3>
       </div>
-      <form className="portal-form" onSubmit={save}>
-        <Field
-          label="Team name"
-          name="name"
-          defaultValue={team.name}
-          required
-        />
-        <div className="team-info-section">
-          <div className="team-info-section-heading"><h4>Contact details</h4><p>Keep the main team contact information up to date.</p></div>
-          <div className="team-info-section-grid">
-            <Field label="Contact person" name="contact_person" defaultValue={team.contact_person} required />
-            <Field label="Contact email" name="contact_email" type="email" defaultValue={team.contact_email} required />
-            <PhoneField defaultValue={team.phone} defaultCode={team.phone_country_code || "+32"} required />
-            <Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={1} max={16} defaultValue={team.expected_delegation_size ?? ""} required />
-            <Field label="Website" name="website" type="url" defaultValue={team.website} />
+      <form ref={wizardFormRef} className="portal-form wizard-form team-portal-info-wizard" onInput={handleWizardInput} onChange={handleWizardInput} onSubmit={save}>
+        <div className="wizard-topbar wizard-progress-bar" aria-label="Team information progress">
+          {teamSteps.map((label, index) => (
+            <button type="button" key={label} disabled={index + 1 > teamStep + 1 || (index + 1 === teamStep + 1 && !stepValid)} className={teamStep === index + 1 ? "active" : teamStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= teamStep + 1 && (index + 1 <= teamStep || stepValid)) setTeamStep(index + 1); }}>
+              <span>{index + 1}</span>{label}
+            </button>
+          ))}
+        </div>
+        <div className="wizard-content">
+          <div className="wizard-content-inner">
+            <div className="wizard-question">
+              <div className="wizard-question-icon"><UserRoundCog /></div>
+              <h3>{teamStep === 1 ? "What is the team name?" : teamStep === 2 ? "Where is the team from?" : teamStep === 3 ? "Update the team identity" : teamStep === 4 ? "Update the team photo" : teamStep === 5 ? "Who is the main team contact?" : teamStep === 6 ? "How large is the delegation?" : teamStep === 7 ? "Where is the team based?" : teamStep === 8 ? "Does the team need an invoice?" : "Review team information"}</h3>
+              <p>{teamStep === 7 ? "Address details are optional." : "Update your team details. You can move back and forth without losing your changes."}</p>
+            </div>
+            <div hidden={teamStep !== 1}>
+              <Field label="Team name" name="name" defaultValue={team.name} required />
+            </div>
+            <div hidden={teamStep !== 2}>
+              <Field label="Country" name="address_country" defaultValue={team.address_country || ""} />
+            </div>
+            <div hidden={teamStep !== 3} className="team-identity-step">
+              <Field label="Team color (HEX)" name="color_hex" defaultValue={team.color || "#ec4899"} required children={<div className="hex-color-control"><input name="color_hex" defaultValue={team.color || "#ec4899"} required /><input data-team-color-picker type="color" defaultValue={team.color || "#ec4899"} aria-label="Choose team color" onChange={(event) => { const input = event.target.parentElement?.querySelector<HTMLInputElement>('input[name="color_hex"]'); if (input) { input.value = event.target.value; input.dispatchEvent(new Event("input", { bubbles: true })); } }} /></div>} />
+              <Field label="Team logo (optional)" name="logo_file" type="file" children={<div className="file-picker-control"><input ref={logoInputRef} name="logo_file" type="file" accept="image/*" onChange={(event) => { setLogoSelected(Boolean(event.target.files?.length)); setRemoveLogo(false); }} />{logoSelected && <button className="btn small icon-only" type="button" title="Clear selected logo file" aria-label="Clear selected logo file" onClick={() => { if (logoInputRef.current) logoInputRef.current.value = ""; setLogoSelected(false); }}><Trash2 /></button>}</div>} />
+              {(team.logo || removeLogo) && <div className="team-media-control"><img className="logo-preview" src={team.logo || undefined} alt={team.logo ? "Current team logo" : ""} />{team.logo && <button className="btn danger small" type="button" onClick={() => setRemoveLogo(true)}>{removeLogo ? "Logo will be removed" : "Remove team logo"}</button>}</div>}
+            </div>
+            <div hidden={teamStep !== 4}>
+              <Field label="Team photo (optional)" name="team_photo_file" type="file" children={<div className="file-picker-control"><input ref={photoInputRef} name="team_photo_file" type="file" accept="image/*" onChange={(event) => { setPhotoSelected(Boolean(event.target.files?.length)); setRemovePhoto(false); }} />{photoSelected && <button className="btn small icon-only" type="button" title="Clear selected team photo file" aria-label="Clear selected team photo file" onClick={() => { if (photoInputRef.current) photoInputRef.current.value = ""; setPhotoSelected(false); }}><Trash2 /></button>}</div>} />
+              {team.team_photo && <div className="team-media-control"><img className="team-photo-preview" src={team.team_photo} alt="Current team photo" /><button className="btn danger small" type="button" onClick={() => setRemovePhoto(true)}>{removePhoto ? "Photo will be removed" : "Remove team photo"}</button></div>}
+            </div>
+            <div hidden={teamStep !== 5} className="team-contact-details-step">
+              <Field label="Contact full name" name="contact_person" defaultValue={team.contact_person} required />
+              <Field label="Contact email address" name="contact_email" type="email" defaultValue={team.contact_email} required />
+              <PhoneField defaultValue={team.phone} defaultCode={team.phone_country_code || "+32"} required />
+              <Field label="Website (optional)" name="website" type="url" defaultValue={team.website || ""} />
+            </div>
+            <div hidden={teamStep !== 6}>
+              <Field label="Expected delegation size (maximum 16)" name="expected_delegation_size" type="number" min={1} max={16} defaultValue={team.expected_delegation_size ?? ""} required />
+              <p className="wizard-help">Enter the expected number of people in your delegation.</p>
+            </div>
+            <div hidden={teamStep !== 7} className="team-address-step">
+              <div className="team-info-section-heading"><h4>Address</h4><p>These details are optional.</p></div>
+              <div className="address-fields">
+                <Field label="Street" name="address_street" defaultValue={team.address_street || ""} />
+                <Field label="House/building number" name="address_number" defaultValue={team.address_number || ""} />
+                <Field label="Postal/ZIP code" name="address_postal_code" defaultValue={team.address_postal_code || ""} />
+                <Field label="City" name="address_city" defaultValue={team.address_city || ""} />
+              </div>
+            </div>
+            <div hidden={teamStep !== 8} className="team-invoice-options-step">
+              <label className="portal-field wide checkbox-field"><input name="invoice_requested" type="checkbox" value="1" checked={invoiceRequested} onChange={(event) => { setInvoiceRequested(event.target.checked); setWizardRevision((value) => value + 1); }} /><span>I would like to receive an invoice during payment for administration.</span></label>
+              {invoiceRequested && <div className="team-invoice-fields">
+                <div className="team-invoice-row"><Field label="Billing name / organisation" name="billing_name" defaultValue={team.billing_name || ""} required /><Field label="VAT / company number (optional)" name="vat_number" defaultValue={team.vat_number || ""} /></div>
+                <div className="team-invoice-row"><Field label="Street and house number" name="billing_address" defaultValue={team.billing_address || ""} required /><Field label="Postal code" name="billing_postal_code" defaultValue={team.billing_postal_code || ""} required /></div>
+                <div className="team-invoice-row"><Field label="City" name="billing_city" defaultValue={team.billing_city || ""} required /><Field label="Country" name="billing_country" defaultValue={team.billing_country || ""} required /></div>
+              </div>}
+            </div>
+            <div hidden={teamStep !== 9} className="team-wizard-review">
+              <h4>Review team information</h4>
+              <p>Check the details below, then save your changes.</p>
+              <dl className="team-info-review-list">
+                <div><dt>Team name</dt><dd>{reviewData.name || team.name || "Not provided"}</dd></div>
+                <div><dt>Country</dt><dd>{reviewData.address_country || team.address_country || "Not provided"}</dd></div>
+                <div><dt>Contact person</dt><dd>{reviewData.contact_person || team.contact_person || "Not provided"}</dd></div>
+                <div><dt>Contact email</dt><dd>{reviewData.contact_email || team.contact_email || "Not provided"}</dd></div>
+                <div><dt>Phone</dt><dd>{reviewData.phone || team.phone || "Not provided"}</dd></div>
+                <div><dt>Expected delegation</dt><dd>{reviewData.expected_delegation_size || String(team.expected_delegation_size || "Not provided")}</dd></div>
+                <div><dt>Team logo</dt><dd>{removeLogo ? "Will be removed" : logoSelected ? "New logo selected" : team.logo ? "Uploaded" : "Not uploaded"}</dd></div>
+                <div><dt>Team photo</dt><dd>{removePhoto ? "Will be removed" : photoSelected ? "New photo selected" : team.team_photo ? "Uploaded" : "Not uploaded"}</dd></div>
+                <div><dt>Invoice</dt><dd>{invoiceRequested ? reviewData.billing_name || team.billing_name || "Details added" : "Not requested"}</dd></div>
+              </dl>
+            </div>
           </div>
         </div>
-        <div className="team-info-section">
-          <div className="team-info-section-heading"><h4>Address</h4><p>Address details are optional.</p></div>
-          <AddressFields team={team} />
-        </div>
-        <Field
-          label="Team color"
-          name="color"
-          type="color"
-          defaultValue={team.color}
-        />
-        <Field label="HEX color" name="color_hex" defaultValue={team.color || "#ec3d91"} />
-        <label className="portal-field wide checkbox-field">
-          <input name="invoice_requested" type="checkbox" value="1" checked={invoiceRequested} onChange={(event) => setInvoiceRequested(event.target.checked)} />
-          <span>I would like to receive an invoice.</span>
-        </label>
-        {invoiceRequested && <Field label="Billing/address information" name="billing_address" defaultValue={team.billing_address} />}
-        <Field
-          label="Team logo file"
-          name="logo_file"
-          children={
-            <div className="file-picker-control">
-              <input
-                ref={logoInputRef}
-                name="logo_file"
-                type="file"
-                accept="image/*"
-                onChange={(event) => {
-                  setLogoSelected(Boolean(event.target.files?.length));
-                  setRemoveLogo(false);
-                }}
-              />
-              {logoSelected ? (
-                <button
-                  className="btn small icon-only"
-                  type="button"
-                  title="Clear selected logo file"
-                  aria-label="Clear selected logo file"
-                  onClick={() => {
-                    if (logoInputRef.current) logoInputRef.current.value = "";
-                    setLogoSelected(false);
-                  }}
-                >
-                  <Trash2 />
-                </button>
-              ) : null}
+        <div className="wizard-footer">
+          <div className="wizard-footer-row">
+            <div className="wizard-footer-back">
+              {teamStep > 1 && <button type="button" className="btn" onClick={() => setTeamStep((step) => step - 1)}>Back</button>}
             </div>
-          }
-        />
-        {team.logo && (
-          <div className="team-media-control">
-            <img
-              className="logo-preview"
-              src={team.logo}
-              alt="Current team logo"
-            />
-            <button
-              className="btn danger small"
-              type="button"
-              onClick={() => setRemoveLogo(true)}
-            >
-              {removeLogo ? "Logo will be removed" : "Remove logo"}
-            </button>
-          </div>
-        )}
-        <Field
-          label="Team photo file"
-          name="team_photo_file"
-          children={
-            <div className="file-picker-control">
-              <input
-                ref={photoInputRef}
-                name="team_photo_file"
-                type="file"
-                accept="image/*"
-                onChange={(event) => {
-                  setPhotoSelected(Boolean(event.target.files?.length));
-                  setRemovePhoto(false);
-                }}
-              />
-              {photoSelected ? (
-                <button
-                  className="btn small icon-only"
-                  type="button"
-                  title="Clear selected team photo file"
-                  aria-label="Clear selected team photo file"
-                  onClick={() => {
-                    if (photoInputRef.current) photoInputRef.current.value = "";
-                    setPhotoSelected(false);
-                  }}
-                >
-                  <Trash2 />
-                </button>
-              ) : null}
+            <div className="wizard-footer-next">
+              {teamStep < teamSteps.length ? <button type="button" className="btn primary" disabled={!stepValid} onClick={() => setTeamStep((step) => step + 1)}>Next <span aria-hidden="true">→</span></button> : <button className="btn primary" disabled={busy} aria-busy={busy}>{busy ? "Saving…" : "Save changes"}</button>}
             </div>
-          }
-        />
-        {team.team_photo && (
-          <div className="team-media-control">
-            <img
-              className="team-photo-preview"
-              src={team.team_photo}
-              alt="Current team photo"
-            />
-            <button
-              className="btn danger small"
-              type="button"
-              onClick={() => setRemovePhoto(true)}
-            >
-              {removePhoto ? "Photo will be removed" : "Remove team photo"}
-            </button>
           </div>
-        )}
-        <div className="form-actions">
-          <button className="btn primary" disabled={busy}>
-            {busy ? "Saving…" : "Save changes"}
-          </button>
         </div>
       </form>
     </section>
