@@ -10123,7 +10123,7 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .chat-thread>header{position:relative;z-index:2}
 
 /* Keep the message menu beside the bubble instead of behind the chat header. */
-.chat-message-menu{top:calc(100% + 8px)!important;bottom:auto!important;transform:none!important;right:auto!important;max-height:240px;overflow-y:auto}
+.chat-message-row .chat-message-menu{top:calc(100% + 8px)!important;bottom:auto!important;transform:none!important;right:auto!important;max-height:240px;overflow-y:auto}
 .chat-message-row.mine .chat-message-menu{right:0!important}
 .chat-message-row.theirs .chat-message-menu{left:0!important}
 .chat-message-row,.chat-message-row .chat-bubble-wrap{overflow:visible!important}
