@@ -10277,3 +10277,59 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
     margin-right: 5px !important;
   }
 }
+
+
+/* Final pre-registration dialog sizing: keep the public form compact and viewport-safe. */
+[data-slot="dialog-content"].registration-dialog {
+  position: fixed !important;
+  inset: 50% auto auto 50% !important;
+  transform: translate(-50%, -50%) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+  width: min(560px, calc(100vw - 32px)) !important;
+  max-width: calc(100vw - 32px) !important;
+  height: auto !important;
+  max-height: calc(100dvh - 32px) !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 24px !important;
+  overflow: hidden !important;
+}
+[data-slot="dialog-content"].registration-dialog > [data-slot="dialog-header"] {
+  flex: 0 0 auto !important;
+  margin-bottom: 18px !important;
+}
+[data-slot="dialog-content"].registration-dialog > .portal-form,
+[data-slot="dialog-content"].registration-dialog > .registration-success {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  align-content: start !important;
+  padding: 0 2px 4px !important;
+}
+[data-slot="dialog-content"].registration-dialog > .portal-form {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 16px !important;
+}
+[data-slot="dialog-content"].registration-dialog .form-actions {
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 1 !important;
+  margin-top: 2px !important;
+  padding-top: 16px !important;
+  background: var(--surface-3, #fff) !important;
+}
+[data-slot="dialog-content"].registration-dialog .registration-consent {
+  align-items: flex-start !important;
+}
+@media (max-width: 560px) {
+  [data-slot="dialog-content"].registration-dialog {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100dvh - 24px) !important;
+    padding: 20px !important;
+  }
+}
