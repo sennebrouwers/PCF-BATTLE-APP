@@ -10056,3 +10056,8 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .chat-actions-menu button{border:0;border-radius:7px;padding:9px 10px;background:transparent;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
 .chat-actions-menu button:hover{background:var(--surface-hover)}
 .chat-actions-menu .danger-action{color:#ef4444}
+
+
+/* Prevent the composer input from showing a second scrollbar */
+.chat-panel .chat-composer textarea{overflow:hidden!important;resize:none!important;scrollbar-width:none}
+.chat-panel .chat-composer textarea::-webkit-scrollbar{display:none}
