@@ -190,6 +190,16 @@ function rememberGet(path: string, data: unknown) {
   recentGetResponses.set(path, { expiresAt: Date.now() + GET_CACHE_MS, data });
 }
 
+function isAbortError(error: unknown) {
+  if (!error) return false;
+  const value = error as { name?: string; message?: string };
+  const message = String(value.message || error).toLowerCase();
+  return value.name === "AbortError" ||
+    message.includes("signal is aborted") ||
+    message.includes("aborted without reason") ||
+    message.includes("the operation was aborted");
+}
+
 function combineSignals(signal: AbortSignal | null | undefined, timeoutMs: number) {
   const timeoutController = new AbortController();
   const timer = window.setTimeout(() => timeoutController.abort(), timeoutMs);
@@ -1038,10 +1048,13 @@ function useData<T = Row[]>(path: string, refresh = 0, poll = false) {
           setData(value);
           setError("");
         })
-        .catch((e: Error) => {
-          if (currentRequest !== requestId.current) return;
-          setError(e.message);
-          toast.error(e.message);
+        .catch((e: unknown) => {
+          // Aborting an obsolete request is expected when navigation, refresh,
+          // polling, or a newer request replaces it. It is not a user-facing error.
+          if (currentRequest !== requestId.current || isAbortError(e)) return;
+          const message = e instanceof Error ? e.message : String(e);
+          setError(message);
+          toast.error(message);
         })
         .finally(() => {
           if (currentRequest === requestId.current) setLoading(false);
