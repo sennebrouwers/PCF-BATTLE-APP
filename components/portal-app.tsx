@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-import type { ChangeEvent, ReactNode } from "react";
+import type { ChangeEvent, KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import {
@@ -81,6 +81,24 @@ function useWizardQuestionFocus(step: number, active = true) {
     if (active && changed) ref.current?.focus();
   }, [step, active]);
   return ref;
+}
+function advanceWizardOnEnter(
+  event: ReactKeyboardEvent<HTMLFormElement>,
+  hasNextStep: boolean,
+) {
+  if (!hasNextStep || event.key !== "Enter" || event.nativeEvent.isComposing) return;
+  const target = event.target;
+  if (
+    target instanceof HTMLButtonElement ||
+    target instanceof HTMLTextAreaElement ||
+    (target instanceof HTMLInputElement && ["file", "button", "submit", "color"].includes(target.type))
+  ) return;
+  const nextButton = event.currentTarget.querySelector<HTMLButtonElement>(
+    ".wizard-footer-next .btn.primary",
+  );
+  if (!nextButton) return;
+  event.preventDefault();
+  if (!nextButton.disabled) nextButton.click();
 }
 type TeamOverviewPayload = Row & {
   matches?: Row[];
@@ -4586,7 +4604,7 @@ function Delegation({
         onOpenChange={(v) => !v && setEditing(undefined)}
         className="member-editor-dialog"
       >
-        <form ref={memberFormRef} noValidate className="portal-form wizard-form" onKeyDown={(event) => { const target = event.target; if (event.key === "Enter" && !event.nativeEvent.isComposing && target instanceof HTMLInputElement && ["text", "email", "tel", "url", "number", "date"].includes(target.type) && memberStep < (admin ? 7 : 6)) { event.preventDefault(); if (memberStepValid) setMemberStep((step) => step + 1); } }} onInput={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onChange={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
+        <form ref={memberFormRef} noValidate className="portal-form wizard-form" onKeyDown={(event) => advanceWizardOnEnter(event, memberStep < (admin ? 7 : 6))} onInput={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onChange={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
           <p className="wizard-subtitle">Add a new member to your team delegation.</p>
           <div className="wizard-topbar wizard-progress-bar" role="group" aria-label="Delegation member progress">
             {(admin ? ["Team","Full name","Date of birth","Member type","Photo","Notes","Consent"] : ["Full name","Date of birth","Member type","Photo","Notes","Consent"]).map((label, index) => { if ((!memberType && ["Playing role","Shirt number","Linked player","Classification"].includes(label)) || (memberType !== "PLAYER" && ["Playing role","Shirt number","Classification"].includes(label)) || (memberType !== "ASSISTANT" && label === "Linked player")) return null; return (
@@ -6943,7 +6961,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
               className="team-editor-dialog"
               description={editing?.id ? "Update the team details without going through the setup wizard." : "Create a new team for the tournament."}
             >
-              <form ref={wizardFormRef} noValidate={!editing?.id} className={editing?.id ? "portal-form team-wizard wizard-form team-edit-form" : "portal-form wizard-form team-wizard-shell"} onKeyDown={(event) => { const target = event.target; if (event.key === "Enter" && !event.nativeEvent.isComposing && target instanceof HTMLInputElement && ["text", "email", "tel", "url", "number", "date", "password"].includes(target.type) && teamStep < 9) { event.preventDefault(); if (stepValid) setTeamStep((step) => step + 1); } }} onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
+              <form ref={wizardFormRef} noValidate={!editing?.id} className={editing?.id ? "portal-form team-wizard wizard-form team-edit-form" : "portal-form wizard-form team-wizard-shell"} onKeyDown={(event) => advanceWizardOnEnter(event, !editing?.id && teamStep < 9)} onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
                 {editing?.id ? (
                   <div className="team-quick-edit">
                     <div className="team-edit-sections">
@@ -8379,7 +8397,7 @@ function TeamInfoV2({
       <div className="panelhead">
         <h3>Team information</h3>
       </div>
-      <form ref={wizardFormRef} noValidate className="portal-form wizard-form team-portal-info-wizard" onKeyDown={(event) => { const target = event.target; if (event.key === "Enter" && !event.nativeEvent.isComposing && target instanceof HTMLInputElement && ["text", "email", "tel", "url", "number", "date"].includes(target.type) && teamStep < teamSteps.length) { event.preventDefault(); if (stepValid) setTeamStep((step) => step + 1); } }} onInput={handleWizardInput} onChange={handleWizardInput} onSubmit={save}>
+      <form ref={wizardFormRef} noValidate className="portal-form wizard-form team-portal-info-wizard" onKeyDown={(event) => advanceWizardOnEnter(event, teamStep < teamSteps.length)} onInput={handleWizardInput} onChange={handleWizardInput} onSubmit={save}>
         <div className="wizard-topbar wizard-progress-bar" role="group" aria-label="Team information progress">
           {teamSteps.map((label, index) => (
             <button type="button" key={label} aria-current={teamStep === index + 1 ? "step" : undefined} disabled={index + 1 > teamStep + 1 || (index + 1 === teamStep + 1 && !stepValid)} className={teamStep === index + 1 ? "active" : teamStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= teamStep + 1 && (index + 1 <= teamStep || stepValid)) setTeamStep(index + 1); }}>
