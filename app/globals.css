@@ -1513,6 +1513,8 @@ header nav a:hover {
 .mvp-panel { display: grid; gap: 24px; }
 .mvp-heading { align-items: flex-start; }
 .mvp-heading h3 { margin: 4px 0 6px; }
+.wizard-question h3:focus,
+.mvp-heading h3:focus { outline: 2px solid var(--pink); outline-offset: 4px; border-radius: 3px; }
 .mvp-heading p { margin: 0; }
 .eyebrow { color: var(--pink); font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .mvp-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }

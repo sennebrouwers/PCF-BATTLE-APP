@@ -72,6 +72,16 @@ import { errorMessage } from "@/types/app";
 
 type Role = "admin" | "team" | "referee" | "scoreboard";
 type Row = Record<string, any>;
+function useWizardQuestionFocus(step: number, active = true) {
+  const ref = useRef<HTMLHeadingElement>(null);
+  const previous = useRef({ step, active: false });
+  useEffect(() => {
+    const changed = previous.current.step !== step || (active && !previous.current.active);
+    previous.current = { step, active };
+    if (active && changed) ref.current?.focus();
+  }, [step, active]);
+  return ref;
+}
 type TeamOverviewPayload = Row & {
   matches?: Row[];
   team?: Row;
@@ -4369,6 +4379,7 @@ function Delegation({
     [memberRevision, setMemberRevision] = useState(0);
   const saveLock = useRef(false);
   const memberFormRef = useRef<HTMLFormElement>(null);
+  const memberQuestionRef = useWizardQuestionFocus(memberStep, editing !== undefined);
   function readMemberStepValidity() {
     const form = memberFormRef.current;
     if (!form) return;
@@ -4575,11 +4586,11 @@ function Delegation({
         onOpenChange={(v) => !v && setEditing(undefined)}
         className="member-editor-dialog"
       >
-        <form ref={memberFormRef} className="portal-form wizard-form" onInput={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onChange={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
+        <form ref={memberFormRef} noValidate className="portal-form wizard-form" onKeyDown={(event) => { const target = event.target; if (event.key === "Enter" && !event.nativeEvent.isComposing && target instanceof HTMLInputElement && ["text", "email", "tel", "url", "number", "date"].includes(target.type) && memberStep < (admin ? 7 : 6)) { event.preventDefault(); if (memberStepValid) setMemberStep((step) => step + 1); } }} onInput={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onChange={() => { setMemberRevision((value) => value + 1); readMemberStepValidity(); }} onSubmit={save}>
           <p className="wizard-subtitle">Add a new member to your team delegation.</p>
-          <div className="wizard-topbar wizard-progress-bar" aria-label="Delegation member progress">
+          <div className="wizard-topbar wizard-progress-bar" role="group" aria-label="Delegation member progress">
             {(admin ? ["Team","Full name","Date of birth","Member type","Photo","Notes","Consent"] : ["Full name","Date of birth","Member type","Photo","Notes","Consent"]).map((label, index) => { if ((!memberType && ["Playing role","Shirt number","Linked player","Classification"].includes(label)) || (memberType !== "PLAYER" && ["Playing role","Shirt number","Classification"].includes(label)) || (memberType !== "ASSISTANT" && label === "Linked player")) return null; return (
-              <button type="button" key={label} disabled={index + 1 > memberStep + 1 || (index + 1 === memberStep + 1 && !memberStepValid)} className={memberStep === index + 1 ? "active" : memberStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= memberStep + 1 && (index + 1 !== 1 || admin) && (index + 1 <= memberStep || memberStepValid)) setMemberStep(index + 1); }}>
+              <button type="button" key={label} aria-current={memberStep === index + 1 ? "step" : undefined} disabled={index + 1 > memberStep + 1 || (index + 1 === memberStep + 1 && !memberStepValid)} className={memberStep === index + 1 ? "active" : memberStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= memberStep + 1 && (index + 1 !== 1 || admin) && (index + 1 <= memberStep || memberStepValid)) setMemberStep(index + 1); }}>
                 <span>{index + 1}</span>{label}
               </button>
             ); })}
@@ -4588,7 +4599,7 @@ function Delegation({
             <div className="wizard-content-inner">
               <div className="wizard-question">
                 <div className="wizard-question-icon"><UserRoundCog /></div>
-                <h3>{memberStep === (admin ? 1 : 1) ? (admin ? "Which team is this member joining?" : "What is their full name?") : memberStep === (admin ? 2 : 1) ? "What is their full name?" : memberStep === (admin ? 3 : 2) ? "What is their date of birth?" : memberStep === (admin ? 4 : 3) ? "What is their member type?" : "Add the relevant details"}</h3>
+                <h3 ref={memberQuestionRef} tabIndex={-1}>{memberStep === (admin ? 1 : 1) ? (admin ? "Which team is this member joining?" : "What is their full name?") : memberStep === (admin ? 2 : 1) ? "What is their full name?" : memberStep === (admin ? 3 : 2) ? "What is their date of birth?" : memberStep === (admin ? 4 : 3) ? "What is their member type?" : "Add the relevant details"}</h3>
                 <p>Enter the information for this team member.</p>
               </div>
               {admin && <div hidden={memberStep !== 1}><Field label="Team" name="team_id" children={<select name="team_id" defaultValue={editing?.team_id || (team === "all" ? "" : team)} required><option value="">Choose team</option>{teams.data.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select>} /></div>}
@@ -6750,6 +6761,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
     [wizardRevision, setWizardRevision] = useState(0),
     [stepValid, setStepValid] = useState(false);
   const wizardFormRef = useRef<HTMLFormElement>(null);
+  const teamWizardQuestionRef = useWizardQuestionFocus(teamStep, editing === null);
   function readStepValidity() {
     const form = wizardFormRef.current;
     if (!form) return;
@@ -6931,7 +6943,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
               className="team-editor-dialog"
               description={editing?.id ? "Update the team details without going through the setup wizard." : "Create a new team for the tournament."}
             >
-              <form ref={wizardFormRef} className={editing?.id ? "portal-form team-wizard wizard-form team-edit-form" : "portal-form wizard-form team-wizard-shell"} onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
+              <form ref={wizardFormRef} noValidate={!editing?.id} className={editing?.id ? "portal-form team-wizard wizard-form team-edit-form" : "portal-form wizard-form team-wizard-shell"} onKeyDown={(event) => { const target = event.target; if (event.key === "Enter" && !event.nativeEvent.isComposing && target instanceof HTMLInputElement && ["text", "email", "tel", "url", "number", "date", "password"].includes(target.type) && teamStep < 9) { event.preventDefault(); if (stepValid) setTeamStep((step) => step + 1); } }} onInput={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onChange={() => { setWizardRevision((value) => value + 1); readStepValidity(); }} onSubmit={save}>
                 {editing?.id ? (
                   <div className="team-quick-edit">
                     <div className="team-edit-sections">
@@ -6976,9 +6988,9 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                   </div>
                 ) : (
                   <>
-                <div className="wizard-topbar wizard-progress-bar" aria-label="Team creation progress">
+                <div className="wizard-topbar wizard-progress-bar" role="group" aria-label="Team creation progress">
                   {["Team name","Country","Team identity","Team photo","Contact details","Delegation","Invoice options","Login details","Review"].map((label, index) => (
-                    <button type="button" key={label} disabled={index + 1 > teamStep + 1 || (index + 1 === teamStep + 1 && !stepValid)} className={teamStep === index + 1 ? "active" : teamStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= teamStep + 1 && (index + 1 <= teamStep || stepValid)) setTeamStep(index + 1); }}>
+                    <button type="button" key={label} aria-current={teamStep === index + 1 ? "step" : undefined} disabled={index + 1 > teamStep + 1 || (index + 1 === teamStep + 1 && !stepValid)} className={teamStep === index + 1 ? "active" : teamStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= teamStep + 1 && (index + 1 <= teamStep || stepValid)) setTeamStep(index + 1); }}>
                       <span>{index + 1}</span>{label}
                     </button>
                   ))}
@@ -6987,7 +6999,7 @@ function TeamsAdminV2({ refresh }: { refresh: number }) {
                   <div className="wizard-content-inner">
                   <div className="wizard-question">
                     <div className="wizard-question-icon"><UserRoundCog /></div>
-                    <h3>{teamStep === 1 ? "What is the team name?" : teamStep === 2 ? "Where is the team from?" : teamStep === 3 ? "Add the team identity" : teamStep === 4 ? "Add a team photo" : teamStep === 5 ? "Who is the contact person?" : teamStep === 6 ? "How large is the delegation?" : teamStep === 7 ? "Does the team need an invoice?" : teamStep === 8 ? "Create the team login" : "Review and create the team"}</h3>
+                    <h3 ref={teamWizardQuestionRef} tabIndex={-1}>{teamStep === 1 ? "What is the team name?" : teamStep === 2 ? "Where is the team from?" : teamStep === 3 ? "Add the team identity" : teamStep === 4 ? "Add a team photo" : teamStep === 5 ? "Who is the contact person?" : teamStep === 6 ? "How large is the delegation?" : teamStep === 7 ? "Does the team need an invoice?" : teamStep === 8 ? "Create the team login" : "Review and create the team"}</h3>
                     <p>Enter the information for this team.</p>
                   </div>
                   <div hidden={teamStep !== 1}><Field label="Team name" name="name" defaultValue={editing?.name} required /></div>
@@ -8162,6 +8174,7 @@ function TeamInfoV2({
     [wizardRevision, setWizardRevision] = useState(0);
   const [reviewData, setReviewData] = useState<Record<string, string>>({});
   const wizardFormRef = useRef<HTMLFormElement>(null);
+  const teamInfoQuestionRef = useWizardQuestionFocus(teamStep, Boolean(team && !wizardComplete));
   const logoInputRef = useRef<HTMLInputElement>(null),
     photoInputRef = useRef<HTMLInputElement>(null);
   const teamSteps = [
@@ -8366,10 +8379,10 @@ function TeamInfoV2({
       <div className="panelhead">
         <h3>Team information</h3>
       </div>
-      <form ref={wizardFormRef} className="portal-form wizard-form team-portal-info-wizard" onInput={handleWizardInput} onChange={handleWizardInput} onSubmit={save}>
-        <div className="wizard-topbar wizard-progress-bar" aria-label="Team information progress">
+      <form ref={wizardFormRef} noValidate className="portal-form wizard-form team-portal-info-wizard" onKeyDown={(event) => { const target = event.target; if (event.key === "Enter" && !event.nativeEvent.isComposing && target instanceof HTMLInputElement && ["text", "email", "tel", "url", "number", "date"].includes(target.type) && teamStep < teamSteps.length) { event.preventDefault(); if (stepValid) setTeamStep((step) => step + 1); } }} onInput={handleWizardInput} onChange={handleWizardInput} onSubmit={save}>
+        <div className="wizard-topbar wizard-progress-bar" role="group" aria-label="Team information progress">
           {teamSteps.map((label, index) => (
-            <button type="button" key={label} disabled={index + 1 > teamStep + 1 || (index + 1 === teamStep + 1 && !stepValid)} className={teamStep === index + 1 ? "active" : teamStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= teamStep + 1 && (index + 1 <= teamStep || stepValid)) setTeamStep(index + 1); }}>
+            <button type="button" key={label} aria-current={teamStep === index + 1 ? "step" : undefined} disabled={index + 1 > teamStep + 1 || (index + 1 === teamStep + 1 && !stepValid)} className={teamStep === index + 1 ? "active" : teamStep > index + 1 ? "complete" : ""} onClick={() => { if (index + 1 <= teamStep + 1 && (index + 1 <= teamStep || stepValid)) setTeamStep(index + 1); }}>
               <span>{index + 1}</span>{label}
             </button>
           ))}
@@ -8378,7 +8391,7 @@ function TeamInfoV2({
           <div className="wizard-content-inner">
             <div className="wizard-question">
               <div className="wizard-question-icon"><UserRoundCog /></div>
-              <h3>{teamStep === 1 ? "What is the team name?" : teamStep === 2 ? "Where is the team from?" : teamStep === 3 ? "Update the team identity" : teamStep === 4 ? "Update the team photo" : teamStep === 5 ? "Who is the main team contact?" : teamStep === 6 ? "How large is the delegation?" : teamStep === 7 ? "Where is the team based?" : teamStep === 8 ? "Does the team need an invoice?" : "Review team information"}</h3>
+              <h3 ref={teamInfoQuestionRef} tabIndex={-1}>{teamStep === 1 ? "What is the team name?" : teamStep === 2 ? "Where is the team from?" : teamStep === 3 ? "Update the team identity" : teamStep === 4 ? "Update the team photo" : teamStep === 5 ? "Who is the main team contact?" : teamStep === 6 ? "How large is the delegation?" : teamStep === 7 ? "Where is the team based?" : teamStep === 8 ? "Does the team need an invoice?" : "Review team information"}</h3>
               <p>{teamStep === 7 ? "Address details are optional." : "Update your team details. You can move back and forth without losing your changes."}</p>
             </div>
             <div hidden={teamStep !== 1}>
@@ -8569,6 +8582,10 @@ function MvpVoting({
   const getCandidates = (category: string) =>
     candidates.filter((candidate) => candidate.category === category);
   const label = MVP_CATEGORIES[step]?.[1] || "Review your votes";
+  const mvpQuestionRef = useWizardQuestionFocus(
+    step,
+    !admin && Boolean(data.data.enabled) && !submitted,
+  );
   const submit = async () => {
     setBusy(true);
     try {
@@ -8767,7 +8784,7 @@ function MvpVoting({
       <section className="panel mvp-panel mvp-wizard">
         <div className="mvp-heading">
           <span className="eyebrow">Final review</span>
-          <h3>Ready to submit?</h3>
+          <h3 ref={mvpQuestionRef} tabIndex={-1}>Ready to submit?</h3>
           <p className="muted">
             Check your choices. You can go back to change any category before
             submitting.
@@ -8789,10 +8806,11 @@ function MvpVoting({
           })}
         </div>
         <div className="mvp-wizard-actions">
-          <button className="btn" onClick={() => setStep(step - 1)}>
+          <button type="button" className="btn" onClick={() => setStep(step - 1)}>
             Back
           </button>
           <button
+            type="button"
             className="btn primary"
             disabled={
               busy || Object.keys(answers).length !== MVP_CATEGORIES.length
@@ -8821,7 +8839,7 @@ function MvpVoting({
         <span className="eyebrow">
           Step {step + 1} of {MVP_CATEGORIES.length}
         </span>
-        <h3>{label}</h3>
+        <h3 ref={mvpQuestionRef} tabIndex={-1}>{label}</h3>
         <p className="muted">
           Select one candidate. Your vote will be submitted at the end.
         </p>
@@ -8851,11 +8869,12 @@ function MvpVoting({
       </div>
       <div className="mvp-wizard-actions">
         {step > 0 && (
-          <button className="btn" onClick={() => setStep(step - 1)}>
+          <button type="button" className="btn" onClick={() => setStep(step - 1)}>
             Back
           </button>
         )}
         <button
+          type="button"
           className="btn primary"
           disabled={!answers[MVP_CATEGORIES[step][0]]}
           onClick={() => setStep(step + 1)}
