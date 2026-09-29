@@ -10173,3 +10173,5 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 }
 
 .chat-message-line:has(.chat-quoted-reply){display:block!important}.chat-message-line:has(.chat-quoted-reply) .chat-inline-meta{float:right;margin-top:8px}
+
+.chat-hover-actions button[aria-label="More actions"]{pointer-events:auto!important;cursor:pointer!important;position:relative;z-index:25!important}
