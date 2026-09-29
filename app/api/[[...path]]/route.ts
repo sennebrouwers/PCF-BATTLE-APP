@@ -1711,6 +1711,7 @@ export async function GET(
     }
     if (path === "messages") {
       if (!u) return out({ error: "Unauthorized" }, 401);
+      await ensureMessagesSchema();
       const limit = Math.min(Math.max(Number(req.nextUrl.searchParams.get("limit") || 80), 1), 200);
       const before = req.nextUrl.searchParams.get("before");
       const query = String(req.nextUrl.searchParams.get("q") || "").trim();
@@ -2688,6 +2689,7 @@ export async function POST(
     }
     if (path === "messages") {
       if (!u) return out({ error: "Unauthorized" }, 401);
+      await ensureMessagesSchema();
       const recipient: any = await db()
         .prepare("SELECT id,email,name,role,active FROM users WHERE id=?")
         .bind(body.recipient_user_id)
