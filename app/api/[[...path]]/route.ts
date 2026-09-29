@@ -2703,7 +2703,12 @@ export async function POST(
           403,
         );
       const subject = String(body.subject || "Chat message").trim(),
-        message = String(body.body || "").trim();
+        message = String(body.body || "").trim(),
+        replyToMessageId = body.reply_to_message_id ? String(body.reply_to_message_id) : null;
+      if (replyToMessageId) {
+        const original: any = await db().prepare("SELECT id,sender_user_id,recipient_user_id FROM messages WHERE id=?").bind(replyToMessageId).first();
+        if (!original || ![original.sender_user_id, original.recipient_user_id].includes(u.id) || ![original.sender_user_id, original.recipient_user_id].includes(recipient.id)) return out({ error: "Reply target not found" }, 422);
+      }
       if (!message) return out({ error: "Message text is required" }, 422);
       const id = uuid();
       await db()
