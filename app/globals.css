@@ -10171,3 +10171,5 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--pink) 0%, transparent); }
   35% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--pink) 48%, transparent); }
 }
+
+.chat-message-line:has(.chat-quoted-reply){display:block!important}.chat-message-line:has(.chat-quoted-reply) .chat-inline-meta{float:right;margin-top:8px}
