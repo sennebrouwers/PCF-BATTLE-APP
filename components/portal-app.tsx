@@ -6536,8 +6536,7 @@ function Payments({ refresh }: { refresh: number }) {
         ]),
       ]
         .map((row) => row.map(cells).join(","))
-        .join("
-"),
+        .join("\n"),
       url = URL.createObjectURL(
         new Blob([csv], { type: "text/csv;charset=utf-8" }),
       ),
