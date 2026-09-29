@@ -10091,3 +10091,25 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 /* Prevent the composer input from showing a second scrollbar */
 .chat-panel .chat-composer textarea{overflow:hidden!important;resize:none!important;scrollbar-width:none}
 .chat-panel .chat-composer textarea::-webkit-scrollbar{display:none}
+
+/* Messenger bubble layout: natural width, inline timestamp, contextual actions. */
+.chat-history{align-items:stretch!important;gap:14px!important}
+.chat-message-row{width:100%;display:flex;align-items:center;min-width:0}
+.chat-message-row.mine{justify-content:flex-end}
+.chat-message-row.theirs{justify-content:flex-start}
+.chat-bubble-wrap{position:relative;display:flex;align-items:center;max-width:min(70%,760px);min-width:0}
+.chat-message-row.mine .chat-bubble-wrap{flex-direction:row-reverse}
+.chat-bubble{width:auto!important;max-width:100%!important;min-width:0;padding:13px 14px!important;border-radius:17px!important}
+.chat-message-line{display:flex;align-items:flex-end;gap:12px;min-width:0}
+.chat-message-line p{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.chat-inline-meta{align-self:flex-end;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;font-size:11px;line-height:1;padding-bottom:1px}
+.chat-message-row.mine .chat-bubble{background:var(--pink)!important;color:#fff!important}
+.chat-message-row.theirs .chat-bubble{background:var(--surface-hover)!important;color:var(--ink)!important}
+.chat-message-row.mine .chat-inline-meta{color:#ffe4f1}
+.chat-message-row.theirs .chat-inline-meta{color:var(--muted)}
+.chat-hover-actions{top:50%;opacity:0;pointer-events:none}
+.chat-message-row:hover .chat-hover-actions,.chat-message-row:focus-within .chat-hover-actions{opacity:1;pointer-events:auto}
+.chat-message-menu-trigger{flex:0 0 24px!important;width:24px!important;height:28px!important;border-radius:8px!important;background:#0000001c!important}
+.chat-message-menu-trigger:hover,.chat-message-menu-trigger[aria-expanded="true"]{background:#00000030!important}
+.chat-reaction-chips{margin-top:7px!important}
+@media(max-width:760px){.chat-bubble-wrap{max-width:86%}.chat-hover-actions{display:none}.chat-bubble{padding:11px 12px!important}.chat-message-line{gap:8px}.chat-inline-meta{font-size:10px}}
