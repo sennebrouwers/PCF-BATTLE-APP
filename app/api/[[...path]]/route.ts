@@ -229,6 +229,14 @@ async function ensureScheduleSchema() {
   })();
   try { await scheduleSchemaReady; } catch (error) { scheduleSchemaReady = null; throw error; }
 }
+async function ensureMessagesSchema() {
+  await db().prepare("CREATE INDEX IF NOT EXISTS idx_messages_reply_to ON messages(reply_to_message_id)").run().catch(async () => {
+    try { await db().prepare("ALTER TABLE messages ADD COLUMN reply_to_message_id text").run(); } catch (error: unknown) {
+      if (!/duplicate column|already exists/i.test(String(error instanceof Error ? error.message : error))) throw error;
+    }
+    await db().prepare("CREATE INDEX IF NOT EXISTS idx_messages_reply_to ON messages(reply_to_message_id)").run();
+  });
+}
 async function ensureContactsSchema() {
   if (contactsSchemaReady) return contactsSchemaReady;
   contactsSchemaReady = (async () => {
@@ -1713,7 +1721,7 @@ export async function GET(
       const rows = (
         await db()
           .prepare(
-            `SELECT m.*,su.name sender_name,su.role sender_role,ru.name recipient_name,ru.role recipient_role FROM messages m JOIN users su ON su.id=m.sender_user_id JOIN users ru ON ru.id=m.recipient_user_id WHERE ${filters.join(" AND ")} ORDER BY m.created_at DESC LIMIT ${limit}`,
+            `SELECT m.*,su.name sender_name,su.role sender_role,ru.name recipient_name,ru.role recipient_role,rs.name reply_sender_name,rm.body reply_body FROM messages m LEFT JOIN messages rm ON rm.id=m.reply_to_message_id LEFT JOIN users rs ON rs.id=rm.sender_user_id JOIN users su ON su.id=m.sender_user_id JOIN users ru ON ru.id=m.recipient_user_id WHERE ${filters.join(" AND ")} ORDER BY m.created_at DESC LIMIT ${limit}`,
           )
           .bind(...values)
           .all()
@@ -2698,9 +2706,9 @@ export async function POST(
       const id = uuid();
       await db()
         .prepare(
-          "INSERT INTO messages (id,sender_user_id,recipient_user_id,subject,body,read_at,deleted_by_sender,deleted_by_recipient,created_at) VALUES (?,?,?,?,?,?,?,?,?)",
+          "INSERT INTO messages (id,sender_user_id,recipient_user_id,subject,body,reply_to_message_id,read_at,deleted_by_sender,deleted_by_recipient,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
         )
-        .bind(id, u.id, recipient.id, subject, message, null, 0, 0, now())
+        .bind(id, u.id, recipient.id, subject, message, replyToMessageId, null, 0, 0, now())
         .run();
       const safe = (s: string) =>
         s.replace(
