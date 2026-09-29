@@ -10140,29 +10140,73 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   overscroll-behavior: contain;
   isolation: isolate;
 }
-.chat-quoted-reply {
-  display: grid;
-  gap: 2px;
-  width: 100%;
-  margin: 0 0 9px;
-  padding: 7px 9px;
-  border: 0;
-  border-left: 3px solid var(--pink);
-  border-radius: 7px;
-  background: color-mix(in srgb, currentColor 12%, transparent);
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
+.chat-bubble:has(.chat-quoted-reply) {
+  padding: 10px 12px !important;
 }
-.chat-quoted-reply b { font-size: .72rem; opacity: .85; }
-.chat-quoted-reply span {
+.chat-quoted-reply {
+  display: grid !important;
+  gap: 3px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 0 8px !important;
+  padding: 6px 9px !important;
+  border: 0 !important;
+  border-left: 3px solid var(--pink) !important;
+  border-radius: 8px !important;
+  background: color-mix(in srgb, var(--surface-3) 72%, transparent) !important;
+  color: inherit !important;
+  text-align: left !important;
+  cursor: pointer !important;
+}
+.chat-quoted-reply .chat-quoted-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  color: inherit;
+  font-size: .7rem;
+  font-weight: 700;
+  line-height: 1.2;
+  opacity: .9;
+}
+.chat-quoted-reply .chat-quoted-label svg {
+  flex: 0 0 auto;
+  color: var(--pink);
+}
+.chat-quoted-reply .chat-quoted-preview {
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  color: inherit;
   font-size: .76rem;
   line-height: 1.25;
-  opacity: .78;
+  opacity: .72;
+}
+.chat-message-line {
+  display: grid !important;
+  gap: 8px !important;
+  min-width: 0;
+}
+.chat-message-line:has(.chat-quoted-reply) {
+  display: grid !important;
+}
+.chat-message-text-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  min-width: 0;
+}
+.chat-message-text-row > p {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+.chat-message-text-row .chat-inline-meta {
+  flex: 0 0 auto;
+  float: none !important;
+  margin: 0 !important;
 }
 .chat-message-highlight .chat-bubble {
   animation: chat-reply-highlight 1.4s ease;
