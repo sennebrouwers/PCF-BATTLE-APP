@@ -6536,7 +6536,8 @@ function Payments({ refresh }: { refresh: number }) {
         ]),
       ]
         .map((row) => row.map(cells).join(","))
-        .join("\n"),
+        .join("
+"),
       url = URL.createObjectURL(
         new Blob([csv], { type: "text/csv;charset=utf-8" }),
       ),
@@ -7592,7 +7593,16 @@ function ChatPanel({ refresh }: { refresh: number }) {
   const [drafts, setDrafts] = useState<Record<string, string>>({}), [replyTo, setReplyTo] = useState<Row | null>(null), [messageMenu, setMessageMenu] = useState<string | null>(null), [menuPosition, setMenuPosition] = useState<{top:number;left:number}|null>(null), [highlightedMessage, setHighlightedMessage] = useState<string | null>(null), [reactionMenu, setReactionMenu] = useState<string | null>(null), [reactions, setReactions] = useState<Record<string, string[]>>({}), [editingMessage, setEditingMessage] = useState<Row | null>(null), [editText, setEditText] = useState(""), [emojiOpen, setEmojiOpen] = useState(false), [newOpen, setNewOpen] = useState(false), [actionsOpen, setActionsOpen] = useState(false), [attachment, setAttachment] = useState<File | null>(null);
   const historyRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null), attachmentRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {\n    const closePopovers = (event: PointerEvent) => {\n      const target = event.target as HTMLElement | null;\n      if (target?.closest(".chat-portal-menu,.chat-hover-actions,.chat-actions-wrap,.chat-composer,.chat-new-wrap")) return;\n      setMessageMenu(null); setReactionMenu(null); setActionsOpen(false); setNewOpen(false); setEmojiOpen(false); setMenuPosition(null);\n    };\n    document.addEventListener("pointerdown", closePopovers);\n    return () => document.removeEventListener("pointerdown", closePopovers);\n  }, []);\n  const all = (messages.data as Row[]) || [];
+  useEffect(() => {
+    const closePopovers = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest(".chat-portal-menu,.chat-hover-actions,.chat-actions-wrap,.chat-composer,.chat-new-wrap")) return;
+      setMessageMenu(null); setReactionMenu(null); setActionsOpen(false); setNewOpen(false); setEmojiOpen(false); setMenuPosition(null);
+    };
+    document.addEventListener("pointerdown", closePopovers);
+    return () => document.removeEventListener("pointerdown", closePopovers);
+  }, []);
+  const all = (messages.data as Row[]) || [];
   const conversationRecipients = recipients.data.filter((r: Row) => all.some((m: Row) => m.sender_user_id === r.id || m.recipient_user_id === r.id));
   const person = recipients.data.find((r: Row) => r.id === selected);
   const displayPerson = announcementMode ? { name: "Announcement to everyone", role: "ALL TEAMS AND REFEREES" } : person;
