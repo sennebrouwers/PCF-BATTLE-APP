@@ -10121,3 +10121,10 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .chat-message-menu,.chat-reaction-picker{z-index:1000!important}
 .chat-message-menu{isolation:isolate}
 .chat-thread>header{position:relative;z-index:2}
+
+/* Keep the message menu beside the bubble instead of behind the chat header. */
+.chat-message-menu{top:50%!important;bottom:auto!important;transform:translateY(-50%);right:auto!important}
+.chat-message-row.mine .chat-message-menu{right:calc(100% + 10px)!important}
+.chat-message-row.theirs .chat-message-menu{left:calc(100% + 10px)!important}
+.chat-message-row,.chat-message-row .chat-bubble-wrap{overflow:visible!important}
+.chat-history{overflow-y:auto;overflow-x:visible!important}
