@@ -10177,3 +10177,5 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .chat-hover-actions button[aria-label="More actions"]{pointer-events:auto!important;cursor:pointer!important;position:relative;z-index:25!important}
 
 .chat-portal-menu.chat-message-menu{display:grid!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important}
+
+.chat-portal-menu.chat-message-menu{position:fixed!important;top:auto;right:auto!important;bottom:auto!important;left:auto!important;transform:none!important;display:grid!important;min-width:190px!important;width:max-content!important;max-width:calc(100vw - 24px)!important;height:auto!important;max-height:280px!important;overflow-y:auto!important}
