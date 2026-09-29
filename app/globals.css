@@ -5167,7 +5167,7 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .chat-hover-actions{position:absolute;top:50%;display:flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--line);border-radius:10px;background:var(--surface-3);box-shadow:0 8px 20px #0003;opacity:0;pointer-events:none;transform:translateY(-50%);transition:opacity .15s ease}
 .chat-message-row.theirs .chat-hover-actions{right:-106px}
 .chat-message-row.mine .chat-hover-actions{left:-106px}
-.chat-message-row:hover .chat-hover-actions,.chat-message-row:focus-within .chat-hover-actions{opacity:1;pointer-events:auto}
+.chat-message-row:hover .chat-hover-actions{opacity:1;pointer-events:auto}
 .chat-hover-actions>button{display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:7px;background:transparent;color:var(--muted);cursor:pointer}
 .chat-hover-actions>button:hover{background:var(--surface-hover);color:var(--ink)}
 .chat-reaction-picker{position:absolute;bottom:calc(100% + 7px);left:0;display:flex;gap:2px;padding:5px;border:1px solid var(--line);border-radius:10px;background:var(--surface-3);box-shadow:0 8px 20px #0003}
@@ -10108,7 +10108,7 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .chat-message-row.mine .chat-inline-meta{color:#ffe4f1}
 .chat-message-row.theirs .chat-inline-meta{color:var(--muted)}
 .chat-hover-actions{top:50%;opacity:0;pointer-events:none}
-.chat-message-row:hover .chat-hover-actions,.chat-message-row:focus-within .chat-hover-actions{opacity:1;pointer-events:auto}
+.chat-message-row:hover .chat-hover-actions{opacity:1;pointer-events:auto}
 .chat-message-menu-trigger{flex:0 0 24px!important;width:24px!important;height:28px!important;border-radius:8px!important;background:#0000001c!important}
 .chat-message-menu-trigger:hover,.chat-message-menu-trigger[aria-expanded="true"]{background:#00000030!important}
 .chat-reaction-chips{margin-top:7px!important}
@@ -10175,3 +10175,5 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
 .chat-message-line:has(.chat-quoted-reply){display:block!important}.chat-message-line:has(.chat-quoted-reply) .chat-inline-meta{float:right;margin-top:8px}
 
 .chat-hover-actions button[aria-label="More actions"]{pointer-events:auto!important;cursor:pointer!important;position:relative;z-index:25!important}
+
+.chat-portal-menu.chat-message-menu{display:grid!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important}
