@@ -35,7 +35,13 @@ const groupColor = (value: string) => {
   return palette[n];
 };
 const placeholderNames: Record<string,string> = {"placeholder:KO:sf1:home":"1st Group A","placeholder:KO:sf1:away":"2nd Group B","placeholder:KO:sf2:home":"1st Group B","placeholder:KO:sf2:away":"2nd Group A","placeholder:KO:5a:home":"3rd Group A","placeholder:KO:5a:away":"4th Group B","placeholder:KO:5b:home":"3rd Group B","placeholder:KO:5b:away":"4th Group A","placeholder:KO:final:home":"Winner Semi-final 1","placeholder:KO:final:away":"Winner Semi-final 2","placeholder:KO:3rd:home":"Loser Semi-final 1","placeholder:KO:3rd:away":"Loser Semi-final 2","placeholder:KO:5th:home":"Winner Intermediate 1","placeholder:KO:5th:away":"Winner Intermediate 2","placeholder:KO:7th:home":"Loser Intermediate 1","placeholder:KO:7th:away":"Loser Intermediate 2"};
-export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
+export default function ScheduleWorkspace({
+  refresh,
+  onMatchesChanged,
+}: {
+  refresh: number;
+  onMatchesChanged?: () => Promise<unknown> | void;
+}) {
   const [items, setItems] = useState<Item[]>([]),
     [matches, setMatches] = useState<Match[]>([]),
     [teams, setTeams] = useState<Team[]>([]),
@@ -254,10 +260,14 @@ export default function ScheduleWorkspace({ refresh }: { refresh: number }) {
     URL.revokeObjectURL(link.href);
   }
   async function remove(item: Item) {
-    if (!confirm("Remove this schedule item?")) return;
+    const message = item.item_type === "match"
+      ? "Delete this match, including its score and events? This cannot be undone."
+      : "Remove this schedule item?";
+    if (!confirm(message)) return;
     try {
       await api(`/schedule_items/${item.id}`, { method: "DELETE" });
-      setItems((v) => v.filter((x) => x.id !== item.id));
+      await load();
+      if (item.item_type === "match") await onMatchesChanged?.();
       setStatus("Saved ✓");
     } catch (e: unknown) {
       setStatus(errorMessage(e));

@@ -56,7 +56,7 @@ const ScheduleWorkspaceLazy = lazy(() => import("@/components/schedule-workspace
 const BracketBuilderLazy = lazy(() => import("@/components/bracket-builder"));
 const GroupBuilderLazy = lazy(() => import("@/components/group-builder"));
 const lazyFallback = <div className="panel loading-state" aria-busy="true">Loading workspace…</div>;
-const ScheduleWorkspace = ({ refresh }: { refresh: number }) => <Suspense fallback={lazyFallback}><ScheduleWorkspaceLazy refresh={refresh} /></Suspense>;
+const ScheduleWorkspace = ({ refresh, onMatchesChanged }: { refresh: number; onMatchesChanged?: () => Promise<unknown> | void }) => <Suspense fallback={lazyFallback}><ScheduleWorkspaceLazy refresh={refresh} onMatchesChanged={onMatchesChanged} /></Suspense>;
 const BracketBuilder = ({ refresh }: { refresh: number }) => <Suspense fallback={lazyFallback}><BracketBuilderLazy refresh={refresh} /></Suspense>;
 const GroupBuilder = ({ refresh = 0 }: { refresh?: number }) => <Suspense fallback={lazyFallback}><GroupBuilderLazy refresh={refresh} /></Suspense>;
 import { toast, Toaster } from "sonner";
@@ -3520,7 +3520,7 @@ function LegacyMatchesAdmin({
             </button>
           </div>
           {view === "schedule" ? (
-            <ScheduleWorkspace refresh={refresh} />
+            <ScheduleWorkspace refresh={refresh} onMatchesChanged={matches.load} />
           ) : (
             <BracketBuilder refresh={refresh} />
           )}

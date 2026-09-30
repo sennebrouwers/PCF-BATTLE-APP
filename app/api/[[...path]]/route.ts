@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/turso-db";
 import { readBlob, writeBlob } from "@/lib/blob-storage";
+import { removeMatchAndScheduleItem } from "@/lib/match-deletion";
 
 const db = getDatabase;
 const now = () => new Date().toISOString();
@@ -1711,7 +1712,7 @@ export async function GET(
       const missing = (await db().prepare("SELECT m.id,m.match_date,m.start_time FROM matches m LEFT JOIN schedule_items si ON si.match_id=m.id AND si.active=1 WHERE m.tournament_id=? AND si.id IS NULL").bind(tournament.id).all()).results as any[];
       if (missing.length) {
         const max: any = await db().prepare("SELECT COALESCE(MAX(sort_order),-1) value FROM schedule_items WHERE tournament_id=?").bind(tournament.id).first();
-        for (const [index, match] of missing.entries()) await db().prepare("INSERT INTO schedule_items (id,tournament_id,item_type,match_id,match_date,start_time,duration_minutes,sort_order,active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)").bind(uuid(),tournament.id,"match",match.id,match.match_date||null,match.start_time||null,20,Number(max?.value||-1)+index+1,1,now(),now()).run();
+        for (const [index, match] of missing.entries()) await db().prepare("INSERT INTO schedule_items (id,tournament_id,item_type,match_id,match_date,start_time,duration_minutes,sort_order,active,created_at,updated_at) SELECT ?,?, 'match',m.id,m.match_date,m.start_time,20,?,1,?,? FROM matches m WHERE m.id=? AND m.tournament_id=? AND NOT EXISTS (SELECT 1 FROM schedule_items si WHERE si.match_id=m.id AND si.active=1)").bind(uuid(),tournament.id,Number(max?.value||-1)+index+1,now(),now(),match.id,tournament.id).run();
       }
       const items = (await db().prepare("SELECT si.*, CASE WHEN si.item_type='match' THEN COALESCE(m.match_date,si.match_date) ELSE si.match_date END AS match_date, CASE WHEN si.item_type='match' THEN COALESCE(m.start_time,si.start_time) ELSE si.start_time END AS start_time, CASE WHEN si.item_type='match' THEN COALESCE(m.court,si.court) ELSE si.court END AS court, m.home_team_id,m.away_team_id,m.group_id,m.status,m.confirmed FROM schedule_items si LEFT JOIN matches m ON m.id=si.match_id WHERE si.tournament_id=? AND si.active=1 ORDER BY si.sort_order,si.start_time,si.id").bind(tournament.id).all()).results;
       return out({ items });
@@ -3959,6 +3960,15 @@ export async function DELETE(
   const u = (await session(req)) as SessionUser,
     body: any = bodyResult.value;
   try {
+  if (parts[0] === "schedule_items" && rid) {
+    if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
+    await ensureScheduleSchema();
+    const result = await removeMatchAndScheduleItem(db(), undefined, rid);
+    if (result.notFound) return out({ error: "Schedule item not found" }, 404);
+    if (result.locked) return out({ error: "This match is confirmed and locked" }, 423);
+    await log(u, "DELETE", result.deletedMatch ? "matches" : "schedule_items", result.matchId || rid, { scheduleItemId: rid });
+    return out({ ok: true, deletedMatch: result.deletedMatch });
+  }
   if (parts[0] === "tournaments" && rid) {
     if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
     const tournament: any = await db().prepare("SELECT id,name,active FROM tournaments WHERE id=?").bind(rid).first();
@@ -4086,14 +4096,13 @@ export async function DELETE(
     if (member?.team_id !== u.teamId) return out({ error: "Forbidden" }, 403);
   } else if (u.role !== "ADMIN") return out({ error: "Forbidden" }, 403);
   if (table === "matches") {
-    const locked: any = await db().prepare("SELECT confirmed FROM matches WHERE id=?").bind(rid).first();
-    if (locked?.confirmed) return out({ error: "This match is confirmed and locked" }, 423);
+    await ensureScheduleSchema();
+    const result = await removeMatchAndScheduleItem(db(), rid);
+    if (result.notFound) return out({ error: "Match not found" }, 404);
+    if (result.locked) return out({ error: "This match is confirmed and locked" }, 423);
+    await log(u, "DELETE", table, rid);
+    return out({ ok: true });
   }
-  if (table === "matches")
-    await db()
-      .prepare("DELETE FROM goal_events WHERE match_id=?")
-      .bind(rid)
-      .run();
   if (table === "rooms") {
     const assigned: any = await db().prepare("SELECT COUNT(*) c FROM room_assignments WHERE room_id=?").bind(rid).first();
     if (Number(assigned?.c || 0) > 0) return out({ error: "Remove all people from this room before deleting it" }, 409);

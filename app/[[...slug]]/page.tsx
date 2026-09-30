@@ -869,9 +869,11 @@ function DynamicLanding() {
             </h1>
             <TournamentHeroDetails tournament={tournament} />
             <p>
-              {registrationsOpen
+              {registration
                 ? localized(tournament.public_message, language) ||
-                  "Team registration is currently open. Tournament details will be published soon."
+                  (registrationsOpen
+                    ? "Team registration is currently open. Tournament details will be published soon."
+                    : copy.registrationClosed)
                 : copy.followTournament}
             </p>
             {registration && (

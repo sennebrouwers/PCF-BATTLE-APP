@@ -5,6 +5,8 @@ import test from "node:test";
 const api = await readFile(new URL("../app/api/[[...path]]/route.ts", import.meta.url), "utf8");
 const page = await readFile(new URL("../app/[[...slug]]/page.tsx", import.meta.url), "utf8");
 const portal = await readFile(new URL("../components/portal-app.tsx", import.meta.url), "utf8");
+const scheduleWorkspace = await readFile(new URL("../components/schedule-workspace.tsx", import.meta.url), "utf8");
+const matchDeletion = await readFile(new URL("../lib/match-deletion.ts", import.meta.url), "utf8");
 const publicHeader = await readFile(new URL("../components/public-header.tsx", import.meta.url), "utf8");
 const scoreboard = await readFile(new URL("../components/scoreboard-display.tsx", import.meta.url), "utf8");
 const securityRunbook = await readFile(new URL("../SECURITY.md", import.meta.url), "utf8");
@@ -202,4 +204,24 @@ test("provides a protected synchronized scoreboard control and TV display", () =
   assert.doesNotMatch(scoreboard, /Latest goal/);
   assert.doesNotMatch(scoreboard, />HOME</);
   assert.doesNotMatch(scoreboard, />AWAY</);
+});
+
+
+test("shows the configured registration message whenever the registration phase is active", () => {
+  assert.match(page, /\{registration\s*\?\s*localized\(tournament\.public_message, language\)/);
+  assert.match(page, /copy\.registrationClosed/);
+  assert.match(portal, /label="Registration message"/);
+});
+
+test("deleting a scheduled match removes its source match and related records atomically", () => {
+  assert.match(api, /from "@\/lib\/match-deletion"/);
+  assert.match(api, /removeMatchAndScheduleItem\(db\(\), undefined, rid\)/);
+  assert.match(matchDeletion, /database\.transaction\(async \(transaction\)/);
+  assert.match(matchDeletion, /DELETE FROM schedule_items WHERE match_id=\?/);
+  assert.match(matchDeletion, /DELETE FROM goal_events WHERE match_id=\?/);
+  assert.match(matchDeletion, /DELETE FROM match_events WHERE match_id=\?/);
+  assert.match(matchDeletion, /DELETE FROM matches WHERE id=\? AND confirmed=0/);
+  assert.match(api, /parts\[0\] === "schedule_items" && rid/);
+  assert.match(api, /INSERT INTO schedule_items[\s\S]*SELECT \?,\?, 'match',m\.id[\s\S]*NOT EXISTS \(SELECT 1 FROM schedule_items si WHERE si\.match_id=m\.id AND si\.active=1\)/);
+  assert.match(scheduleWorkspace, /Delete this match, including its score and events/);
 });
