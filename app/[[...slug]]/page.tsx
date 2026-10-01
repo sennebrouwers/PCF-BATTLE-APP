@@ -994,7 +994,7 @@ function DynamicLanding() {
         </section>
         <PublicFooter />
       </main>
-      {!registration && <Chat />}
+      <Chat />
       <ConnectionStatus updatedAt={d.updatedAt} />
       <Toaster richColors />
     </>

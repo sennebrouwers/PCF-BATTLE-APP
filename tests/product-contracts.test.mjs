@@ -85,6 +85,12 @@ test("requires terms acceptance for public pre-registration", () => {
   assert.match(api, /body\.terms_accepted !== true/);
 });
 
+test("keeps the public tournament assistant visible on the home page during registration", () => {
+  const landing = page.slice(page.indexOf("function DynamicLanding()"), page.indexOf("function DynamicStandings"));
+  assert.match(landing, /<Chat \/>/);
+  assert.doesNotMatch(landing, /!registration\s*&&\s*<Chat/);
+});
+
 test("keeps registration identity and invite redemption atomic", () => {
   assert.match(api, /idx_preregistrations_tournament_email_normalized ON preregistrations\(tournament_id,lower\(email\)\)/);
   assert.match(api, /isRateLimited\("preregister", req, 10/);
