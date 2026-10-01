@@ -3,6 +3,8 @@ import { getDatabase } from "@/lib/turso-db";
 import { deleteBlob, readBlob, writeBlob } from "@/lib/blob-storage";
 import { removeMatchAndScheduleItem } from "@/lib/match-deletion";
 import { deliverEmail } from "@/lib/email-delivery";
+import { answerTournamentQuestion, calculateGroupStandings, parseAiKnowledge } from "@/lib/tournament-assistant";
+import { getPublicFaq } from "@/lib/public-faq";
 
 const db = getDatabase;
 const now = () => new Date().toISOString();
@@ -3164,48 +3166,56 @@ export async function POST(
       return out({ id }, 201);
     }
     if (path === "chat") {
-      const question = String(body.message || "").trim(),
-        q = question.toLowerCase(),
-        language = "en",
-        t: any = (await list("tournaments", "WHERE active=1 LIMIT 1"))[0] || {};
-      if (q.includes("standing") || q.includes("stand"))
-        return out({
-          answer: `Current leader: ${(await standings())[0]?.name || "not decided yet"}.`,
-        });
-      if (q.includes("live"))
-        return out({
-          answer:
-            t.live_enabled === 0
-              ? "Live match coverage is currently disabled."
-              : `${(await list("matches", "WHERE status='live'")).length} match is live now.`,
-        });
-      const facts = [
-        t.start_date && `Tournament dates: ${t.start_date}${t.end_date ? ` to ${t.end_date}` : ""}`,
-        (t.city || t.country) && `Location: ${[t.city, t.country].filter(Boolean).join(", ")}`,
-        t.opening_hours,
-        t.hotel_name && `Hotel: ${t.hotel_name}, ${t.hotel_address || ""}`,
-        t.venue_name && `Venue: ${t.venue_name}, ${t.venue_address || ""}`,
-        t.parking_info,
-        t.accessibility_info,
-        t.catering_info,
-        t.award_info,
-        t.visitor_info,
-        t.chatbot_knowledge,
-      ]
-        .filter(Boolean)
-        .join("\n");
-      const words = q.split(/\W+/).filter((w: string) => w.length > 3),
-        lines = facts.split(/\n+/).filter(Boolean),
-        match = lines.find((line: string) =>
-          words.some((w: string) => line.toLowerCase().includes(w)),
-        );
-      return out({
-        answer:
-          match ||
-          (q.includes("rule") || q.includes("regel")
-            ? "Win 3, draw 1, loss 0. Ties use goal difference, then goals for."
-            : "I could not find that in the tournament information yet. Please contact the organisation at hello@pcfbattle.be for further assistance."),
-      });
+      const question = String(body.message || "").trim().slice(0, 500);
+      if (!question) return out({ error: "Enter a question" }, 422);
+      await ensureScheduleSchema();
+      const t: any = await db().prepare("SELECT * FROM tournaments WHERE active=1 LIMIT 1").first() || {};
+      const tournamentId = String(t.id || "");
+      if (!tournamentId) return out({ answer: "Tournament information is not available yet. Please contact hello@pcfbattle.be." });
+      const [teams, matches, schedule] = await Promise.all([
+        db().prepare("SELECT id,name,group_id FROM teams ORDER BY name").all().then((result: any) => result.results as any[]),
+        db().prepare("SELECT m.id,m.home_team_id,m.away_team_id,m.home_score,m.away_score,m.status,m.confirmed,m.match_date,m.start_time,m.group_id,COALESCE(si.match_date,m.match_date) scheduled_date,COALESCE(si.start_time,m.start_time) scheduled_time,home.name home_name,away.name away_name FROM matches m LEFT JOIN teams home ON home.id=m.home_team_id LEFT JOIN teams away ON away.id=m.away_team_id LEFT JOIN schedule_items si ON si.match_id=m.id AND si.active=1 WHERE m.tournament_id=? ORDER BY COALESCE(si.match_date,m.match_date),COALESCE(si.start_time,m.start_time),m.id").bind(tournamentId).all().then((result: any) => result.results as any[]),
+        db().prepare("SELECT id,item_type,match_id,label,match_date,start_time,duration_minutes,court FROM schedule_items WHERE tournament_id=? AND active=1 ORDER BY sort_order,match_date,start_time,id").bind(tournamentId).all().then((result: any) => result.results as any[]),
+      ]);
+      const withSchedule = matches.map((match) => ({ ...match, match_date: match.scheduled_date, start_time: match.scheduled_time }));
+      const groupA = calculateGroupStandings(teams, withSchedule, "A");
+      const groupB = calculateGroupStandings(teams, withSchedule, "B");
+      const wantsScorers = /top scorer|top goalscorer|most goals|scorer|goalscorer|doelpuntenmaker|topschutter/i.test(question);
+      const wantsPlayers = /player|roster|squad|speler|spelers|selectie|who plays|who is on/i.test(question);
+      const wantsClassification = /classification|classified|class points|classificatie/i.test(question);
+      const wantsMvp = /mvp|most valuable|voting|vote|stemmen|stemming/i.test(question);
+      if (wantsScorers || wantsPlayers) await ensureConsentSchema();
+      const scorers: any[] = wantsScorers
+        ? (await db().prepare("SELECT dm.name player_name,t.name team_name,COUNT(ge.id) goals FROM goal_events ge JOIN delegation_members dm ON dm.id=ge.player_id JOIN teams t ON t.id=ge.team_id JOIN matches m ON m.id=ge.match_id WHERE m.tournament_id=? AND m.status IN ('live','finished') AND dm.privacy_consent=1 GROUP BY dm.id,dm.name,t.id,t.name ORDER BY goals DESC,dm.name ASC LIMIT 10").bind(tournamentId).all()).results as any[]
+        : [];
+      const players: any[] = wantsPlayers
+        ? (await db().prepare("SELECT dm.name,dm.number,dm.team_id,t.name team_name FROM delegation_members dm JOIN teams t ON t.id=dm.team_id WHERE dm.member_type='PLAYER' AND dm.privacy_consent=1 ORDER BY t.name,dm.number,dm.name LIMIT 100").all()).results as any[]
+        : [];
+      const ownClassifications: any[] = wantsClassification && u?.role === "TEAM" && u.teamId
+        ? (await db().prepare("SELECT name,player_role,classification_points FROM delegation_members WHERE team_id=? AND member_type='PLAYER' ORDER BY number,name").bind(String(u.teamId)).all()).results as any[]
+        : [];
+      let mvpEnabled: boolean | null = null;
+      if (wantsMvp) {
+        await ensureMvpSchema();
+        const mvp: any = await db().prepare("SELECT enabled FROM mvp_settings WHERE tournament_id=?").bind(tournamentId).first();
+        mvpEnabled = mvp ? Number(mvp.enabled) === 1 : null;
+      }
+      const language = body.language === "nl" ? "nl" : "en";
+      return out({ answer: answerTournamentQuestion(question, {
+        tournament: t,
+        teams,
+        matches: withSchedule,
+        schedule,
+        groups: { A: groupA, B: groupB },
+        knowledge: parseAiKnowledge(t.chatbot_knowledge),
+        scorers,
+        players,
+        ownClassifications,
+        mvpEnabled,
+        faqs: getPublicFaq(t, teams.length, language),
+        language,
+        ownTeamId: u?.role === "TEAM" ? String(u.teamId || "") : null,
+      }) });
     }
     if (path === "messages") {
       if (!u) return out({ error: "Unauthorized" }, 401);
@@ -4032,6 +4042,29 @@ export async function PUT(
       if (body[field] === undefined) continue;
       body[field] = String(body[field] ?? "").trim();
       if (body[field].length > limit) return out({ error: `${field.replaceAll("_", " ")} must be ${limit} characters or fewer` }, 422);
+    }
+    if (body.chatbot_knowledge !== undefined) {
+      const rawKnowledge = String(body.chatbot_knowledge ?? "").trim();
+      if (rawKnowledge.length > 180_000) return out({ error: "AI Knowledge must be 180 KB or smaller" }, 422);
+      if (rawKnowledge.startsWith("[")) {
+        let entries: unknown;
+        try { entries = JSON.parse(rawKnowledge); } catch { return out({ error: "AI Knowledge must be valid JSON" }, 422); }
+        if (!Array.isArray(entries) || entries.length > 40) return out({ error: "Add no more than 40 AI Knowledge entries" }, 422);
+        const cleanEntries: { title: string; content: string }[] = [];
+        for (const entry of entries) {
+          if (!entry || typeof entry !== "object") return out({ error: "Each AI Knowledge entry needs a title and information" }, 422);
+          const title = String((entry as any).title || "").trim();
+          const content = String((entry as any).content || "").trim();
+          if (!title || title.length > 120 || !content || content.length > 4000)
+            return out({ error: "Each AI Knowledge entry needs a title (up to 120 characters) and information (up to 4,000 characters)" }, 422);
+          cleanEntries.push({ title, content });
+        }
+        body.chatbot_knowledge = JSON.stringify(cleanEntries);
+      } else {
+        // Accept the prior free-text field until an administrator opens and saves it.
+        if (rawKnowledge.length > 20_000) return out({ error: "Existing AI Knowledge must be 20,000 characters or fewer" }, 422);
+        body.chatbot_knowledge = rawKnowledge;
+      }
     }
   }
   if (table === "matches") body.court = "Court 1";

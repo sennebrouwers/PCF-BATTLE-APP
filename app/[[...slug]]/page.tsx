@@ -7,7 +7,6 @@ import {
   Accessibility,
   ArrowDown,
   ArrowRight,
-  Bot,
   CalendarDays,
   ChevronRight,
   Clock3,
@@ -15,7 +14,6 @@ import {
   Hotel,
   Info,
   MapPin,
-  MessageCircle,
   ParkingCircle,
   Plus,
   Star,
@@ -23,7 +21,6 @@ import {
   Trophy,
   Utensils,
   Users,
-  X,
   Zap,
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
@@ -40,6 +37,7 @@ import type { Match, PublicBracketData, PublicData, PublicLink, PublicScorer, Re
 import { errorMessage } from "@/types/app";
 import { getPageMetadata } from "@/lib/page-metadata";
 import { PUBLIC_CONTACT_EMAIL } from "@/lib/public-organization";
+import { getPublicFaq } from "@/lib/public-faq";
 const PortalApp = lazy(() => import("@/components/portal-app"));
 const Gallery = lazy(() => import("@/components/gallery"));
 const ScoreboardDisplay = lazy(() => import("@/components/scoreboard-display"));
@@ -102,79 +100,6 @@ function LiveClock({ match }: { match: Match }) {
       ? Math.max(0, base - Math.floor((now - new Date(String(match.clock_started_at)).getTime()) / 1000))
       : base;
   return <>{`${Math.floor(left / 60).toString().padStart(2, "0")}:${(left % 60).toString().padStart(2, "0")}`}</>;
-}
-function Chat() {
-  const { language } = usePublicLanguage();
-  const copy = publicCopy[language];
-  const [open, setOpen] = useState(false),
-    [text, setText] = useState("");
-  const [msgs, setMsgs] = useState<string[]>([
-    language === "nl"
-      ? "Hallo! Stel me een vraag over livewedstrijden, het wedstrijdschema, de stand of de regels."
-      : "Hi! Ask me about live matches, standings, the schedule or rules.",
-  ]);
-  async function send(q = text) {
-    if (!q) return;
-    setMsgs((v) => [...v, q]);
-    setText("");
-    try {
-      const out = await api("/chat", {
-        method: "POST",
-        body: JSON.stringify({ message: q, language }),
-      });
-      setMsgs((v) => [...v, out.answer]);
-    } catch {
-      setMsgs((v) => [
-        ...v,
-        language === "nl"
-          ? `Ik kan de toernooiinformatie momenteel niet ophalen. Neem contact op met de organisatie via ${PUBLIC_CONTACT_EMAIL}.`
-          : `I couldn’t reach the tournament data. Please contact the organisation at ${PUBLIC_CONTACT_EMAIL} for further assistance.`,
-      ]);
-    }
-  }
-  return (
-    <>
-      <button className="chatfab" onClick={() => setOpen(!open)} aria-label={open ? "Close tournament assistant" : "Open tournament assistant"}>
-        {open ? <X /> : <MessageCircle />}
-      </button>
-      {open && (
-        <aside className="chat">
-          <div>
-            <Bot /> {copy.tournamentAssistant} <small>{copy.liveData}</small>
-          </div>
-          <section>
-            {msgs.map((x, i) => (
-              <p className={i % 2 ? "you" : "bot"} key={i}>
-                {x}
-              </p>
-            ))}
-          </section>
-          <nav>
-              <button onClick={() => send("Live matches")}>{copy.liveMatches}</button>
-              <button onClick={() => send("Standings")}>{copy.standings}</button>
-          </nav>
-          <form
-            toolname="ask_tournament_assistant"
-            tooldescription="Ask the PCF BATTLE tournament assistant for public information about matches, standings, and schedules."
-            onSubmit={(e) => {
-              e.preventDefault();
-              send();
-            }}
-          >
-            <input
-              name="question"
-              toolparamdescription="The visitor's question about the tournament."
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder={`${copy.question}…`}
-              aria-label={copy.question}
-            />
-            <button>{copy.send}</button>
-          </form>
-        </aside>
-      )}
-    </>
-  );
 }
 function Login() {
   const [email, setEmail] = useState(""),
@@ -1004,7 +929,7 @@ function DynamicLanding() {
         </section>
         <PublicFooter />
       </main>
-      <Chat />
+      <DeferredPublicChat />
       <ConnectionStatus updatedAt={d.updatedAt} />
       <Toaster richColors />
     </>
@@ -1402,7 +1327,7 @@ function DynamicPublic({ view }: { view: string }) {
           )}
       </main>
       <PublicFooter />
-      <Chat />
+      <DeferredPublicChat />
       <ConnectionStatus updatedAt={d.updatedAt} />
     </>
   );
@@ -1675,60 +1600,22 @@ function Contact() {
 }
 
 function FAQ() {
-  type FaqGroup = [string, string[][]];
   const { language } = usePublicLanguage(), copy = publicCopy[language],
     [openQuestion, setOpenQuestion] = useState<string | null>(null),
     d = usePublicData(),
     t = d.tournaments.find((x: any) => x.active) || d.tournaments[0] || {},
-    groups: FaqGroup[] = [
-      [language === "nl" ? "Over PCF BATTLE" : "About PCF BATTLE", [
-        ["What is PCF BATTLE?", "PCF BATTLE is an international powerchair floorball tournament bringing teams together for competitive matches in an energetic tournament environment."],
-        ["What is powerchair floorball?", "Powerchair floorball is a fast-paced, inclusive team sport played by athletes using electric wheelchairs. Players compete with floorball sticks attached to their wheelchairs or held in their hands, combining tactical teamwork, precision, and speed."],
-      ]],
-      [language === "nl" ? "Toernooi & bezoekers" : "Tournament & Spectators", [
-        ["When and where does PCF BATTLE take place?", `The tournament takes place from ${t.start_date || "the published tournament dates"}${t.end_date ? ` to ${t.end_date}` : ""} at ${[t.venue_name, t.venue_address].filter(Boolean).join(", ") || "the published tournament venue"}. More practical information is available on the Practical Information page.`],
-        ["Which teams are participating?", `All confirmed teams are listed in the Participating Teams section of the website. ${d.teams.length ? `${d.teams.length} teams are currently published.` : "The team list will be updated as teams are confirmed."}`],
-        ["Where can I find the match schedule?", "The complete tournament schedule is available in the Tournament section. Match times and other information can be updated during the tournament."],
-        ["Where can I see the results and standings?", "Results, group standings, and tournament brackets are updated on the website throughout PCF BATTLE."],
-        ["Is PCF BATTLE open to spectators?", "Yes. Spectators are welcome to come and experience powerchair floorball live. Please check the Practical Information page for venue and visitor details."],
-        ["Is the venue wheelchair accessible?", t.accessibility_info || "Accessibility information is available on the Practical Information page. Please contact the organization in advance if you have specific accessibility requirements."],
-        ["Will the matches be livestreamed?", t.show_livestream === 1 ? "Yes. When livestreaming is available, the link is published on the Livestream page and shared through the PCF BATTLE social media channels." : "Livestream information will be published on the website when it is available."],
-      ]],
-      [language === "nl" ? "Teams & registratie" : "Teams & Registration", [
-        ["Where can teams find their tournament information?", "Participating teams receive access to their personal Team Portal, where they can submit and manage the information required by the tournament organization."],
-        ["How can my team participate in PCF BATTLE?", "When registrations are open, teams can submit their registration through the PCF BATTLE website. Registration does not automatically guarantee selection for the tournament."],
-        ["How will we know if our team has been selected?", "Selected teams receive an official confirmation by email. They will later receive a separate invitation to access their Team Portal."],
-        ["Can I follow PCF BATTLE on social media?", "Yes. Follow PCF BATTLE on Instagram for tournament announcements, participating teams, behind-the-scenes content, results, and other updates."],
-        ["Who can I contact if I have a question?", "Use the Contact page to email the organisation or find PCF BATTLE on social media."],
-      ]],
-    ];
-  const faqNl: Record<string, [string, string]> = {
-    "What is PCF BATTLE?": ["Wat is PCF BATTLE?", "PCF BATTLE is een internationaal powerchair floorballtoernooi dat teams samenbrengt voor competitieve wedstrijden in een dynamische toernooisfeer."],
-    "What is powerchair floorball?": ["Wat is powerchair floorball?", "Powerchair floorball is een snelle, inclusieve teamsport voor sporters die een elektrische rolstoel gebruiken. Spelers nemen deel met floorballsticks die aan hun rolstoel zijn bevestigd of die ze in hun handen houden. De sport combineert tactisch samenspel, precisie en snelheid."],
-    "When and where does PCF BATTLE take place?": ["Wanneer en waar vindt PCF BATTLE plaats?", `Het toernooi vindt plaats van ${String(t.start_date || "de gepubliceerde toernooidata")}${t.end_date ? ` tot ${String(t.end_date)}` : ""} in ${[t.venue_name, t.venue_address].filter(Boolean).map(String).join(", ") || "de gepubliceerde toernooilocatie"}. Meer praktische informatie vind je op de pagina Praktische informatie.`],
-    "Which teams are participating?": ["Welke teams nemen deel?", `Alle bevestigde teams staan vermeld bij Deelnemende teams op de website. ${d.teams.length ? `Momenteel zijn er ${d.teams.length} teams gepubliceerd.` : "De lijst wordt bijgewerkt zodra teams bevestigd zijn."}`],
-    "Where can I find the match schedule?": ["Waar vind ik het wedstrijdschema?", "Het volledige wedstrijdschema staat in het onderdeel Toernooi. Wedstrijdtijden en andere informatie kunnen tijdens het toernooi worden aangepast."],
-    "Where can I see the results and standings?": ["Waar kan ik de resultaten en stand bekijken?", "Resultaten, groepsstanden en het toernooischema worden tijdens PCF BATTLE op de website bijgewerkt."],
-    "Is PCF BATTLE open to spectators?": ["Is PCF BATTLE toegankelijk voor toeschouwers?", "Ja. Toeschouwers zijn welkom om powerchair floorball live te beleven. Bekijk de pagina Praktische informatie voor informatie over de locatie en bezoekers."],
-    "Is the venue wheelchair accessible?": ["Is de locatie toegankelijk voor rolstoelgebruikers?", t.accessibility_info || "Informatie over toegankelijkheid vind je op de pagina Praktische informatie. Neem vooraf contact op met de organisatie als je specifieke toegankelijkheidsbehoeften hebt."],
-    "Will the matches be livestreamed?": ["Worden de wedstrijden gestreamd?", t.show_livestream === 1 ? "Ja. Wanneer livestreaming beschikbaar is, wordt de link op de Livestreampagina gepubliceerd en gedeeld via de sociale mediakanalen van PCF BATTLE." : "Informatie over de livestream wordt op de website gepubliceerd zodra die beschikbaar is."],
-    "Where can teams find their tournament information?": ["Waar vinden teams hun toernooi-informatie?", "Deelnemende teams krijgen toegang tot hun persoonlijke Team Portal. Daar kunnen ze de informatie die de toernooiorganisatie nodig heeft indienen en beheren."],
-    "How can my team participate in PCF BATTLE?": ["Hoe kan mijn team deelnemen aan PCF BATTLE?", "Wanneer de inschrijvingen geopend zijn, kunnen teams zich via de PCF BATTLE-website registreren. Een registratie garandeert niet automatisch dat een team geselecteerd wordt."],
-    "How will we know if our team has been selected?": ["Hoe weten we of ons team geselecteerd is?", "Geselecteerde teams ontvangen een officiële bevestiging per e-mail. Later ontvangen ze een aparte uitnodiging voor hun Team Portal."],
-    "Can I follow PCF BATTLE on social media?": ["Kan ik PCF BATTLE volgen op sociale media?", "Ja. Volg PCF BATTLE op Instagram voor aankondigingen, deelnemende teams, beelden achter de schermen, resultaten en andere updates."],
-    "Who can I contact if I have a question?": ["Met wie kan ik contact opnemen als ik een vraag heb?", "Gebruik de Contactpagina om de organisatie te mailen of PCF BATTLE op sociale media te vinden."],
-  };
+    groups = getPublicFaq(t, d.teams.length, language === "nl" ? "nl" : "en");
   return <>
     <PublicHeader settings={t} currentPath="/faq" loading={!d.ready} />
     <main className="public faq-page">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org", "@type": "FAQPage",
-        mainEntity: groups.flatMap(([, questions]) => (questions as string[][]).map(([question, answer]) => ({ "@type": "Question", name: language === "nl" ? (faqNl[question]?.[0] || question) : question, acceptedAnswer: { "@type": "Answer", text: language === "nl" ? (faqNl[question]?.[1] || answer) : answer } })))
+        mainEntity: groups.flatMap((group) => group.questions.map(({ question, answer }) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })))
       }) }} />
       <div className="pagehero"><span>PCF BATTLE</span><h1>{copy.faqTitle}</h1><p>{copy.faqIntro}</p></div>
-      {groups.map(([title, questions]) => <section className="block about-faq" key={String(title)}>
+      {groups.map(({ title, questions }) => <section className="block about-faq" key={title}>
         <div className="title"><h2>{title}</h2></div>
-        {(questions as string[][]).map(([question, answer]) => { const translated = language === "nl" ? faqNl[question] : null; const isOpen = openQuestion === question; return <details className={`faq-item${isOpen ? " is-open" : ""}`} key={question} open={isOpen}><summary onClick={(event) => { event.preventDefault(); setOpenQuestion(isOpen ? null : question); }}>{translated?.[0] || question}</summary><p>{translated?.[1] || answer}</p></details>; })}
+        {questions.map(({ question, answer }) => { const isOpen = openQuestion === question; return <details className={`faq-item${isOpen ? " is-open" : ""}`} key={question} open={isOpen}><summary onClick={(event) => { event.preventDefault(); setOpenQuestion(isOpen ? null : question); }}>{question}</summary><p>{answer}</p></details>; })}
       </section>)}
     </main>
     <PublicFooter />

@@ -11,6 +11,7 @@ const matchDeletion = await readFile(new URL("../lib/match-deletion.ts", import.
 const publicHeader = await readFile(new URL("../components/public-header.tsx", import.meta.url), "utf8");
 const publicMetadata = await readFile(new URL("../lib/page-metadata.ts", import.meta.url), "utf8");
 const publicOrganization = await readFile(new URL("../lib/public-organization.ts", import.meta.url), "utf8");
+const publicChat = await readFile(new URL("../components/public-chat.tsx", import.meta.url), "utf8");
 const scoreboard = await readFile(new URL("../components/scoreboard-display.tsx", import.meta.url), "utf8");
 const practicalStyles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
 const securityRunbook = await readFile(new URL("../SECURITY.md", import.meta.url), "utf8");
@@ -135,8 +136,8 @@ test("uses registration wording in the public call to action and modal", () => {
 
 test("keeps the public tournament assistant visible on the home page during registration", () => {
   const landing = page.slice(page.indexOf("function DynamicLanding()"), page.indexOf("function DynamicStandings"));
-  assert.match(landing, /<Chat \/>/);
-  assert.doesNotMatch(landing, /!registration\s*&&\s*<Chat/);
+  assert.match(landing, /<DeferredPublicChat \/>/);
+  assert.doesNotMatch(landing, /!registration\s*&&\s*<DeferredPublicChat/);
 });
 
 test("keeps registration identity and invite redemption atomic", () => {
@@ -200,7 +201,7 @@ test("does not create accounts with predictable fallback passwords", () => {
 test("keeps public tournament data internally consistent", () => {
   assert.match(page, /await api\("\/public-data"\)/);
   assert.doesNotMatch(page, /await Promise\.allSettled\(\[api\("\/standings"\), api\("\/scorers"\)\]\)/);
-  assert.match(page, /aria-label=\{open \? "Close tournament assistant"/);
+  assert.match(publicChat, /aria-label=\{open \? "Close tournament assistant"/);
 });
 
 test("new matches use the active tournament instead of a fixed edition", () => {

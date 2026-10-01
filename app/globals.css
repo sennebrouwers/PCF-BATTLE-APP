@@ -4615,6 +4615,15 @@ input:not([type="checkbox"]):not([type="radio"]), select { min-height:var(--cont
 .portal-field.wide {
   grid-column: 1/-1;
 }
+.ai-knowledge-editor { gap: 12px; }
+.ai-knowledge-editor > .form-help { margin: -4px 0 0; font-weight: 500; line-height: 1.5; }
+.ai-knowledge-entry { display: grid; gap: 12px; min-width: 0; margin: 0; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface, #fff) 88%, var(--pink) 12%); }
+.ai-knowledge-entry legend { padding: 0 6px; color: var(--muted); font-size: 12px; font-weight: 800; }
+.ai-knowledge-entry .portal-field { min-width: 0; }
+.ai-knowledge-entry textarea { width: 100%; min-height: 100px; resize: vertical; border: 1px solid var(--line); border-radius: 10px; padding: 11px; background: var(--input-surface, #fff); color: inherit; font: inherit; line-height: 1.5; }
+.ai-knowledge-entry textarea:focus { outline: 2px solid #ec489933; border-color: var(--pink); }
+.ai-knowledge-entry .btn { justify-self: start; }
+.ai-knowledge-add { justify-self: start; }
 .chat-delete {
   margin-left: auto;
   display: flex;

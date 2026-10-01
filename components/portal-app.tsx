@@ -491,6 +491,42 @@ function Field({
     </label>
   );
 }
+type AiKnowledgeDraft = { title: string; content: string };
+function AiKnowledgeEditor({ initialValue = "" }: { initialValue: string }) {
+  const [entries, setEntries] = useState<AiKnowledgeDraft[]>(() => {
+    const raw = String(initialValue || "").trim();
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.filter((entry) => entry && typeof entry.title === "string" && typeof entry.content === "string");
+    } catch {}
+    const paragraphs = raw.split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean);
+    const blocks: string[] = [];
+    let block = "";
+    for (const paragraph of paragraphs) for (let offset = 0; offset < paragraph.length; offset += 4000) {
+      const part = paragraph.slice(offset, offset + 4000);
+      if (block && block.length + part.length + 2 > 4000) { blocks.push(block); block = ""; }
+      block = block ? `${block}\n\n${part}` : part;
+    }
+    if (block) blocks.push(block);
+    return blocks.map((content, index) => ({ title: blocks.length > 1 ? `Existing tournament information ${index + 1}` : "Existing tournament information", content }));
+  });
+  const updateEntry = (index: number, key: keyof AiKnowledgeDraft, value: string) => {
+    setEntries((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, [key]: value } : entry));
+  };
+  return <div className="portal-field wide ai-knowledge-editor">
+    <span>AI Knowledge</span>
+    <p className="form-help">Add useful public tournament facts that are not covered by the settings above. The assistant uses these entries alongside the live schedule, results, teams and venue information.</p>
+    <input type="hidden" name="chatbot_knowledge" value={JSON.stringify(entries)} />
+    {entries.map((entry, index) => <fieldset className="ai-knowledge-entry" key={index}>
+      <legend>Knowledge {index + 1}</legend>
+      <label className="portal-field"><span>Title</span><input required value={entry.title} maxLength={120} onChange={(event) => updateEntry(index, "title", event.target.value)} placeholder="Airport" /></label>
+      <label className="portal-field"><span>Information</span><textarea required value={entry.content} maxLength={4000} rows={4} onChange={(event) => updateEntry(index, "content", event.target.value)} placeholder="Nearest airport, transfer options, and useful travel details" /></label>
+      <button className="btn danger small" type="button" onClick={() => setEntries((current) => current.filter((_, entryIndex) => entryIndex !== index))}><Trash2 aria-hidden="true" size={15} /> Remove knowledge</button>
+    </fieldset>)}
+    <button className="btn secondary small ai-knowledge-add" type="button" onClick={() => setEntries((current) => [...current, { title: "", content: "" }])}><Plus aria-hidden="true" size={16} /> Add knowledge</button>
+  </div>;
+}
 const callingCodes = [
   ["BE", "🇧🇪 Belgium", "+32"],
   ["NL", "🇳🇱 Netherlands", "+31"],
@@ -2906,7 +2942,6 @@ function TournamentManager({ refresh }: { refresh: number }) {
                 ["pcf_battle_info", "What is Powerchair Floorball Battle?"],
                 ["award_info", "Award ceremony information"],
                 ["visitor_info", "Other visitor and delegation information"],
-                ["chatbot_knowledge", "Tournament assistant knowledge / FAQs"],
               ].map(([name, label]) => (
                 <label className="portal-field wide" key={name}>
                   <span>{label}</span>
@@ -2917,6 +2952,8 @@ function TournamentManager({ refresh }: { refresh: number }) {
                   />
                 </label>
               ))}
+              <h3 className="form-section-title">AI Knowledge</h3>
+              <AiKnowledgeEditor key={active.id} initialValue={active.chatbot_knowledge || ""} />
               <div className="form-actions">
                 <button className="btn primary" disabled={busy}>
                   {busy ? "Saving…" : "Save website settings"}
