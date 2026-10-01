@@ -36,15 +36,15 @@ export default function PublicHeader({
   const [menuOpen, setMenuOpen] = useState(false);
   const { language } = usePublicLanguage();
   const copy = publicCopy[language];
-  const [cachedSettings, setCachedSettings] = useState<TournamentSettings | undefined>(() => {
-    if (typeof window === "undefined") return undefined;
+  // Start empty so the first client render matches the server; the sessionStorage
+  // cache is only read after hydration.
+  const [cachedSettings, setCachedSettings] = useState<TournamentSettings | undefined>(undefined);
+  useEffect(() => {
     try {
       const value = sessionStorage.getItem("pcf-public-navigation");
-      return value ? JSON.parse(value) : undefined;
-    } catch {
-      return undefined;
-    }
-  });
+      if (value) setCachedSettings((current) => current ?? JSON.parse(value));
+    } catch {}
+  }, []);
   useEffect(() => {
     if (!menuOpen) return;
     const close = (event: KeyboardEvent) => event.key === "Escape" && setMenuOpen(false);
@@ -81,7 +81,7 @@ export default function PublicHeader({
     {settings?.emergency_enabled === 1 && settings.emergency_message?.trim() && <aside className="public-emergency" role="alert"><strong>Important tournament update</strong><span>{settings.emergency_message}</span></aside>}
     <header className="public-header">
       <Link className="brand" href="/">
-        <Image src="/PFB_Logo_Pink.svg" alt="PCF Battle" width={54} height={64} unoptimized />
+        <Image src="/PFB_Logo_Pink.svg" alt="PCF Battle" width={54} height={64} unoptimized loading="eager" />
         <span>PCF <b>BATTLE</b></span>
       </Link>
       {!hideNav && (

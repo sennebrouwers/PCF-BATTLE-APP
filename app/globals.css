@@ -3672,7 +3672,8 @@ html[data-theme="dark"] .sponsor-banner {
   gap: 8px 22px;
   margin-bottom: 28px;
 }
-.site-footer-links a { color: var(--muted); text-decoration: none; font-weight: 400; transition: color .2s ease; }
+/* min-height keeps each link at least 24px tall (WCAG 2.2 target size). */
+.site-footer-links a { display: inline-flex; align-items: center; min-height: 24px; color: var(--muted); text-decoration: none; font-weight: 400; transition: color .2s ease; }
 .site-footer-links a:hover { color: var(--pink); text-decoration: underline; }
 .site-footer-bottom { display: flex; justify-content: center; gap: 20px; color: var(--muted); font-size: 12px; }
 .legal-content { max-width: 900px; margin: 0 auto 48px; }

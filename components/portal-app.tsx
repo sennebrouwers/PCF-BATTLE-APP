@@ -830,13 +830,9 @@ function Confirm({
 
 export default function PortalApp({ role }: { role: Role }) {
   const items = nav[role],
-    [active, setActive] = useState<string>(() => {
-      if (typeof window === "undefined") return items[0][0];
-      const saved = localStorage.getItem(`phb_active_page_${role}`);
-      return saved && items.some((item) => item[0] === saved)
-        ? saved
-        : items[0][0];
-    }),
+    // Start on the first page so the server and first client render match; the
+    // saved page is restored after hydration (see effect below).
+    [active, setActive] = useState<string>(items[0][0]),
     [menu, setMenu] = useState(false),
     [user, setUser] = useState<Row | null>(null),
     [tournamentYear, setTournamentYear] = useState(new Date().getFullYear()),
@@ -856,6 +852,10 @@ export default function PortalApp({ role }: { role: Role }) {
     setActive(page);
     localStorage.setItem(`phb_active_page_${role}`, page);
   };
+  useEffect(() => {
+    const saved = localStorage.getItem(`phb_active_page_${role}`);
+    if (saved && items.some((item) => item[0] === saved)) setActive(saved);
+  }, [role]);
   useEffect(() => {
     const raw = localStorage.getItem("phb_user");
     if (!raw) {

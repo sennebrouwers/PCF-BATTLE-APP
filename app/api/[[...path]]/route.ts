@@ -1750,6 +1750,9 @@ export async function GET(
     }
     if (path === "public-data") {
       await ensureMediaSchema();
+      // Tournament/delegation columns queried below are added by ensureScheduleSchema;
+      // without this a fresh database returns no tournaments.
+      await ensureScheduleSchema();
       const cached = publicDataCache;
       if (cached && cached.expiresAt > Date.now()) {
         return NextResponse.json(cached.payload, { headers: { "Cache-Control": "public, max-age=5, s-maxage=15, stale-while-revalidate=60" } });
@@ -2215,6 +2218,8 @@ export async function GET(
     }
     if (path === "my-team") {
       if (!permit(u, ["TEAM"])) return out({ error: "Forbidden" }, 403);
+      await ensureScheduleSchema();
+      await ensureFinanceSchema();
       const [memberResult, roomResult, pricing, teamResult, matchResult] = await Promise.all([
         db().prepare("SELECT * FROM delegation_members WHERE team_id=?").bind(u.teamId).all(),
         db().prepare("SELECT ra.room_id,ra.member_id,r.number,m.name FROM room_assignments ra JOIN rooms r ON r.id=ra.room_id JOIN delegation_members m ON m.id=ra.member_id WHERE m.team_id=?").bind(u.teamId).all(),
@@ -2245,6 +2250,8 @@ export async function GET(
     }
     if (path === "team-onboarding") {
       if (!u || !permit(u, ["ADMIN", "TEAM"])) return out({ error: "Forbidden" }, 403);
+      await ensureScheduleSchema();
+      await ensureFinanceSchema();
       const requestedTeam = new URL(req.url).searchParams.get("team_id") || u.teamId;
       if (u.role === "TEAM" && requestedTeam !== u.teamId) return out({ error: "Forbidden" }, 403);
       const status = await buildOnboardingStatus(String(requestedTeam || ""));
@@ -2252,6 +2259,8 @@ export async function GET(
     }
     if (path === "team-onboardings") {
       if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
+      await ensureScheduleSchema();
+      await ensureFinanceSchema();
       const teams = (await db().prepare("SELECT id FROM teams ORDER BY name").all()).results as { id: string }[];
       const statuses = await buildOnboardingStatuses(teams.map((team) => team.id));
       return out(statuses);

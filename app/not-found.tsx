@@ -2,16 +2,13 @@ import Link from "next/link";
 import PublicFooter from "@/components/public-footer";
 import PublicHeader from "@/components/public-header";
 
+// The 404 page has no tournament data, so only link to sections that are always
+// public; tournament, livestream and media may be unpublished.
 const navigationSettings = {
-  show_tournament: 1,
-  live_enabled: 1,
-  show_matches: 1,
-  show_standings: 1,
-  show_brackets: 1,
-  show_statistics: 1,
+  show_tournament: 0,
   show_about: 1,
-  show_livestream: 1,
-  show_gallery: 1,
+  show_livestream: 0,
+  show_gallery: 0,
 };
 
 export default function NotFound() {
