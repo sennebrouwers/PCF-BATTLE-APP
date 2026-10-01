@@ -1386,7 +1386,7 @@ async function seed(force = false, preserveAdminId?: string) {
       [0, 1, 2, 3, 4, 5, 6, 7].map((n, j) =>
         db()
           .prepare(
-            "INSERT INTO delegation_members VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO delegation_members (id,team_id,name,role,dob,dietary,notes,number,photo,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
           )
           .bind(
             `member-${i + 1}-${j + 1}`,
@@ -1411,7 +1411,7 @@ async function seed(force = false, preserveAdminId?: string) {
   await db().batch(
     names.map((name, i) =>
       db()
-        .prepare("INSERT INTO payments VALUES (?,?,?,?,?,?,?,?,?,?)")
+        .prepare("INSERT INTO payments (id,team_id,amount,description,status,due_date,last_reminder_at,notes,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)")
         .bind(
           `payment-${i + 1}`,
           `team-${i + 1}`,
@@ -1609,6 +1609,16 @@ async function mayControlMatch(u: SessionUser | null, matchId: string) {
 }
 async function mayViewMatch(u: SessionUser | null, matchId: string) {
   if (await mayControlMatch(u, matchId)) return true;
+  // Teams may read the goal/incident timeline of matches they played in
+  // (shown on their portal overview).
+  if (u?.role === "TEAM") {
+    if (!u.teamId) return false;
+    const match: any = await db()
+      .prepare("SELECT home_team_id,away_team_id FROM matches WHERE id=?")
+      .bind(matchId)
+      .first();
+    return match?.home_team_id === u.teamId || match?.away_team_id === u.teamId;
+  }
   if (u?.role !== "REFEREE") return false;
   const row: any = await db()
     .prepare("SELECT referee_ids FROM matches WHERE id=?")
@@ -2310,14 +2320,22 @@ export async function GET(
         if (u.role === "ADMIN") return out(await list(table));
         return out({ error: "Forbidden" }, 403);
       }
+      // Every role's match list carries referee_names (the match cards show them);
+      // previously only the admin branch added them, so other portals said "Not assigned".
+      const withRefereeNames = async (matches: any[]) => {
+        const referees = await list("users", "WHERE role='REFEREE' AND active=1");
+        const delegationReferees = await list("delegation_members", "WHERE role='REFEREE'");
+        const officials = [...referees, ...delegationReferees];
+        return matches.map((match: any) => ({ ...match, referee_names: (match.referee_ids || []).map((id: string) => officials.find((referee: any) => referee.id === id)?.name).filter(Boolean) }));
+      };
       if (table === "matches") {
         if (u.role === "REFEREE") {
           const assigned = (await list(table)).filter(
             (match: any) => Array.isArray(match.referee_ids) && match.referee_ids.includes(u.id),
           );
-          return out(assigned);
+          return out(await withRefereeNames(assigned));
         }
-        if (u.role === "TEAM" || u.role === "SCOREBOARD") return out(await list(table, "WHERE tournament_id=(SELECT id FROM tournaments WHERE active=1 LIMIT 1)"));
+        if (u.role === "TEAM" || u.role === "SCOREBOARD") return out(await withRefereeNames(await list(table, "WHERE tournament_id=(SELECT id FROM tournaments WHERE active=1 LIMIT 1)")));
         if (u.role !== "ADMIN") return out({ error: "Forbidden" }, 403);
       }
       if (table === "tournaments") {
@@ -2331,10 +2349,7 @@ export async function GET(
         return out((await db().prepare("SELECT u.id,u.email,u.role,u.name,u.team_id,u.country,u.photo,NULL AS phone,NULL AS whatsapp,u.active,u.created_at,u.updated_at,t.name team_name,t.phone team_phone FROM users u LEFT JOIN teams t ON t.id=u.team_id ORDER BY u.role,u.name").all()).results);
       const rows = await list(table);
       if (table !== "matches") return out(rows);
-      const referees = await list("users", "WHERE role='REFEREE' AND active=1");
-      const delegationReferees = await list("delegation_members", "WHERE role='REFEREE'");
-      const officials = [...referees, ...delegationReferees];
-      return out(rows.map((match: any) => ({ ...match, referee_names: (match.referee_ids || []).map((id: string) => officials.find((referee: any) => referee.id === id)?.name).filter(Boolean) })));
+      return out(await withRefereeNames(rows));
     }
     return out({ error: "Not found" }, 404);
   } catch (error: unknown) {

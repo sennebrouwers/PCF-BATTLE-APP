@@ -888,8 +888,11 @@ export default function PortalApp({ role }: { role: Role }) {
       });
   }, [role]);
   useEffect(() => {
-    api("/tournaments")
-      .then((rows) => {
+    // Public endpoint: /tournaments is admin/scoreboard-only, so team and referee
+    // portals always fell back to the current year.
+    api("/public-data")
+      .then((data) => {
+        const rows: Row[] = Array.isArray(data?.tournaments) ? data.tournaments : [];
         const active = rows.find((row: Row) => row.active) || rows[0],
           year = Number(String(active?.start_date || "").slice(0, 4));
         if (year) setTournamentYear(year);
