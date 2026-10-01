@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const api = await readFile(new URL("../app/api/[[...path]]/route.ts", import.meta.url), "utf8");
+const emailDelivery = await readFile(new URL("../lib/email-delivery.ts", import.meta.url), "utf8");
 const page = await readFile(new URL("../app/[[...slug]]/page.tsx", import.meta.url), "utf8");
 const portal = await readFile(new URL("../components/portal-app.tsx", import.meta.url), "utf8");
 const scheduleWorkspace = await readFile(new URL("../components/schedule-workspace.tsx", import.meta.url), "utf8");
@@ -92,6 +93,19 @@ test("keeps registration identity and invite redemption atomic", () => {
   assert.match(api, /transaction\(async \(transaction\)/);
   assert.match(api, /recipient_email[^\n]+email/);
   assert.match(tursoAdapter, /client\.batch\(statements\.map\([\s\S]*"write"\)/);
+});
+
+test("records safe email failures and allows a confirmed registration-email retry", () => {
+  assert.match(emailDelivery, /missing_configuration/);
+  assert.match(emailDelivery, /provider_rejected/);
+  assert.match(emailDelivery, /network_error/);
+  assert.match(api, /event: "email_delivery_failed"/);
+  assert.match(api, /siteOriginConfigured: Boolean\(runtimeEnv\.SITE_ORIGIN\?\.trim\(\)\)/);
+  assert.match(api, /const forceResend = body\.force === true/);
+  assert.match(api, /registration_confirmation_sent_at IS NULL OR \?=1/);
+  assert.match(api, /preregistration_confirmation_resend/);
+  assert.match(portal, /Provider accepted/);
+  assert.match(portal, /Resend confirmation/);
 });
 
 test("does not leak credentials and enforces consent for public participant data", () => {

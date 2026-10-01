@@ -2891,11 +2891,16 @@ function PreRegistrations({ refresh }: { refresh: number }) {
   const rows = useData("/preregistrations", refresh);
   const [busy, setBusy] = useState<string | null>(null);
   const [decisions, setDecisions] = useState<Record<string, "selected" | "rejected">>({});
-  async function sendConfirmation(row: Row) {
+  async function sendConfirmation(row: Row, forceResend = false) {
     setBusy(row.id);
     try {
-      await api(`/preregistrations/${row.id}/confirmation`, { method: "POST" });
-      toast.success(`Confirmation email sent to ${row.club_name}`);
+      await api(`/preregistrations/${row.id}/confirmation`, {
+        method: "POST",
+        ...(forceResend ? { body: JSON.stringify({ force: true }) } : {}),
+      });
+      toast.success(forceResend
+        ? "Confirmation resend accepted by the email provider for " + row.club_name
+        : "Confirmation accepted by the email provider for " + row.club_name);
       rows.load();
     } catch (error: unknown) {
       toast.error(errorMessage(error));
@@ -2970,7 +2975,18 @@ function PreRegistrations({ refresh }: { refresh: number }) {
               </span>
                 <div className="registration-statuses">
                 {r.registration_confirmation_sent_at ? (
-                  <span className="status-chip">Confirmation sent</span>
+                  <>
+                    <span className="status-chip">Provider accepted</span>
+                    <Confirm
+                      title="Resend confirmation email"
+                      text={`Resend the registration confirmation to ${r.email}?`}
+                      onConfirm={() => sendConfirmation(r, true)}
+                    >
+                      <button className="status-chip" type="button" disabled={busy === r.id}>
+                        {busy === r.id ? "Sending confirmation…" : "Resend confirmation"}
+                      </button>
+                    </Confirm>
+                  </>
                 ) : (
                   <button className="status-chip" type="button" disabled={busy === r.id} onClick={() => sendConfirmation(r)}>
                     {busy === r.id ? "Sending confirmation…" : "Send confirmation"}

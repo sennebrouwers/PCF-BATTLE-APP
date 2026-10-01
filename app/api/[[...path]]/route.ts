@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/turso-db";
 import { readBlob, writeBlob } from "@/lib/blob-storage";
 import { removeMatchAndScheduleItem } from "@/lib/match-deletion";
+import { deliverEmail } from "@/lib/email-delivery";
 
 const db = getDatabase;
 const now = () => new Date().toISOString();
@@ -967,28 +968,38 @@ async function sendEmail(
   to: string | undefined,
   subject: string,
   html: string,
+  context: { operation?: string; registrationId?: string } = {},
 ) {
   const key = runtimeEnv.RESEND_API_KEY,
     from = runtimeEnv.RESEND_FROM;
-  if (!key || !from || !to) return false;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8_000);
-  try {
-    const r = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ from, to, subject, html }),
-      signal: controller.signal,
-    });
-    return r.ok;
-  } catch {
+  const result = await deliverEmail({ apiKey: key, from, to, subject, html });
+  const operation = context.operation || "transactional_email";
+  if (!result.ok) {
+    console.error(JSON.stringify({
+      event: "email_delivery_failed",
+      operation,
+      ...(context.registrationId ? { registrationId: context.registrationId } : {}),
+      reason: result.reason,
+      ...(result.status ? { status: result.status } : {}),
+      ...(result.providerCode ? { providerCode: result.providerCode } : {}),
+      ...(result.errorName ? { errorName: result.errorName } : {}),
+      ...(result.reason === "missing_configuration" ? {
+        resendApiKeyConfigured: Boolean(key),
+        resendFromConfigured: Boolean(from),
+        recipientConfigured: Boolean(to),
+      } : {}),
+    }));
     return false;
-  } finally {
-    clearTimeout(timeout);
   }
+  if (context.registrationId) {
+    console.info(JSON.stringify({
+      event: "email_delivery_accepted",
+      operation,
+      registrationId: context.registrationId,
+      ...(result.providerMessageId ? { providerMessageId: result.providerMessageId } : {}),
+    }));
+  }
+  return true;
 }
 function emailOrigin(req: NextRequest) {
   const configured = runtimeEnv.SITE_ORIGIN?.trim();
@@ -1096,11 +1107,33 @@ function registrationEmail(origin: string, clubName: string, selected = false, w
   const logoUrl = `${escapeEmailHtml(origin)}/PFB_Logo_Pink.svg`;
   return `<!doctype html><html lang="en"><body style="margin:0;background:#f5f5f7;color:#18181b;font-family:Arial,Helvetica,sans-serif"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f7"><tr><td align="center" style="padding:32px 14px"><table role="presentation" width="100%" style="max-width:680px;background:#fff;border:1px solid #e4e4e7;border-radius:18px;overflow:hidden"><tr><td align="center" style="padding:32px 32px 24px;border-top:6px solid #ec4899"><img src="${logoUrl}" width="82" alt="PCF BATTLE" style="display:block;width:82px;height:auto;margin:0 auto 18px"><div style="font-size:13px;font-weight:700;letter-spacing:1.8px;color:#ec4899">PCF BATTLE</div><h1 style="margin:8px 0 0;font-size:28px;line-height:1.2;color:#18181b">Powerchair Floorball Battle</h1></td></tr><tr><td style="padding:34px 40px 38px"><h2 style="margin:0 0 14px;font-size:22px;line-height:1.3;color:#18181b">${title}</h2><div style="font-size:16px;line-height:1.65;color:#52525b"><p>${intro}</p><p>${next}</p><p style="margin-bottom:0">Questions? Contact <a href="mailto:hello@pcfbattle.be" style="color:#db2777">hello@pcfbattle.be</a>.</p></div></td></tr><tr><td style="padding:0;background:#fafafa;border-top:1px solid #e4e4e7"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td width="31%" align="center" valign="middle" style="padding:26px 22px"><img src="${logoUrl}" width="112" alt="Powerchair Floorball Battle Belgium" style="display:block;width:100%;max-width:112px;height:auto;margin:0 auto"></td><td width="2" style="width:2px;background:#ec1970;font-size:0;line-height:0">&nbsp;</td><td valign="middle" style="padding:26px 24px 26px 28px"><div style="font-size:21px;font-weight:800;line-height:1.25;color:#18181b">Senne Brouwers &amp;<br>Seppe Hemerijckx</div><div style="margin-top:8px;font-size:13px;font-weight:800;letter-spacing:1.2px;color:#ec4899">ORGANIZERS</div><div style="margin-top:18px;font-size:15px;font-weight:800;line-height:1.35;letter-spacing:.4px;color:#27272a">POWERCHAIR FLOORBALL BATTLE</div><div style="margin-top:10px;font-size:14px;font-weight:700"><a href="mailto:hello@pcfbattle.be" style="color:#db2777;text-decoration:none">hello@pcfbattle.be</a></div></td></tr></table></td></tr></table></td></tr></table></body></html>`;
 }
-async function sendAppEmail(req: NextRequest, to: string | undefined, subject: string, template: (origin: string) => string) {
+async function sendAppEmail(
+  req: NextRequest,
+  to: string | undefined,
+  subject: string,
+  template: (origin: string) => string,
+  context: { operation?: string; registrationId?: string } = {},
+) {
   try {
-    return await sendEmail(to, subject, template(emailOrigin(req)));
+    return await sendEmail(to, subject, template(emailOrigin(req)), context);
   } catch (error) {
-    console.error(JSON.stringify({ event: "email_delivery_error", error: error instanceof Error ? error.name : "UnknownError" }));
+    const message = error instanceof Error ? error.message : "";
+    const reason = message === "SITE_ORIGIN is required in production"
+      ? "missing_site_origin"
+      : message.startsWith("SITE_ORIGIN must") || (Boolean(runtimeEnv.SITE_ORIGIN?.trim()) && error instanceof TypeError)
+        ? "invalid_site_origin"
+        : "email_template_error";
+    const errorName = error instanceof Error && /^[a-z0-9_-]{1,64}$/i.test(error.name)
+      ? error.name
+      : "UnknownError";
+    console.error(JSON.stringify({
+      event: "email_template_error",
+      operation: context.operation || "transactional_email",
+      ...(context.registrationId ? { registrationId: context.registrationId } : {}),
+      reason,
+      errorName,
+      siteOriginConfigured: Boolean(runtimeEnv.SITE_ORIGIN?.trim()),
+    }));
     return false;
   }
 }
@@ -2694,7 +2727,13 @@ export async function POST(
           )
           .bind(id, t.id, clubName, email, now())
           .run();
-        const emailSent = await sendAppEmail(req, email, "Registration received — PCF BATTLE", (origin) => registrationEmail(origin, clubName));
+        const emailSent = await sendAppEmail(
+          req,
+          email,
+          "Registration received — PCF BATTLE",
+          (origin) => registrationEmail(origin, clubName),
+          { operation: "preregistration_confirmation", registrationId: id },
+        );
         if (emailSent) await db().prepare("UPDATE preregistrations SET registration_confirmation_sent_at=? WHERE id=?").bind(now(), id).run();
         return out({ ok: true, id, emailSent }, 201);
       } catch (e: any) {
@@ -2708,14 +2747,21 @@ export async function POST(
       await ensurePreregistrationSchema();
       const row: any = await db().prepare("SELECT * FROM preregistrations WHERE id=?").bind(parts[1]).first();
       if (!row) return out({ error: "Registration not found" }, 404);
-      if (row.registration_confirmation_sent_at) return out({ error: "The confirmation email has already been sent" }, 409);
+      const forceResend = body.force === true;
+      if (row.registration_confirmation_sent_at && !forceResend) return out({ error: "The confirmation email has already been accepted by the email provider" }, 409);
       const claimedAt = now(), staleClaim = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-      const claim = await db().prepare("UPDATE preregistrations SET registration_confirmation_claimed_at=? WHERE id=? AND registration_confirmation_sent_at IS NULL AND (registration_confirmation_claimed_at IS NULL OR registration_confirmation_claimed_at<?)").bind(claimedAt, row.id, staleClaim).run();
+      const claim = await db().prepare("UPDATE preregistrations SET registration_confirmation_claimed_at=? WHERE id=? AND (registration_confirmation_sent_at IS NULL OR ?=1) AND (registration_confirmation_claimed_at IS NULL OR registration_confirmation_claimed_at<?)").bind(claimedAt, row.id, forceResend ? 1 : 0, staleClaim).run();
       if (!claim.meta.changes) return out({ error: "The confirmation email is already being sent" }, 409);
-      const emailSent = await sendAppEmail(req, row.email, "Registration received — PCF BATTLE", (origin) => registrationEmail(origin, row.club_name));
+      const emailSent = await sendAppEmail(
+        req,
+        row.email,
+        "Registration received — PCF BATTLE",
+        (origin) => registrationEmail(origin, row.club_name),
+        { operation: forceResend ? "preregistration_confirmation_resend" : "preregistration_confirmation", registrationId: row.id },
+      );
       if (!emailSent) {
         await db().prepare("UPDATE preregistrations SET registration_confirmation_claimed_at=NULL WHERE id=? AND registration_confirmation_claimed_at=?").bind(row.id, claimedAt).run();
-        return out({ error: "Email could not be sent. Check the email service configuration." }, 502);
+        return out({ error: "Email could not be sent. Check the Vercel email configuration and Resend delivery logs." }, 502);
       }
       await db().prepare("UPDATE preregistrations SET registration_confirmation_sent_at=?,registration_confirmation_claimed_at=NULL WHERE id=? AND registration_confirmation_claimed_at=?").bind(now(), row.id, claimedAt).run();
       await log(u, "RESEND_REGISTRATION_CONFIRMATION", "preregistration", row.id);
