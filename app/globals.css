@@ -10667,3 +10667,45 @@ textarea { height:auto; min-height:42px; padding:10px 12px; }
   min-height: 0 !important;
   margin: 0 !important;
 }
+
+/* Public contact page */
+.contact-page { padding-top: 42px; }
+.contact-hero { position: relative; overflow: hidden; isolation: isolate; margin: 0 0 22px; padding: clamp(22px, 4vw, 38px); border: 1px solid var(--line); border-radius: 20px; background: radial-gradient(ellipse at 88% 12%, color-mix(in srgb, var(--pink) 15%, transparent), transparent 38%), var(--card); }
+.contact-hero > * { position: relative; z-index: 1; }
+.contact-hero::after { content: ""; position: absolute; z-index: 0; right: -64px; bottom: -120px; width: 270px; height: 270px; border: 1px solid color-mix(in srgb, var(--pink) 20%, transparent); border-radius: 50%; box-shadow: 0 0 0 26px color-mix(in srgb, var(--pink) 4%, transparent), 0 0 0 54px color-mix(in srgb, var(--pink) 3%, transparent); pointer-events: none; }
+.contact-hero h1 { margin: 7px 0 6px; font-size: clamp(34px, 5vw, 48px); letter-spacing: -.045em; }
+.contact-hero p { max-width: 680px; margin: 0; color: var(--muted); font-size: 15px; line-height: 1.65; }
+.contact-methods { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 0 0 26px; }
+.contact-method { min-width: 0; min-height: 196px; display: grid; grid-template-columns: 44px minmax(0, 1fr); align-content: start; align-items: start; gap: 13px; padding: 20px; border: 1px solid var(--line); border-radius: 17px; background: var(--card); transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.contact-method:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--pink) 48%, var(--line)); box-shadow: 0 12px 28px #21152112; }
+.contact-method-icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 13px; background: color-mix(in srgb, var(--pink) 12%, var(--card)); color: var(--pink); }
+.contact-method-icon svg { width: 21px; height: 21px; }
+.contact-method-copy { min-width: 0; }
+.contact-method-copy h2 { margin: 1px 0 5px; font-size: 16px; }
+.contact-method-value { overflow-wrap: anywhere; margin: 0; font-size: 14px; font-weight: 800; }
+.contact-method-description { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.contact-method > a { grid-column: 2; justify-self: start; display: inline-flex; align-items: center; gap: 7px; min-height: 36px; margin-top: 3px; color: var(--pink); font-size: 12px; font-weight: 850; text-decoration: none; }
+.contact-method > a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.contact-method > a:focus-visible { outline: 2px solid var(--pink); outline-offset: 3px; border-radius: 5px; }
+.contact-method > a svg { width: 15px; height: 15px; transition: transform .18s ease; }
+.contact-method > a:hover svg { transform: translateX(3px); }
+.contact-organisation { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 15px; align-items: start; padding: 20px 22px; border: 1px solid color-mix(in srgb, var(--pink) 24%, var(--line)); border-radius: 17px; background: color-mix(in srgb, var(--pink) 5%, var(--card)); }
+.contact-organisation-mark { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: var(--pink); color: #fff; }
+.contact-organisation-mark svg { width: 21px; height: 21px; }
+.contact-organisation h2 { margin: 5px 0 7px; font-size: 18px; }
+.contact-organisation p { max-width: 760px; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.contact-organisation .contact-organisation-location { display: flex; align-items: center; gap: 6px; margin-bottom: 7px; color: var(--ink); font-weight: 750; }
+.contact-organisation-location svg { width: 15px; height: 15px; color: var(--pink); }
+@media (max-width: 900px) { .contact-methods { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) {
+  .contact-page { padding-top: 28px; padding-bottom: 56px; }
+  .contact-hero { padding: 22px 19px; border-radius: 16px; }
+  .contact-hero p { font-size: 14px; }
+  .contact-methods { grid-template-columns: 1fr; gap: 10px; margin-bottom: 18px; }
+  .contact-method { min-height: 0; grid-template-columns: 42px minmax(0, 1fr); gap: 11px; padding: 16px; border-radius: 15px; }
+  .contact-method-icon { width: 42px; height: 42px; }
+  .contact-method > a { min-height: 40px; }
+  .contact-organisation { grid-template-columns: 40px minmax(0, 1fr); gap: 12px; padding: 17px 15px; border-radius: 15px; }
+  .contact-organisation-mark { width: 40px; height: 40px; border-radius: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .contact-method, .contact-method > a svg { transition: none; } }

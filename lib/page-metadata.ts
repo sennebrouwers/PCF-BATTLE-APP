@@ -18,6 +18,10 @@ const pageMetadata: Record<string, PageMetadata> = {
     title: "Practical Information | PCF BATTLE",
     description: "Discover the venue, accommodation, tournament format and practical information for the Powerchair Floorball Battle in Leuven, Belgium.",
   },
+  "/contact": {
+    title: "Contact | Powerchair Floorball Battle",
+    description: "Contact the Powerchair Floorball Battle organisation or follow PCF BATTLE on social media.",
+  },
   "/faq": {
     title: "FAQ | Powerchair Floorball Battle",
     description: "Find answers about registration, teams, accommodation, matches and the international Powerchair Floorball Battle.",

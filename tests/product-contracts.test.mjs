@@ -9,6 +9,8 @@ const portal = await readFile(new URL("../components/portal-app.tsx", import.met
 const scheduleWorkspace = await readFile(new URL("../components/schedule-workspace.tsx", import.meta.url), "utf8");
 const matchDeletion = await readFile(new URL("../lib/match-deletion.ts", import.meta.url), "utf8");
 const publicHeader = await readFile(new URL("../components/public-header.tsx", import.meta.url), "utf8");
+const publicMetadata = await readFile(new URL("../lib/page-metadata.ts", import.meta.url), "utf8");
+const publicOrganization = await readFile(new URL("../lib/public-organization.ts", import.meta.url), "utf8");
 const scoreboard = await readFile(new URL("../components/scoreboard-display.tsx", import.meta.url), "utf8");
 const practicalStyles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
 const securityRunbook = await readFile(new URL("../SECURITY.md", import.meta.url), "utf8");
@@ -94,6 +96,20 @@ test("restricts practical image changes to admins and guards blob/database consi
   assert.match(api, /await deleteBlob\(objectKey\)[\s\S]*?await removeUnreferencedBlob\(current\.image\)/);
   assert.match(api, /UPDATE tournaments SET \$\{column\}=NULL[\s\S]*?removeUnreferencedBlob\(current\.image\)/);
   assert.match(api, /active=1 AND \(venue_image=\? OR hotel_image=\?\)/);
+});
+
+test("publishes a standalone Contact page and keeps Practical focused on event details", () => {
+  assert.match(publicHeader, /\["\/contact", copy\.contact, true\]/);
+  assert.match(page, /if \(p === "\/contact"\) return <Contact \/>/);
+  assert.match(page, /mailto:\$\{PUBLIC_CONTACT_EMAIL\}/);
+  assert.match(page, /https:\/\/www\.instagram\.com\/pcfbattle/);
+  assert.match(page, /https:\/\/www\.facebook\.com\/pcfbattle/);
+  assert.match(page, /rel: "noopener noreferrer"/);
+  assert.match(page, /className="contact-organisation"/);
+  assert.match(publicMetadata, /"\/contact":\s*\{/);
+  assert.match(publicOrganization, /PUBLIC_CONTACT_EMAIL = "hello@pcfbattle\.be"/);
+  const practical = page.slice(page.indexOf("function About()"), page.indexOf("function InstagramMark()"));
+  assert.doesNotMatch(practical, /contact-section|Follow on Instagram|mailto:/);
 });
 
 test("minimizes audit details and preserves payment invariants", () => {

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { defaultDescription, getPageMetadata } from "@/lib/page-metadata";
+import { PUBLIC_CONTACT_EMAIL } from "@/lib/public-organization";
 
 const baseUrl = "https://www.pcfbattle.be";
 
@@ -58,7 +59,7 @@ const structuredData = {
       name: "PCF BATTLE",
       url: baseUrl,
       logo: `${baseUrl}/PFB_Logo_Pink.svg`,
-      email: "hello@pcfbattle.be",
+      email: PUBLIC_CONTACT_EMAIL,
     },
     {
       "@type": "WebSite",

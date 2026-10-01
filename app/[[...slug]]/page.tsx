@@ -11,6 +11,7 @@ import {
   CalendarDays,
   ChevronRight,
   Clock3,
+  Mail,
   Hotel,
   Info,
   MapPin,
@@ -38,6 +39,7 @@ import { publicCopy, usePublicLanguage } from "@/components/public-language";
 import type { Match, PublicBracketData, PublicData, PublicLink, PublicScorer, Referee, StandingRow, Team, Tournament } from "@/types/app";
 import { errorMessage } from "@/types/app";
 import { getPageMetadata } from "@/lib/page-metadata";
+import { PUBLIC_CONTACT_EMAIL } from "@/lib/public-organization";
 const PortalApp = lazy(() => import("@/components/portal-app"));
 const Gallery = lazy(() => import("@/components/gallery"));
 const ScoreboardDisplay = lazy(() => import("@/components/scoreboard-display"));
@@ -125,8 +127,8 @@ function Chat() {
       setMsgs((v) => [
         ...v,
         language === "nl"
-          ? "Ik kan de toernooiinformatie momenteel niet ophalen. Neem contact op met de organisatie via hello@pcfbattle.be."
-          : "I couldn’t reach the tournament data. Please contact the organisation at hello@pcfbattle.be for further assistance.",
+          ? `Ik kan de toernooiinformatie momenteel niet ophalen. Neem contact op met de organisatie via ${PUBLIC_CONTACT_EMAIL}.`
+          : `I couldn’t reach the tournament data. Please contact the organisation at ${PUBLIC_CONTACT_EMAIL} for further assistance.`,
       ]);
     }
   }
@@ -1626,13 +1628,50 @@ function About() {
         {t.show_referees !== 0 && <section className="block"><div className="title"><h2>Tournament referees</h2></div><div className="people-grid">
           {d.referees.map((ref: any) => <article key={ref.id}>{ref.photo ? <img src={ref.photo} alt={`${ref.name}, tournament referee`} /> : <span className="person-placeholder">{ref.name?.slice(0, 1)}</span>}<b>{ref.name}</b><small>{ref.country || "Tournament referee"}</small></article>)}
         </div></section>}
-        <section className="block contact-section"><div className="title"><h2>Contact</h2></div><p>Have a question about PCF BATTLE? Contact the organisation.</p><p><a href="mailto:hello@pcfbattle.be">hello@pcfbattle.be</a> · <a href="https://www.instagram.com/pcfbattle/" target="_blank" rel="noreferrer">Instagram</a></p></section>
       </main>
       <PublicFooter />
       <DeferredPublicChat />
       <ConnectionStatus updatedAt={d.updatedAt} />
     </>
   );
+}
+
+function InstagramMark() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" strokeWidth="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="2"/><circle cx="17.5" cy="6.5" r="1.25" fill="currentColor"/></svg>;
+}
+
+function FacebookMark() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8h3V4h-3c-3.31 0-5 1.97-5 5v3H6v4h3v8h4v-8h3.2l.8-4H13V9c0-.66.34-1 1-1Z" fill="currentColor"/></svg>;
+}
+
+function Contact() {
+  const data = usePublicData();
+  const tournament = data.tournaments.find((item: any) => item.active) || data.tournaments[0] || {};
+  const methods = [
+    { key: "email", title: "Email us", value: PUBLIC_CONTACT_EMAIL, description: "For registration, participation or event questions.", action: "Send email", href: `mailto:${PUBLIC_CONTACT_EMAIL}`, icon: <Mail aria-hidden="true" /> },
+    { key: "instagram", title: "Instagram", value: "@pcfbattle", description: "Tournament news, teams and updates.", action: "Follow on Instagram", href: "https://www.instagram.com/pcfbattle", icon: <InstagramMark /> },
+    { key: "facebook", title: "Facebook", value: "Powerchair Floorball Battle", description: "Follow the event and share updates.", action: "Follow on Facebook", href: "https://www.facebook.com/pcfbattle", icon: <FacebookMark /> },
+  ];
+  return <>
+    <PublicHeader settings={tournament} currentPath="/contact" loading={!data.ready} />
+    <main className="public contact-page">
+      <div className="pagehero contact-hero"><span>CONTACT</span><h1>Get in touch</h1><p>Have a question about the Powerchair Floorball Battle? Get in touch with the organisation or follow us on social media.</p></div>
+      <section className="contact-methods" aria-label="Contact methods">
+        {methods.map((method) => <article className={`contact-method contact-method-${method.key}`} key={method.key}>
+          <span className="contact-method-icon">{method.icon}</span>
+          <div className="contact-method-copy"><h2>{method.title}</h2><p className="contact-method-value">{method.value}</p><p className="contact-method-description">{method.description}</p></div>
+          <a href={method.href} {...(method.key === "email" ? {} : { target: "_blank", rel: "noopener noreferrer" })}>{method.action}<ArrowRight aria-hidden="true" /></a>
+        </article>)}
+      </section>
+      <section className="contact-organisation">
+        <span className="contact-organisation-mark"><Trophy aria-hidden="true" /></span>
+        <div><span className="practical-eyebrow">TOURNAMENT ORGANISATION</span><h2>Powerchair Floorball Battle</h2><p className="contact-organisation-location"><MapPin aria-hidden="true" /> Leuven, Belgium</p><p>Questions about registration, participation, accessibility or the tournament? Contact the PCF Battle organisation and we’ll be happy to help.</p></div>
+      </section>
+    </main>
+    <PublicFooter />
+    <DeferredPublicChat />
+    <ConnectionStatus updatedAt={data.updatedAt} />
+  </>;
 }
 
 function FAQ() {
@@ -1660,7 +1699,7 @@ function FAQ() {
         ["How can my team participate in PCF BATTLE?", "When registrations are open, teams can submit their registration through the PCF BATTLE website. Registration does not automatically guarantee selection for the tournament."],
         ["How will we know if our team has been selected?", "Selected teams receive an official confirmation by email. They will later receive a separate invitation to access their Team Portal."],
         ["Can I follow PCF BATTLE on social media?", "Yes. Follow PCF BATTLE on Instagram for tournament announcements, participating teams, behind-the-scenes content, results, and other updates."],
-        ["Who can I contact if I have a question?", "You can contact the PCF BATTLE organization at hello@pcfbattle.be or through the contact details provided on the website."],
+        ["Who can I contact if I have a question?", "Use the Contact page to email the organisation or find PCF BATTLE on social media."],
       ]],
     ];
   const faqNl: Record<string, [string, string]> = {
@@ -1677,7 +1716,7 @@ function FAQ() {
     "How can my team participate in PCF BATTLE?": ["Hoe kan mijn team deelnemen aan PCF BATTLE?", "Wanneer de inschrijvingen geopend zijn, kunnen teams zich via de PCF BATTLE-website registreren. Een registratie garandeert niet automatisch dat een team geselecteerd wordt."],
     "How will we know if our team has been selected?": ["Hoe weten we of ons team geselecteerd is?", "Geselecteerde teams ontvangen een officiële bevestiging per e-mail. Later ontvangen ze een aparte uitnodiging voor hun Team Portal."],
     "Can I follow PCF BATTLE on social media?": ["Kan ik PCF BATTLE volgen op sociale media?", "Ja. Volg PCF BATTLE op Instagram voor aankondigingen, deelnemende teams, beelden achter de schermen, resultaten en andere updates."],
-    "Who can I contact if I have a question?": ["Met wie kan ik contact opnemen als ik een vraag heb?", "Je kunt contact opnemen met de organisatie van PCF BATTLE via hello@pcfbattle.be of via de contactgegevens op de website."],
+    "Who can I contact if I have a question?": ["Met wie kan ik contact opnemen als ik een vraag heb?", "Gebruik de Contactpagina om de organisatie te mailen of PCF BATTLE op sociale media te vinden."],
   };
   return <>
     <PublicHeader settings={t} currentPath="/faq" loading={!d.ready} />
@@ -1876,6 +1915,7 @@ export default function App({ params }: { params: Promise<{ slug?: string[] }> }
   if (p === "/scoreboard") return <Suspense fallback={<div className="route-loading" />}><PortalApp role="scoreboard" /></Suspense>;
   if (p === "/scoreboard/display") return <Suspense fallback={<div className="scoreboard-screen loading" />}><ScoreboardDisplay /></Suspense>;
   if (p === "/about") return <About />;
+  if (p === "/contact") return <Contact />;
   if (p === "/faq") return <FAQ />;
   if (p === "/livestream") return <Livestream />;
   if (p.startsWith("/teams/")) return <TeamOverview id={p.split("/").pop() || ""}/>;

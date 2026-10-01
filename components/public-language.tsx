@@ -8,6 +8,7 @@ export function usePublicLanguage() {
 
 const englishCopy = {
     practical: "Practical",
+    contact: "Contact",
     faq: "FAQ",
     tournament: "Tournament",
     livestream: "Livestream",

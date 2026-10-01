@@ -74,6 +74,7 @@ export default function PublicHeader({
     ["/faq", copy.faq, ready],
     ["/livestream", copy.livestream, ready && navigationSettings!.show_livestream === 1],
     ["/gallery", copy.media, ready && navigationSettings!.show_gallery === 1],
+    ["/contact", copy.contact, true],
   ].filter((item) => item[2]) as [string, string, boolean][];
 
   return (
