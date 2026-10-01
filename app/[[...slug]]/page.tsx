@@ -686,14 +686,14 @@ function PreRegistrationDialog() {
         className="btn primary registration-cta"
         onClick={() => setOpen(true)}
       >
-        <Users /> Preregister your club
+        <Users /> Register your club
       </button>
       <DialogContent
         className="portal-dialog registration-dialog"
         centerInOverlay
       >
         <DialogHeader>
-          <DialogTitle>Pre-register for PCF Battle</DialogTitle>
+          <DialogTitle>Register for PCF Battle</DialogTitle>
         </DialogHeader>
         {done ? (
           <div className="registration-success">
@@ -704,7 +704,7 @@ function PreRegistrationDialog() {
             </button>
           </div>
         ) : (
-          <form className="portal-form" method="post" onSubmit={submit} toolname="pre_register_team" tooldescription="Submit a club name and contact email to pre-register a team for PCF BATTLE.">
+          <form className="portal-form" method="post" onSubmit={submit} toolname="register_team" tooldescription="Register a club for PCF BATTLE by submitting its name and contact email.">
             <label className="portal-field">
               <span>Club name</span>
               <input name="club_name" required placeholder="Your club" toolparamdescription="The name of the club or team." />
@@ -728,7 +728,7 @@ function PreRegistrationDialog() {
             {error && <p className="formerror">{error}</p>}
             <div className="form-actions">
               <button className="btn primary" disabled={busy}>
-                {busy ? "Submitting…" : "Submit pre-registration"}
+                {busy ? "Registering…" : "Register"}
               </button>
             </div>
           </form>

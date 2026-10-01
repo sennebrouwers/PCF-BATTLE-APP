@@ -85,6 +85,13 @@ test("requires terms acceptance for public pre-registration", () => {
   assert.match(api, /body\.terms_accepted !== true/);
 });
 
+test("uses registration wording in the public call to action and modal", () => {
+  assert.match(page, /<Users \/> Register your club/);
+  assert.match(page, /<DialogTitle>Register for PCF Battle<\/DialogTitle>/);
+  assert.match(page, /busy \? "Registering…" : "Register"/);
+  assert.doesNotMatch(page, /Preregister your club|Pre-register for PCF Battle|Submit pre-registration/);
+});
+
 test("keeps the public tournament assistant visible on the home page during registration", () => {
   const landing = page.slice(page.indexOf("function DynamicLanding()"), page.indexOf("function DynamicStandings"));
   assert.match(landing, /<Chat \/>/);
