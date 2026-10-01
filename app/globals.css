@@ -2045,6 +2045,166 @@ body {
   }
 }
 
+/* Public event guide: practical places, compact facts and readable tournament flow. */
+.practical-event-guide { --guide-gap: clamp(18px, 3vw, 34px); }
+.practical-event-guide .practical-hero { margin: 0 0 18px; }
+.practical-event-guide .practical-hero > p { max-width: 700px; font-size: clamp(16px, 1.6vw, 19px); line-height: 1.55; }
+.practical-section-heading { display: grid; gap: 8px; margin: 0 0 20px; }
+.practical-section-heading.compact { margin-bottom: 15px; }
+.practical-section-heading h2 { margin: 0; font-size: clamp(23px, 2.6vw, 32px); letter-spacing: -.035em; }
+.practical-section-heading > p { margin: 0; color: var(--muted); }
+.practical-eyebrow { color: var(--pink); font-size: 11px; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
+.practical-glance { margin: 30px 0 48px; }
+.practical-stats-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.practical-stat { min-width: 0; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; align-items: center; column-gap: 10px; padding: 14px 15px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+.practical-stat > span { grid-row: 1 / 3; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px; background: color-mix(in srgb, var(--pink) 11%, var(--card)); color: var(--pink); }
+.practical-stat svg { width: 17px; height: 17px; }
+.practical-stat > b { font-size: 21px; line-height: 1.05; }
+.practical-stat > small { color: var(--muted); font-size: 11px; font-weight: 700; }
+.practical-places { display: grid; gap: 28px; margin: 0 0 80px; }
+.practical-place { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); align-items: stretch; overflow: hidden; border: 1px solid var(--line); border-radius: 22px; background: var(--card); box-shadow: 0 12px 36px #2115210a; }
+.practical-place.reverse .practical-place-photo { order: 2; }
+.practical-place-photo { position: relative; min-height: 360px; aspect-ratio: 1.43; overflow: hidden; background: color-mix(in srgb, var(--pink) 8%, var(--surface-2)); }
+.practical-place-photo > img { object-fit: cover; }
+.practical-photo-empty { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 12px; color: var(--muted); background: radial-gradient(ellipse at 72% 30%, color-mix(in srgb, var(--pink) 17%, transparent), transparent 48%), linear-gradient(135deg, var(--surface-2), var(--card)); }
+.practical-photo-empty > span { width: 72px; height: 72px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 22px; background: var(--card); color: var(--pink); }
+.practical-photo-empty svg { width: 30px; height: 30px; }
+.practical-photo-empty b { font-size: 13px; }
+.practical-place-photo-caption { position: absolute; left: 18px; bottom: 18px; padding: 7px 10px; border: 1px solid #ffffff44; border-radius: 999px; background: #151016bd; color: #fff; font-size: 10px; font-weight: 900; letter-spacing: .1em; }
+.practical-place-copy { align-self: center; padding: clamp(24px, 4vw, 46px); }
+.practical-place-copy h2 { margin: 7px 0 8px; font-size: clamp(24px, 2.8vw, 34px); line-height: 1.12; letter-spacing: -.04em; }
+.practical-location { display: flex; align-items: center; gap: 7px; margin: 0; color: var(--muted); font-weight: 650; }
+.practical-location svg { width: 16px; height: 16px; color: var(--pink); }
+.practical-place-details { display: grid; gap: 15px; margin-top: 25px; }
+.practical-detail-row { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 11px; align-items: start; }
+.practical-detail-icon { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px; background: color-mix(in srgb, var(--pink) 10%, var(--card)); color: var(--pink); }
+.practical-detail-icon svg { width: 17px; height: 17px; }
+.practical-detail-row > div { min-width: 0; padding-top: 1px; }
+.practical-detail-row b { display: block; margin-bottom: 3px; font-size: 12px; }
+.practical-detail-row p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; white-space: pre-wrap; }
+.practical-map-link { display: inline-flex; align-items: center; gap: 8px; margin-top: 23px; color: var(--pink); font-size: 13px; font-weight: 850; text-decoration: none; }
+.practical-map-link svg { width: 16px; height: 16px; }
+.practical-map-link svg:last-child { width: 14px; }
+.practical-format { margin: 0 0 70px; }
+.practical-format > .practical-section-heading { margin-bottom: 25px; }
+.practical-format > .practical-section-heading > p { color: var(--ink); font-size: clamp(18px, 2vw, 23px); font-weight: 800; letter-spacing: -.025em; }
+.format-day { padding: clamp(18px, 3vw, 30px); border: 1px solid var(--line); border-radius: 20px; background: var(--card); }
+.format-day + .format-day { margin-top: 18px; }
+.format-day-heading { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 21px; }
+.format-day-heading > span { flex: 0 0 auto; padding: 7px 10px; border-radius: 8px; background: var(--pink); color: #fff; font-size: 10px; font-weight: 900; letter-spacing: .08em; }
+.format-day-heading h3 { margin: 0 0 3px; font-size: clamp(19px, 2.2vw, 24px); letter-spacing: -.03em; }
+.format-day-heading p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.format-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.format-group-card { padding: 19px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface-2); }
+.format-group-name { display: flex; align-items: center; gap: 8px; color: var(--pink); font-size: 11px; font-weight: 900; letter-spacing: .1em; }
+.format-group-name svg { width: 17px; height: 17px; }
+.format-group-stats { display: flex; align-items: center; gap: 15px; margin-top: 18px; }
+.format-group-stats > b { font-size: 22px; }
+.format-group-stats > b small { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; font-weight: 650; }
+.format-group-stats > svg { width: 17px; height: 17px; color: var(--muted); }
+.format-round-robin { display: inline-flex; margin-top: 16px; padding: 6px 9px; border-radius: 999px; background: color-mix(in srgb, var(--pink) 10%, var(--surface-2)); color: var(--pink); font-size: 11px; font-weight: 800; }
+.format-bridge { display: grid; grid-template-columns: 1fr auto auto auto 1fr; align-items: center; gap: 10px; max-width: 620px; margin: 19px auto 8px; color: var(--pink); }
+.format-bridge > span { height: 1px; background: var(--line); }
+.format-bridge b { color: var(--muted); font-size: 9px; letter-spacing: .1em; }
+.format-bridge svg { width: 16px; height: 16px; }
+.format-bridge strong { padding: 5px 8px; border-radius: 7px; background: color-mix(in srgb, var(--pink) 11%, var(--card)); font-size: 10px; letter-spacing: .08em; }
+.format-explainer { max-width: 660px; margin: 12px auto 0; color: var(--muted); font-size: 12px; line-height: 1.6; text-align: center; }
+.format-day-two { border-color: color-mix(in srgb, var(--pink) 32%, var(--line)); }
+.format-paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
+.format-path { min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface-2); }
+.format-path > header { display: flex; align-items: center; gap: 11px; margin-bottom: 16px; }
+.format-path-icon { flex: 0 0 auto; width: 39px; height: 39px; display: grid; place-items: center; border-radius: 12px; background: color-mix(in srgb, var(--pink) 13%, var(--card)); color: var(--pink); }
+.format-path-icon svg { width: 19px; height: 19px; }
+.format-path > header > div > span { display: block; color: var(--pink); font-size: 9px; font-weight: 900; letter-spacing: .12em; }
+.format-path > header h4 { margin: 3px 0 0; font-size: 17px; }
+.format-match-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.flow-match { min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.flow-match-title { display: block; margin-bottom: 9px; color: var(--muted); font-size: 9px; font-weight: 900; letter-spacing: .09em; text-transform: uppercase; }
+.flow-match > div { display: grid; gap: 6px; }
+.flow-match > div b { overflow-wrap: anywhere; font-size: 12px; }
+.flow-match > div span { color: var(--pink); font-size: 8px; font-weight: 900; letter-spacing: .1em; }
+.format-branch-label { display: flex; align-items: center; gap: 9px; margin: 16px 0 10px; color: var(--muted); font-size: 8px; font-weight: 900; letter-spacing: .1em; }
+.format-branch-label > span { flex: 1; height: 1px; background: var(--line); }
+.format-branch-label svg { width: 14px; height: 14px; color: var(--pink); }
+.format-destinations { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.flow-destination { min-width: 0; padding: 11px; border-left: 3px solid var(--pink); border-radius: 0 10px 10px 0; background: color-mix(in srgb, var(--pink) 7%, var(--card)); }
+.flow-destination > span { color: var(--pink); font-size: 8px; font-weight: 900; letter-spacing: .1em; }
+.flow-destination > div { display: grid; gap: 3px; margin-top: 4px; }
+.flow-destination b { font-size: 12px; line-height: 1.25; }
+.flow-destination small { color: var(--muted); font-size: 10px; }
+.format-every-team { display: flex; align-items: center; gap: 13px; margin-top: 17px; padding: 16px 18px; border: 1px solid color-mix(in srgb, var(--pink) 28%, var(--line)); border-radius: 14px; background: color-mix(in srgb, var(--pink) 8%, var(--card)); }
+.format-every-team > span { flex: 0 0 auto; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; background: var(--pink); color: #fff; }
+.format-every-team > span svg { width: 19px; }
+.format-every-team p { display: grid; gap: 3px; margin: 0; }
+.format-every-team p b { font-size: 14px; }
+.format-every-team p small { color: var(--muted); font-size: 12px; line-height: 1.5; }
+.format-every-trophy { flex: 0 0 auto; width: 22px; margin-left: auto; color: var(--pink); }
+.practical-additional { margin: 0 0 55px; }
+.practical-additional-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.practical-additional-grid article { display: grid; grid-template-columns: 40px minmax(0,1fr); gap: 12px; padding: 17px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+.practical-additional-grid article > span { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; background: color-mix(in srgb, var(--pink) 10%, var(--card)); color: var(--pink); }
+.practical-additional-grid article > span svg { width: 18px; height: 18px; }
+.practical-additional-grid h3 { margin: 0 0 5px; font-size: 13px; }
+.practical-additional-grid p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; white-space: pre-wrap; }
+.practical-photo-setting { display: grid; gap: 10px; }
+.practical-photo-setting-preview { min-height: 170px; max-height: 280px; overflow: hidden; border: 1px solid var(--line); border-radius: 13px; background: var(--surface-2); }
+.practical-photo-setting-preview > img { display: block; width: 100%; max-height: 280px; aspect-ratio: 16 / 7; object-fit: cover; }
+.practical-photo-setting-preview > div { min-height: 170px; display: grid; place-content: center; justify-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+.practical-photo-setting-preview > div svg { color: var(--pink); }
+.practical-photo-setting-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.practical-photo-setting-actions small { flex-basis: 100%; color: var(--muted); }
+.practical-photo-setting input[type="file"] { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+@media (max-width: 1000px) {
+  .practical-stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .format-paths { grid-template-columns: 1fr; }
+}
+@media (max-width: 800px) {
+  .practical-place, .practical-place.reverse { grid-template-columns: minmax(0, 1fr); }
+  .practical-place.reverse .practical-place-photo { order: 0; }
+  .practical-place-photo { min-height: 0; aspect-ratio: 16 / 9; }
+  .practical-place-copy { padding: clamp(22px, 5vw, 34px); }
+  .practical-places { gap: 18px; margin-bottom: 56px; }
+}
+@media (max-width: 560px) {
+  .practical-event-guide { padding-top: 30px; }
+  .practical-event-guide .practical-hero > p { font-size: 15px; }
+  .practical-glance { margin: 24px 0 38px; }
+  .practical-stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .practical-stat { grid-template-columns: 1fr; justify-items: start; gap: 7px; padding: 11px; }
+  .practical-stat > span { grid-row: auto; width: 30px; height: 30px; border-radius: 9px; }
+  .practical-stat > b { font-size: 20px; }
+  .practical-stat > small { font-size: 10px; }
+  .practical-place { border-radius: 17px; }
+  .practical-place-photo { aspect-ratio: 4 / 3; }
+  .practical-place-copy h2 { font-size: 25px; }
+  .practical-format { margin-bottom: 52px; }
+  .format-day { padding: 15px; border-radius: 16px; }
+  .format-day-heading { gap: 10px; }
+  .format-day-heading > span { padding: 6px 8px; font-size: 9px; }
+  .format-groups { gap: 9px; }
+  .format-group-card { padding: 13px; }
+  .format-group-stats { gap: 7px; margin-top: 13px; }
+  .format-group-stats > b { font-size: 19px; }
+  .format-group-stats > b small { font-size: 9px; }
+  .format-group-stats > svg { width: 13px; }
+  .format-path { padding: 13px; }
+  .format-match-grid { gap: 7px; }
+  .flow-match { padding: 10px 8px; }
+  .flow-match > div b { font-size: 11px; }
+  .format-destinations { gap: 7px; }
+  .flow-destination { padding: 9px 8px; }
+  .flow-destination b { font-size: 11px; }
+  .flow-destination small { font-size: 9px; }
+  .format-every-team { align-items: flex-start; padding: 13px; }
+  .format-every-trophy { display: none; }
+  .format-groups, .format-match-grid, .format-destinations { grid-template-columns: 1fr; }
+  .practical-additional-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 380px) {
+  .practical-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .format-group-stats { gap: 10px; }
+}
+
 /* Final responsive admin layout pass. Keep every admin surface inside the
    viewport and let dense controls stack instead of widening the page. */
 :root {

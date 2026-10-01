@@ -4,15 +4,23 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
+  Accessibility,
+  ArrowDown,
+  ArrowRight,
   Bot,
   CalendarDays,
   ChevronRight,
+  Clock3,
+  Hotel,
+  Info,
   MapPin,
   MessageCircle,
+  ParkingCircle,
   Plus,
   Star,
   Swords,
   Trophy,
+  Utensils,
   Users,
   X,
   Zap,
@@ -1398,98 +1406,227 @@ function DynamicPublic({ view }: { view: string }) {
   );
 }
 
+type PracticalRow = { label: string; value?: string; icon: ReactNode };
+
+function PracticalPlace({
+  title,
+  kicker,
+  image,
+  imageAlt,
+  address,
+  location,
+  rows,
+  reverse = false,
+}: {
+  title: string;
+  kicker: string;
+  image?: string;
+  imageAlt: string;
+  address?: string;
+  location: string;
+  rows: PracticalRow[];
+  reverse?: boolean;
+}) {
+  const visibleRows = rows.filter((row) => row.value?.trim());
+  return (
+    <section className={`practical-place${reverse ? " reverse" : ""}`}>
+      <div className="practical-place-photo">
+        {image ? (
+          <Image src={image} alt={imageAlt} fill sizes="(max-width: 800px) 100vw, 50vw" loading="lazy" />
+        ) : (
+          <div className="practical-photo-empty" aria-label={`${title} photo not uploaded`}>
+            <span><Hotel aria-hidden="true" /></span>
+            <b>Photo coming soon</b>
+          </div>
+        )}
+        <span className="practical-place-photo-caption">{kicker}</span>
+      </div>
+      <div className="practical-place-copy">
+        <span className="practical-eyebrow">{kicker}</span>
+        <h2>{title}</h2>
+        <p className="practical-location"><MapPin aria-hidden="true" />{location}</p>
+        {visibleRows.length > 0 && (
+          <div className="practical-place-details">
+            {visibleRows.map((row) => (
+              <div className="practical-detail-row" key={row.label}>
+                <span className="practical-detail-icon">{row.icon}</span>
+                <div><b>{row.label}</b><p>{row.value}</p></div>
+              </div>
+            ))}
+          </div>
+        )}
+        {address && (
+          <a className="practical-map-link" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`} target="_blank" rel="noreferrer">
+            <MapPin aria-hidden="true" /> Open in Google Maps <ArrowRight aria-hidden="true" />
+          </a>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function FlowMatch({ title, top, bottom }: { title: string; top: string; bottom: string }) {
+  return (
+    <article className="flow-match">
+      <span className="flow-match-title">{title}</span>
+      <div><b>{top}</b><span>VS</span><b>{bottom}</b></div>
+    </article>
+  );
+}
+
+function FlowDestination({ source, title, rank }: { source: string; title: string; rank: string }) {
+  return (
+    <article className="flow-destination">
+      <span>{source}</span>
+      <div><b>{title}</b><small>{rank}</small></div>
+    </article>
+  );
+}
+
+function TournamentFlow() {
+  return (
+    <section className="practical-format" aria-labelledby="practical-format-title">
+      <div className="practical-section-heading">
+        <span className="practical-eyebrow">THE COMPETITION</span>
+        <h2 id="practical-format-title">Tournament format</h2>
+        <p>8 teams. 2 groups. 2 days. One champion.</p>
+      </div>
+      <section className="format-day format-day-one" aria-labelledby="group-stage-title">
+        <header className="format-day-heading"><span>DAY 1</span><div><h3 id="group-stage-title">Group stage</h3><p>Every team plays each of the other teams in its group once.</p></div></header>
+        <div className="format-groups">
+          {["A", "B"].map((group) => (
+            <article className="format-group-card" key={group}>
+              <div className="format-group-name"><Users aria-hidden="true" /><span>GROUP {group}</span></div>
+              <div className="format-group-stats"><b>4 <small>teams</small></b><ArrowRight aria-hidden="true" /><b>3 <small>matches each</small></b></div>
+              <span className="format-round-robin">Round-robin</span>
+            </article>
+          ))}
+        </div>
+        <div className="format-bridge"><span></span><b>GROUP STANDINGS</b><ArrowDown aria-hidden="true" /><strong>DAY 2</strong><span></span></div>
+        <p className="format-explainer">After three group matches per team, the final standings set the Day 2 matchups.</p>
+      </section>
+      <section className="format-day format-day-two" aria-labelledby="knockout-title">
+        <header className="format-day-heading"><span>DAY 2</span><div><h3 id="knockout-title">Knockout &amp; placement stage</h3><p>Two paths make sure every team plays on and earns a final position.</p></div></header>
+        <div className="format-paths">
+          <section className="format-path format-path-championship">
+            <header><span className="format-path-icon"><Trophy aria-hidden="true" /></span><div><span>PLACES 1–4</span><h4>Championship path</h4></div></header>
+            <div className="format-match-grid">
+              <FlowMatch title="Semi-final 1" top="1st Group A" bottom="2nd Group B" />
+              <FlowMatch title="Semi-final 2" top="1st Group B" bottom="2nd Group A" />
+            </div>
+            <div className="format-branch-label"><span></span><b>SEMI-FINAL RESULTS</b><ArrowDown aria-hidden="true" /><span></span></div>
+            <div className="format-destinations">
+              <FlowDestination source="WINNERS" title="Final" rank="1st / 2nd place" />
+              <FlowDestination source="LOSERS" title="Bronze match" rank="3rd / 4th place" />
+            </div>
+          </section>
+          <section className="format-path format-path-placement">
+            <header><span className="format-path-icon"><Swords aria-hidden="true" /></span><div><span>PLACES 5–8</span><h4>Placement path</h4></div></header>
+            <div className="format-match-grid">
+              <FlowMatch title="Play-off 1" top="3rd Group A" bottom="4th Group B" />
+              <FlowMatch title="Play-off 2" top="3rd Group B" bottom="4th Group A" />
+            </div>
+            <div className="format-branch-label"><span></span><b>PLAY-OFF RESULTS</b><ArrowDown aria-hidden="true" /><span></span></div>
+            <div className="format-destinations">
+              <FlowDestination source="WINNERS" title="5th-place match" rank="5th / 6th place" />
+              <FlowDestination source="LOSERS" title="7th-place match" rank="7th / 8th place" />
+            </div>
+          </section>
+        </div>
+        <div className="format-every-team"><span><Users aria-hidden="true" /></span><p><b>Every team plays on both days</b><small>All eight teams continue into Day 2 and finish with a tournament ranking from 1st to 8th place.</small></p><Trophy aria-hidden="true" className="format-every-trophy" /></div>
+      </section>
+    </section>
+  );
+}
+
 function About() {
   const { language } = usePublicLanguage(), copy = publicCopy[language],
     d = usePublicData(),
     t = d.tournaments.find((x: any) => x.active) || d.tournaments[0] || {},
-    items = [
-      [language === "nl" ? "Openingsuren" : "Opening hours", localized(t.opening_hours, language)],
-      ["Hotel", [localized(t.hotel_name, language), localized(t.hotel_address, language)].filter(Boolean).join(" · "), localized(t.hotel_address, language)],
-      [
-        "Sports hall",
-        [localized(t.venue_name, language), localized(t.venue_address, language)].filter(Boolean).join(" · "), localized(t.venue_address, language),
-      ],
-      ["Parking", localized(t.parking_info, language)],
-      [language === "nl" ? "Toegankelijkheid" : "Accessibility", localized(t.accessibility_info, language)],
-      ["Catering", localized(t.catering_info, language)],
-      [language === "nl" ? "Prijsuitreiking" : "Award ceremony", localized(t.award_info, language)],
-      [language === "nl" ? "Meer informatie" : "More information", localized(t.visitor_info, language)],
-    ].filter((x) => x[1]);
+    venueName = localized(t.venue_name, language) || "Sportoase Philipssite Arena",
+    venueAddress = localized(t.venue_address, language) || "",
+    hotelName = localized(t.hotel_name, language) || "Park Inn by Radisson Leuven",
+    hotelAddress = localized(t.hotel_address, language) || "",
+    practicalInfo = [
+      { label: "Opening hours", value: localized(t.opening_hours, language), icon: <Clock3 aria-hidden="true" /> },
+      { label: "Catering", value: localized(t.catering_info, language), icon: <Utensils aria-hidden="true" /> },
+      { label: "Visitor information", value: localized(t.visitor_info, language), icon: <Info aria-hidden="true" /> },
+      { label: "Award ceremony", value: localized(t.award_info, language), icon: <Trophy aria-hidden="true" /> },
+      { label: "Additional match information", value: localized(t.format_rules, language), icon: <Swords aria-hidden="true" /> },
+    ].filter((item) => item.value?.trim());
   return (
     <>
       <PublicHeader settings={t} currentPath="/about" loading={!d.ready} />
-      <main className="public about-page">
-        <div className="pagehero">
-          <span>PCF BATTLE</span>
+      <main className="public about-page practical-event-guide">
+        <div className="pagehero practical-hero">
+          <span>PCF BATTLE · {String(t.start_date || "").slice(0, 4) || "TOURNAMENT GUIDE"}</span>
           <h1>{copy.practicalTitle}</h1>
+          <p>Your guide to the venue, accommodation and tournament weekend in Leuven.</p>
           <TournamentHeroDetails tournament={t} />
         </div>
-        <div className="about-grid">
-          {items.map(([label, value, address]) => (
-            <article key={label}>
-              <h2>{label}</h2>
-              <p>{value}</p>
-              {address && <a className="maps-link" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(String(address))}`} target="_blank" rel="noreferrer"><MapPin/> Open in Google Maps</a>}
-            </article>
-          ))}
-        </div>
-        {localized(t.format_rules, language) && <section className="block about-format">
-          <div className="title"><h2>{language === "nl" ? "Toernooiformat en wedstrijdregels" : "Tournament format and match rules"}</h2></div>
-          <p>{localized(t.format_rules, language)}</p>
+        <section className="practical-glance" aria-labelledby="practical-glance-title">
+          <div className="practical-section-heading compact"><span className="practical-eyebrow">THE WEEKEND</span><h2 id="practical-glance-title">Tournament at a glance</h2></div>
+          <div className="practical-stats-grid">
+            {[
+              { number: "8", label: "Teams", icon: <Users aria-hidden="true" /> },
+              { number: "2", label: "Groups", icon: <Users aria-hidden="true" /> },
+              { number: "2", label: "Days", icon: <CalendarDays aria-hidden="true" /> },
+              { number: "20", label: "Matches", icon: <Swords aria-hidden="true" /> },
+              { number: "1", label: "Court", icon: <MapPin aria-hidden="true" /> },
+              { number: "5v5", label: "Format", icon: <Zap aria-hidden="true" /> },
+            ].map((item) => <article className="practical-stat" key={item.label}><span>{item.icon}</span><b>{item.number}</b><small>{item.label}</small></article>)}
+          </div>
+        </section>
+        <section className="practical-places" aria-label="Venue and hotel">
+          <PracticalPlace
+            title={venueName}
+            kicker="THE VENUE"
+            image={t.venue_image}
+            imageAlt={`${venueName}, tournament venue in Leuven`}
+            address={venueAddress}
+            location={[t.city || "Leuven", t.country || "Belgium"].filter(Boolean).join(", ")}
+            rows={[
+              { label: "Address", value: venueAddress, icon: <MapPin aria-hidden="true" /> },
+              { label: "Parking", value: localized(t.parking_info, language), icon: <ParkingCircle aria-hidden="true" /> },
+              { label: "Accessibility", value: localized(t.accessibility_info, language), icon: <Accessibility aria-hidden="true" /> },
+            ]}
+          />
+          <PracticalPlace
+            title={hotelName}
+            kicker="TEAM ACCOMMODATION"
+            image={t.hotel_image}
+            imageAlt={`${hotelName}, accommodation for tournament teams`}
+            address={hotelAddress}
+            location={[t.city || "Leuven", t.country || "Belgium"].filter(Boolean).join(", ")}
+            reverse
+            rows={[
+              { label: "Address", value: hotelAddress, icon: <MapPin aria-hidden="true" /> },
+              { label: "Team stay", value: "Three-night stay included", icon: <Hotel aria-hidden="true" /> },
+              { label: "Check-in", value: localized(t.hotel_checkin, language), icon: <Clock3 aria-hidden="true" /> },
+              { label: "Check-out", value: localized(t.hotel_checkout, language), icon: <Clock3 aria-hidden="true" /> },
+              { label: "Accessibility", value: localized(t.hotel_accessibility_info, language), icon: <Accessibility aria-hidden="true" /> },
+              { label: "Team information", value: localized(t.hotel_info, language), icon: <Info aria-hidden="true" /> },
+            ]}
+          />
+        </section>
+        <TournamentFlow />
+        {practicalInfo.length > 0 && <section className="practical-additional">
+          <div className="practical-section-heading"><span className="practical-eyebrow">GOOD TO KNOW</span><h2>More practical information</h2></div>
+          <div className="practical-additional-grid">{practicalInfo.map((item) => <article key={item.label}><span>{item.icon}</span><div><h3>{item.label}</h3><p>{item.value}</p></div></article>)}</div>
         </section>}
         <section className="block about-sport-intro">
-          <div className="title">
-            <h2>{copy.pcfTitle}</h2>
-          </div>
-          <p className="about-lead">
-            {localized(t.pcf_battle_info, language) || copy.pcfText}
-          </p>
+          <div className="title"><h2>{copy.pcfTitle}</h2></div>
+          <p className="about-lead">{localized(t.pcf_battle_info, language) || copy.pcfText}</p>
         </section>
         {t.show_teams !== 0 && (
-          <section className="block">
-            <div className="title">
-              <h2>Participating teams</h2>
-            </div>
-            <div className="people-grid">
-              {d.teams.map((team: any) => (
-                <Link href={`/teams/${teamSlug(team.name, team.id)}`} className="team-overview-card" key={team.id}>
-                  {team.logo ? (
-                    <img src={team.logo} alt={`${team.name} logo`} />
-                  ) : (
-                    <LiveMark team={team} />
-                  )}
-                  <b>{team.name}</b>
-                  <small>{copy.groupLabel} {team.group_id}</small>
-                </Link>
-              ))}
-            </div>
-          </section>
+          <section className="block"><div className="title"><h2>Participating teams</h2></div><div className="people-grid">
+            {d.teams.map((team: any) => <Link href={`/teams/${teamSlug(team.name, team.id)}`} className="team-overview-card" key={team.id}>{team.logo ? <img src={team.logo} alt={`${team.name} logo`} /> : <LiveMark team={team} />}<b>{team.name}</b><small>{copy.groupLabel} {team.group_id}</small></Link>)}
+          </div></section>
         )}
-        {t.show_referees !== 0 && <section className="block">
-          <div className="title">
-            <h2>Tournament referees</h2>
-          </div>
-          <div className="people-grid">
-            {d.referees.map((ref: any) => (
-              <article key={ref.id}>
-                {ref.photo ? (
-                  <img src={ref.photo} alt={`${ref.name}, tournament referee`} />
-                ) : (
-                  <span className="person-placeholder">
-                    {ref.name?.slice(0, 1)}
-                  </span>
-                )}
-                <b>{ref.name}</b>
-                <small>{ref.country || "Tournament referee"}</small>
-              </article>
-            ))}
-          </div>
-        </section>}
-        <section className="block contact-section">
-          <div className="title"><h2>{language === "nl" ? "Contact" : "Contact"}</h2></div>
-          <p>{language === "nl" ? "Heb je een vraag over PCF BATTLE? Neem contact op met de organisatie." : "Have a question about PCF BATTLE? Contact the organisation."}</p>
-          <p><a href="mailto:hello@pcfbattle.be">hello@pcfbattle.be</a> · <a href="https://www.instagram.com/pcfbattle/" target="_blank" rel="noreferrer">Instagram</a></p>
-        </section>
+        {t.show_referees !== 0 && <section className="block"><div className="title"><h2>Tournament referees</h2></div><div className="people-grid">
+          {d.referees.map((ref: any) => <article key={ref.id}>{ref.photo ? <img src={ref.photo} alt={`${ref.name}, tournament referee`} /> : <span className="person-placeholder">{ref.name?.slice(0, 1)}</span>}<b>{ref.name}</b><small>{ref.country || "Tournament referee"}</small></article>)}
+        </div></section>}
+        <section className="block contact-section"><div className="title"><h2>Contact</h2></div><p>Have a question about PCF BATTLE? Contact the organisation.</p><p><a href="mailto:hello@pcfbattle.be">hello@pcfbattle.be</a> · <a href="https://www.instagram.com/pcfbattle/" target="_blank" rel="noreferrer">Instagram</a></p></section>
       </main>
       <PublicFooter />
       <DeferredPublicChat />

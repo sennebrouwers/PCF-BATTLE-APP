@@ -10,6 +10,7 @@ const scheduleWorkspace = await readFile(new URL("../components/schedule-workspa
 const matchDeletion = await readFile(new URL("../lib/match-deletion.ts", import.meta.url), "utf8");
 const publicHeader = await readFile(new URL("../components/public-header.tsx", import.meta.url), "utf8");
 const scoreboard = await readFile(new URL("../components/scoreboard-display.tsx", import.meta.url), "utf8");
+const practicalStyles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
 const securityRunbook = await readFile(new URL("../SECURITY.md", import.meta.url), "utf8");
 const gdprMap = await readFile(new URL("../GDPR-DATA-MAP.md", import.meta.url), "utf8");
 const tursoAdapter = await readFile(new URL("../lib/turso-db.ts", import.meta.url), "utf8");
@@ -69,6 +70,28 @@ test("keeps role enforcement on the server", () => {
   assert.match(api, /mayViewMatch/);
   assert.match(api, /Array\.isArray\(match\.referee_ids\) && match\.referee_ids\.includes\(u\.id\)/);
   assert.doesNotMatch(api, /WHERE referee_ids LIKE/);
+});
+
+test("provides the complete responsive public tournament guide and admin-configurable venue/hotel details", () => {
+  for (const phrase of ["Tournament at a glance", 'number: "20", label: "Matches"', 'number: "5v5", label: "Format"', "Every team plays on both days", "Three-night stay included", "Bronze match", "5th-place match", "7th-place match"]) {
+    assert.ok(page.includes(phrase), `missing practical guide content: ${phrase}`);
+  }
+  for (const field of ["venue_image", "venue_name", "venue_address", "parking_info", "accessibility_info", "hotel_image", "hotel_name", "hotel_address", "hotel_checkin", "hotel_checkout", "hotel_accessibility_info", "hotel_info"]) {
+    assert.ok(portal.includes(`name="${field}"`) || portal.includes(`slot="${field.startsWith("venue") ? "venue" : "hotel"}"`), `missing Admin practical setting: ${field}`);
+    assert.ok(api.includes(field), `missing server/database handling: ${field}`);
+  }
+  assert.match(practicalStyles, /\.practical-place-photo > img\s*\{\s*object-fit:\s*cover/);
+  assert.match(practicalStyles, /@media \(max-width: 800px\)[\s\S]*?\.practical-place, \.practical-place\.reverse/);
+  assert.match(practicalStyles, /@media \(max-width: 560px\)[\s\S]*?\.format-paths\s*\{\s*grid-template-columns:\s*1fr/);
+});
+
+test("restricts practical image changes to admins and guards blob/database consistency", () => {
+  assert.match(api, /practicalImageMatch[\s\S]*?permit\(u, \["ADMIN"\]\)/);
+  assert.match(api, /MAX_UPLOAD_BODY_BYTES[\s\S]*?MAX_UPLOAD_FILE_BYTES[\s\S]*?hasAllowedFileSignature\(file\)/);
+  assert.match(api, /await writeBlob\(objectKey, file\.stream\(\), file\.type, u\.id\)/);
+  assert.match(api, /await deleteBlob\(objectKey\)[\s\S]*?await removeUnreferencedBlob\(current\.image\)/);
+  assert.match(api, /UPDATE tournaments SET \$\{column\}=NULL[\s\S]*?removeUnreferencedBlob\(current\.image\)/);
+  assert.match(api, /active=1 AND \(venue_image=\? OR hotel_image=\?\)/);
 });
 
 test("minimizes audit details and preserves payment invariants", () => {

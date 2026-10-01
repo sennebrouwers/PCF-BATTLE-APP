@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/turso-db";
-import { readBlob, writeBlob } from "@/lib/blob-storage";
+import { deleteBlob, readBlob, writeBlob } from "@/lib/blob-storage";
 import { removeMatchAndScheduleItem } from "@/lib/match-deletion";
 import { deliverEmail } from "@/lib/email-delivery";
 
@@ -166,6 +166,30 @@ async function hasAllowedFileSignature(file: File) {
 function isOwnedUploadReference(value: unknown, ownerId: string) {
   const match = String(value || "").match(/^\/api\/files\/([A-Za-z0-9._-]{1,180})$/);
   return Boolean(match && match[1].startsWith(`${ownerId}-`));
+}
+function practicalImagePath(value: unknown) {
+  const match = String(value || "").match(/^\/api\/files\/([A-Za-z0-9._-]{1,180})$/);
+  return match?.[1];
+}
+async function removeUnreferencedBlob(reference: unknown) {
+  const objectKey = practicalImagePath(reference);
+  if (!objectKey) return;
+  let stillReferenced: unknown;
+  try {
+    const url = String(reference);
+    stillReferenced = await db().prepare(
+      "SELECT 1 FROM links WHERE url=? OR dark_url=? UNION ALL SELECT 1 FROM teams WHERE logo=? OR team_photo=? UNION ALL SELECT 1 FROM delegation_members WHERE photo=? UNION ALL SELECT 1 FROM users WHERE photo=? UNION ALL SELECT 1 FROM tournaments WHERE venue_image=? OR hotel_image=? LIMIT 1",
+    ).bind(url, url, url, url, url, url, url, url).first();
+  } catch (error) {
+    console.error(JSON.stringify({ event: "blob_cleanup_check_failed", objectKey, error: error instanceof Error ? error.name : "UnknownError" }));
+    return;
+  }
+  if (stillReferenced) return;
+  try {
+    await deleteBlob(objectKey);
+  } catch (error) {
+    console.error(JSON.stringify({ event: "blob_cleanup_failed", objectKey, error: error instanceof Error ? error.name : "UnknownError" }));
+  }
 }
 let scheduleSchemaReady: Promise<void> | null = null;
 let contactsSchemaReady: Promise<void> | null = null;
@@ -351,6 +375,12 @@ async function ensureScheduleSchema() {
     "ALTER TABLE tournaments ADD COLUMN hotel_address text",
     "ALTER TABLE tournaments ADD COLUMN venue_name text",
     "ALTER TABLE tournaments ADD COLUMN venue_address text",
+    "ALTER TABLE tournaments ADD COLUMN venue_image text",
+    "ALTER TABLE tournaments ADD COLUMN hotel_image text",
+    "ALTER TABLE tournaments ADD COLUMN hotel_checkin text",
+    "ALTER TABLE tournaments ADD COLUMN hotel_checkout text",
+    "ALTER TABLE tournaments ADD COLUMN hotel_accessibility_info text",
+    "ALTER TABLE tournaments ADD COLUMN hotel_info text",
     "ALTER TABLE tournaments ADD COLUMN parking_info text",
     "ALTER TABLE tournaments ADD COLUMN accessibility_info text",
     "ALTER TABLE tournaments ADD COLUMN catering_info text",
@@ -701,6 +731,10 @@ const resources: Record<string, string[]> = {
     "opening_hours",
     "hotel_name",
     "hotel_address",
+    "hotel_checkin",
+    "hotel_checkout",
+    "hotel_accessibility_info",
+    "hotel_info",
     "venue_name",
     "venue_address",
     "parking_info",
@@ -1699,8 +1733,9 @@ export async function GET(
       const objectKey = parts.slice(1).join("/");
       if (!/^[A-Za-z0-9._-]{1,180}$/.test(objectKey)) return out({ error: "Invalid file reference" }, 400);
       await ensureMediaSchema();
+      await ensureScheduleSchema();
       const fileUrl = `/api/files/${objectKey}`;
-      const sharedResource = await db().prepare("SELECT id FROM links WHERE active=1 AND (url=? OR dark_url=?) UNION ALL SELECT id FROM teams WHERE logo=? OR team_photo=? UNION ALL SELECT id FROM delegation_members WHERE photo=? AND privacy_consent=1 AND photo_consent=1 UNION ALL SELECT id FROM users WHERE photo=? AND role='REFEREE' AND active=1 LIMIT 1").bind(fileUrl, fileUrl, fileUrl, fileUrl, fileUrl, fileUrl).first();
+      const sharedResource = await db().prepare("SELECT id FROM links WHERE active=1 AND (url=? OR dark_url=?) UNION ALL SELECT id FROM teams WHERE logo=? OR team_photo=? UNION ALL SELECT id FROM delegation_members WHERE photo=? AND privacy_consent=1 AND photo_consent=1 UNION ALL SELECT id FROM users WHERE photo=? AND role='REFEREE' AND active=1 UNION ALL SELECT id FROM tournaments WHERE active=1 AND (venue_image=? OR hotel_image=?) LIMIT 1").bind(fileUrl, fileUrl, fileUrl, fileUrl, fileUrl, fileUrl, fileUrl, fileUrl).first();
       let teamResource: unknown = null;
       if (u?.role === "TEAM" && u.teamId) {
         teamResource = await db().prepare("SELECT id FROM teams WHERE id=? AND (logo=? OR team_photo=?) UNION ALL SELECT id FROM delegation_members WHERE team_id=? AND photo=? LIMIT 1").bind(u.teamId, fileUrl, fileUrl, u.teamId, fileUrl).first();
@@ -1723,7 +1758,7 @@ export async function GET(
             : object.contentDisposition
               ? { "Content-Disposition": object.contentDisposition }
               : {}),
-          "Cache-Control": "private, no-store",
+          "Cache-Control": sharedResource ? "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800" : "private, no-store",
           ...securityHeaders,
         },
       });
@@ -1821,7 +1856,7 @@ export async function GET(
         scorers,
         players,
       ] = await Promise.all([
-        safe("tournaments", list("tournaments", "", [], "id,name,start_date,end_date,city,country,active,registration_mode,registration_enabled,live_enabled,show_tournament,show_referees,show_livestream,livestream_url,show_teams,show_matches,show_standings,show_brackets,show_statistics,show_about,show_gallery,gallery_url,public_message,opening_hours,hotel_name,hotel_address,venue_name,venue_address,parking_info,accessibility_info,catering_info,award_info,visitor_info,format_rules"), []),
+        safe("tournaments", list("tournaments", "", [], "id,name,start_date,end_date,city,country,active,registration_mode,registration_enabled,live_enabled,show_tournament,show_referees,show_livestream,livestream_url,show_teams,show_matches,show_standings,show_brackets,show_statistics,show_about,show_gallery,gallery_url,public_message,opening_hours,hotel_name,hotel_address,hotel_image,hotel_checkin,hotel_checkout,hotel_accessibility_info,hotel_info,venue_name,venue_address,venue_image,parking_info,accessibility_info,catering_info,award_info,visitor_info,format_rules"), []),
         safe("teams", list("teams", "", [], "id,name,color,logo,team_photo,group_id"), []),
         safe("matches", db().prepare("SELECT id,tournament_id,home_team_id,away_team_id,home_score,away_score,status,confirmed,court,match_date,start_time,referee_ids,group_id,period,clock,clock_running,clock_started_at,scoreboard_mode,version,created_at,updated_at FROM matches WHERE tournament_id=(SELECT id FROM tournaments WHERE active=1 LIMIT 1) AND (home_team_id IS NULL OR away_team_id IS NULL OR home_team_id<>away_team_id)").all().then((r: any) => r.results.map((x: any) => { for (const k of ["referee_ids"]) if (typeof x[k] === "string") try { x[k] = JSON.parse(x[k]); } catch {} return x; })), []),
         safe("standings", standings(), []),
@@ -2400,14 +2435,50 @@ export async function POST(
   if (!acceptsMutation(req)) return out({ error: "Cross-site request blocked" }, 403);
   const parts = (await params).path || [],
     path = parts.join("/"),
+    practicalImageMatch = /^tournaments\/([A-Za-z0-9_-]{1,100})\/practical-images\/(venue|hotel)$/.exec(path),
     contentLength = Number(req.headers.get("content-length") || 0);
-  if (path !== "uploads" && contentLength > MAX_JSON_BODY_BYTES) return out({ error: "Request body is too large" }, 413);
-  if (path === "uploads" && contentLength > MAX_UPLOAD_BODY_BYTES) return out({ error: "Upload must be 4 MB or smaller" }, 413);
-  const bodyResult = path === "uploads" ? { ok: true as const, value: {} } : await readJsonObject(req);
+  if (path !== "uploads" && !practicalImageMatch && contentLength > MAX_JSON_BODY_BYTES) return out({ error: "Request body is too large" }, 413);
+  if ((path === "uploads" || practicalImageMatch) && contentLength > MAX_UPLOAD_BODY_BYTES) return out({ error: "Upload must be 4 MB or smaller" }, 413);
+  const bodyResult = path === "uploads" || practicalImageMatch ? { ok: true as const, value: {} } : await readJsonObject(req);
   if (!bodyResult.ok) return out({ error: bodyResult.error }, bodyResult.status);
   const body: any = bodyResult.value,
     u = (await session(req)) as SessionUser;
   try {
+    if (practicalImageMatch) {
+      if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
+      const [, tournamentId, slot] = practicalImageMatch,
+        formResult = await readBoundedFormData(req);
+      if (!formResult.ok) return out({ error: formResult.error }, formResult.status);
+      const file = formResult.value.get("file");
+      if (!(file instanceof File) || !file.size) return out({ error: "Choose an image to upload" }, 422);
+      if (file.size > MAX_UPLOAD_FILE_BYTES) return out({ error: "Image must be 4 MB or smaller" }, 413);
+      if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type) || !(await hasAllowedFileSignature(file)))
+        return out({ error: "Upload a valid JPEG, PNG, WebP or GIF image" }, 415);
+      await ensureMediaSchema();
+      await ensureScheduleSchema();
+      const column = slot === "venue" ? "venue_image" : "hotel_image",
+        current: any = await db().prepare(`SELECT id,${column} image FROM tournaments WHERE id=?`).bind(tournamentId).first();
+      if (!current) return out({ error: "Tournament edition not found" }, 404);
+      const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-").slice(-80) || `${slot}-photo`,
+        objectKey = `practical-${slot}-${uuid()}-${cleanName}`;
+      await writeBlob(objectKey, file.stream(), file.type, u.id);
+      const image = `/api/files/${objectKey}`;
+      try {
+        const updated = await db().prepare(`UPDATE tournaments SET ${column}=?,updated_at=? WHERE id=?`).bind(image, now(), tournamentId).run();
+        if (!updated.meta.changes) throw new Error("Tournament edition not found");
+      } catch (error) {
+        try { await deleteBlob(objectKey); } catch (cleanupError) {
+          console.error(JSON.stringify({ event: "blob_cleanup_failed", objectKey, error: cleanupError instanceof Error ? cleanupError.name : "UnknownError" }));
+        }
+        throw error;
+      }
+      await removeUnreferencedBlob(current.image);
+      await removeUnreferencedBlob(image);
+      await log(u, "UPDATE", `tournament_${slot}_image`, tournamentId).catch((error) => {
+        console.error(JSON.stringify({ event: "practical_image_audit_failed", tournamentId, error: error instanceof Error ? error.name : "UnknownError" }));
+      });
+      return out({ ok: true, image }, 201);
+    }
     if (parts[0] === "teams" && parts[2] === "confirmation" && parts[1]) {
       if (!u || !permit(u, ["ADMIN", "TEAM"])) return out({ error: u ? "Forbidden" : "Unauthorized" }, u ? 403 : 401);
       if (u.role === "TEAM" && u.teamId !== parts[1]) return out({ error: "You can only confirm your own team" }, 403);
@@ -3948,6 +4019,21 @@ export async function PUT(
       return out({ error: "Upload a new photo before assigning it to a delegation member" }, 403);
     body.photo = next || null;
   }
+  if (table === "tournaments") {
+    const limits: Record<string, number> = {
+      venue_name: 120, venue_address: 300, parking_info: 1600,
+      accessibility_info: 1600, hotel_name: 120, hotel_address: 300,
+      hotel_checkin: 40, hotel_checkout: 40,
+      hotel_accessibility_info: 1600, hotel_info: 2000,
+      opening_hours: 1200, catering_info: 1600, visitor_info: 2000,
+      award_info: 1200, format_rules: 4000,
+    };
+    for (const [field, limit] of Object.entries(limits)) {
+      if (body[field] === undefined) continue;
+      body[field] = String(body[field] ?? "").trim();
+      if (body[field].length > limit) return out({ error: `${field.replaceAll("_", " ")} must be ${limit} characters or fewer` }, 422);
+    }
+  }
   if (table === "matches") body.court = "Court 1";
   const cols = resources[table].filter(
     (k) => body[k] !== undefined && k !== "version",
@@ -4032,6 +4118,20 @@ export async function DELETE(
   const u = (await session(req)) as SessionUser,
     body: any = bodyResult.value;
   try {
+  if (parts[0] === "tournaments" && parts[2] === "practical-images" && ["venue", "hotel"].includes(parts[3] || "") && rid) {
+    if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
+    await ensureMediaSchema();
+    await ensureScheduleSchema();
+    const column = parts[3] === "venue" ? "venue_image" : "hotel_image",
+      current: any = await db().prepare(`SELECT id,${column} image FROM tournaments WHERE id=?`).bind(rid).first();
+    if (!current) return out({ error: "Tournament edition not found" }, 404);
+    await db().prepare(`UPDATE tournaments SET ${column}=NULL,updated_at=? WHERE id=?`).bind(now(), rid).run();
+    await removeUnreferencedBlob(current.image);
+    await log(u, "DELETE", `tournament_${parts[3]}_image`, rid).catch((error) => {
+      console.error(JSON.stringify({ event: "practical_image_audit_failed", tournamentId: rid, error: error instanceof Error ? error.name : "UnknownError" }));
+    });
+    return out({ ok: true });
+  }
   if (parts[0] === "schedule_items" && rid) {
     if (!permit(u, ["ADMIN"])) return out({ error: "Forbidden" }, 403);
     await ensureScheduleSchema();

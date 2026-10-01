@@ -1,4 +1,8 @@
-import { get, put } from "@vercel/blob";
+import { del, get, put } from "@vercel/blob";
+
+export async function deleteBlob(pathname: string) {
+  await del(pathname);
+}
 
 export async function readBlob(pathname: string) {
   try {

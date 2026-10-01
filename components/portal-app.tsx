@@ -2444,6 +2444,76 @@ function Tournament({ refresh }: { refresh: number }) {
     </Tabs>
   );
 }
+function PracticalPhotoSetting({
+  tournamentId,
+  slot,
+  initialImage,
+}: {
+  tournamentId: string;
+  slot: "venue" | "hotel";
+  initialImage?: string;
+}) {
+  const [image, setImage] = useState(initialImage || ""),
+    [busy, setBusy] = useState(false);
+  useEffect(() => setImage(initialImage || ""), [initialImage, tournamentId]);
+  const title = slot === "venue" ? "Venue photo" : "Hotel photo";
+  async function upload(event: ChangeEvent<HTMLInputElement>) {
+    const selected = event.currentTarget.files?.[0];
+    if (!selected) return;
+    event.currentTarget.value = "";
+    setBusy(true);
+    try {
+      const file = await prepareUploadFile(selected);
+      if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type))
+        throw new Error("Choose a JPEG, PNG, WebP or GIF image.");
+      if (file.size > 4 * 1024 * 1024) throw new Error("Images must be 4 MB or smaller.");
+      const form = new FormData();
+      form.append("file", file);
+      const response = await fetch(`/api/tournaments/${encodeURIComponent(tournamentId)}/practical-images/${slot}`, {
+        method: "POST",
+        credentials: "same-origin",
+        body: form,
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Image upload failed");
+      setImage(result.image);
+      toast.success(`${title} updated`);
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function remove() {
+    setBusy(true);
+    try {
+      await api(`/tournaments/${encodeURIComponent(tournamentId)}/practical-images/${slot}`, { method: "DELETE" });
+      setImage("");
+      toast.success(`${title} removed`);
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="practical-photo-setting portal-field wide">
+      <span>{title}</span>
+      <div className="practical-photo-setting-preview">
+        {image ? <img src={image} alt={`Current ${slot} photo`} /> : <div><Hotel aria-hidden="true" /><span>No photo uploaded</span></div>}
+      </div>
+      <div className="practical-photo-setting-actions">
+        <label className="btn small">
+          {busy ? "Working…" : image ? "Replace photo" : "Upload photo"}
+          <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={upload} disabled={busy} />
+        </label>
+        {image && <button className="btn danger small" type="button" onClick={remove} disabled={busy}>Remove photo</button>}
+        <small>Use a clear landscape image. JPEG, PNG, WebP or GIF; maximum 4 MB.</small>
+      </div>
+    </div>
+  );
+}
+
 function TournamentManager({ refresh }: { refresh: number }) {
   const tournaments = useData("/tournaments", refresh),
     checks = useData<HealthCheck>("/tournament-checks", refresh),
@@ -2758,6 +2828,28 @@ function TournamentManager({ refresh }: { refresh: number }) {
                 name="opening_hours"
                 defaultValue={active.opening_hours}
               />
+              <h4 className="form-section-title">Venue details</h4>
+              <PracticalPhotoSetting tournamentId={active.id} slot="venue" initialImage={active.venue_image} />
+              <Field
+                label="Venue name"
+                name="venue_name"
+                defaultValue={active.venue_name}
+              />
+              <Field
+                label="Venue address"
+                name="venue_address"
+                defaultValue={active.venue_address}
+              />
+              <label className="portal-field wide">
+                <span>Venue parking information</span>
+                <textarea name="parking_info" rows={3} defaultValue={active.parking_info || ""} placeholder="Parking locations, cost, hours and bus drop-off details" />
+              </label>
+              <label className="portal-field wide">
+                <span>Venue accessibility information</span>
+                <textarea name="accessibility_info" rows={3} defaultValue={active.accessibility_info || ""} placeholder="Step-free entrance, accessible toilets, seating and charging information" />
+              </label>
+              <h4 className="form-section-title">Hotel details</h4>
+              <PracticalPhotoSetting tournamentId={active.id} slot="hotel" initialImage={active.hotel_image} />
               <Field
                 label="Hotel name"
                 name="hotel_name"
@@ -2768,6 +2860,26 @@ function TournamentManager({ refresh }: { refresh: number }) {
                 name="hotel_address"
                 defaultValue={active.hotel_address}
               />
+              <Field
+                label="Check-in time"
+                name="hotel_checkin"
+                defaultValue={active.hotel_checkin}
+                placeholder="For example, 15:00"
+              />
+              <Field
+                label="Check-out time"
+                name="hotel_checkout"
+                defaultValue={active.hotel_checkout}
+                placeholder="For example, 12:00"
+              />
+              <label className="portal-field wide">
+                <span>Hotel accessibility information</span>
+                <textarea name="hotel_accessibility_info" rows={3} defaultValue={active.hotel_accessibility_info || ""} placeholder="Accessible rooms, step-free routes, bathrooms and assistance arrangements" />
+              </label>
+              <label className="portal-field wide">
+                <span>Other hotel information</span>
+                <textarea name="hotel_info" rows={3} defaultValue={active.hotel_info || ""} placeholder="Included stay, breakfast, transport or team-specific information" />
+              </label>
               <h3 className="form-section-title">
                 Participation and accommodation pricing
               </h3>
@@ -2788,19 +2900,7 @@ function TournamentManager({ refresh }: { refresh: number }) {
                 as: number of delegation members × base price, plus the
                 supplement when a room has only one assigned person.
               </p>
-              <Field
-                label="Sports hall / venue"
-                name="venue_name"
-                defaultValue={active.venue_name}
-              />
-              <Field
-                label="Venue address"
-                name="venue_address"
-                defaultValue={active.venue_address}
-              />
               {[
-                ["parking_info", "Parking information"],
-                ["accessibility_info", "Accessibility information"],
                 ["catering_info", "Catering information"],
                 ["format_rules", "Tournament format and match rules"],
                 ["pcf_battle_info", "What is Powerchair Floorball Battle?"],
