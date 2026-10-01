@@ -1564,6 +1564,10 @@ function About() {
           <p>Your guide to the venue, accommodation and tournament weekend in Leuven.</p>
           <TournamentHeroDetails tournament={t} />
         </div>
+        <section className="practical-about">
+          <div className="practical-section-heading compact"><span className="practical-eyebrow">ABOUT</span><h2>{copy.pcfTitle}</h2></div>
+          <p className="about-lead">{localized(t.pcf_battle_info, language) || copy.pcfText}</p>
+        </section>
         <section className="practical-glance" aria-labelledby="practical-glance-title">
           <div className="practical-section-heading compact"><span className="practical-eyebrow">THE WEEKEND</span><h2 id="practical-glance-title">Tournament at a glance</h2></div>
           <div className="practical-stats-grid">
@@ -1614,10 +1618,6 @@ function About() {
           <div className="practical-section-heading"><span className="practical-eyebrow">GOOD TO KNOW</span><h2>More practical information</h2></div>
           <div className="practical-additional-grid">{practicalInfo.map((item) => <article key={item.label}><span>{item.icon}</span><div><h3>{item.label}</h3><p>{item.value}</p></div></article>)}</div>
         </section>}
-        <section className="block about-sport-intro">
-          <div className="title"><h2>{copy.pcfTitle}</h2></div>
-          <p className="about-lead">{localized(t.pcf_battle_info, language) || copy.pcfText}</p>
-        </section>
         {t.show_teams !== 0 && (
           <section className="block"><div className="title"><h2>Participating teams</h2></div><div className="people-grid">
             {d.teams.map((team: any) => <Link href={`/teams/${teamSlug(team.name, team.id)}`} className="team-overview-card" key={team.id}>{team.logo ? <img src={team.logo} alt={`${team.name} logo`} /> : <LiveMark team={team} />}<b>{team.name}</b><small>{copy.groupLabel} {team.group_id}</small></Link>)}

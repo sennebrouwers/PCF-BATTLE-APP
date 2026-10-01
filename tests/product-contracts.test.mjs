@@ -73,6 +73,8 @@ test("keeps role enforcement on the server", () => {
 });
 
 test("provides the complete responsive public tournament guide and admin-configurable venue/hotel details", () => {
+  assert.ok(page.indexOf("practical-about") < page.indexOf("practical-glance"), "about introduction must come before the weekend statistics");
+  assert.match(page, /practical-eyebrow">ABOUT<\/span><h2>\{copy\.pcfTitle\}/);
   for (const phrase of ["Tournament at a glance", 'number: "20", label: "Matches"', 'number: "5v5", label: "Format"', "Every team plays on both days", "Three-night stay included", "Bronze match", "5th-place match", "7th-place match"]) {
     assert.ok(page.includes(phrase), `missing practical guide content: ${phrase}`);
   }

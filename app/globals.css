@@ -2054,6 +2054,7 @@ body {
 .practical-section-heading h2 { margin: 0; font-size: clamp(23px, 2.6vw, 32px); letter-spacing: -.035em; }
 .practical-section-heading > p { margin: 0; color: var(--muted); }
 .practical-eyebrow { color: var(--pink); font-size: 11px; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
+.practical-about { margin: 0 0 36px; }
 .practical-glance { margin: 30px 0 48px; }
 .practical-stats-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
 .practical-stat { min-width: 0; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; align-items: center; column-gap: 10px; padding: 14px 15px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
