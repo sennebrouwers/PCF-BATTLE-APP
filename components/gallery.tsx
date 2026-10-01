@@ -46,14 +46,20 @@ export default function Gallery() {
     [fullImageLoaded, setFullImageLoaded] = useState(false);
   useEffect(() => {
     let active = true;
-    Promise.all([
-      clientApi("/tournaments"),
-      clientApi("/gallery"),
-    ])
-      .then(([tournaments, gallery]) => {
+    // Header settings come from the public endpoint (/tournaments is admin-only and
+    // returned 401 to visitors). Loaded separately so a settings failure can't hide the photos.
+    clientApi("/public-data")
+      .then((data) => {
+        if (!active || !Array.isArray(data?.tournaments)) return;
+        setT((data.tournaments.find((v: Tournament) => v.active) || data.tournaments[0] || { id: "" }) as Tournament);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setSettingsLoading(false);
+      });
+    clientApi("/gallery")
+      .then((gallery) => {
         if (!active) return;
-        if (Array.isArray(tournaments))
-          setT((tournaments.find((v: Tournament) => v.active) || tournaments[0] || { id: "" }) as Tournament);
           const items = Array.isArray(gallery)
               ? gallery
               : Array.isArray(gallery.photos)
@@ -73,9 +79,7 @@ export default function Gallery() {
         ),
       )
       .finally(() => {
-        if (!active) return;
-        setSettingsLoading(false);
-        setLoading(false);
+        if (active) setLoading(false);
       });
     return () => {
       active = false;

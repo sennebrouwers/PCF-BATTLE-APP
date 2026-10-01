@@ -29,6 +29,7 @@ import PublicFooter from "@/components/public-footer";
 import { publicCopy, usePublicLanguage } from "@/components/public-language";
 import type { Match, PublicBracketData, PublicData, PublicLink, PublicScorer, Referee, StandingRow, Team, Tournament } from "@/types/app";
 import { errorMessage } from "@/types/app";
+import { getPageMetadata } from "@/lib/page-metadata";
 const PortalApp = lazy(() => import("@/components/portal-app"));
 const Gallery = lazy(() => import("@/components/gallery"));
 const ScoreboardDisplay = lazy(() => import("@/components/scoreboard-display"));
@@ -205,7 +206,7 @@ function Login() {
         <span className="pink">WELCOME BACK</span>
         <h1>Sign in to your portal</h1>
         <p>Manage your tournament, team, or referee assignments.</p>
-        <form onSubmit={go} toolname="sign_in_to_portal" tooldescription="Sign in to the PCF BATTLE team, referee, or administrator portal.">
+        <form method="post" onSubmit={go} toolname="sign_in_to_portal" tooldescription="Sign in to the PCF BATTLE team, referee, or administrator portal.">
           <label>
             Email address
             <input id="login-email" name="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -299,7 +300,7 @@ function Signup() {
             <Link className="btn" href="/login">Go to sign in</Link>
           </>
         ) : (
-          <form onSubmit={redeem} toolname="create_team_portal_account" tooldescription="Create a team portal account using a valid PCF BATTLE invitation.">
+          <form method="post" onSubmit={redeem} toolname="create_team_portal_account" tooldescription="Create a team portal account using a valid PCF BATTLE invitation.">
             <label>
               Team name
               <input name="team_name" value={teamName} readOnly aria-readonly="true" toolparamdescription="The invited team name." />
@@ -469,14 +470,25 @@ function readPublicDataCache(): PublicData | null {
 }
 
 function usePublicData(): PublicData {
-  const [data, setData] = useState<PublicData>(() =>
-    readPublicDataCache() ? { ...emptyPublicData, ...readPublicDataCache(), ready: true } : emptyPublicData,
-  );
+  // Start empty so the first client render matches the server; the cache is
+  // applied right after hydration.
+  const [data, setData] = useState<PublicData>(emptyPublicData);
+  useEffect(() => {
+    const cached = readPublicDataCache();
+    if (cached) setData((current) => (current.ready ? current : { ...emptyPublicData, ...cached, ready: true }));
+  }, []);
   useEffect(() => {
     let mounted = true;
     let refreshBusy = false;
+    // Only poll live scores when a match can actually be live. Re-evaluated on every
+    // public-data refresh (10s), so polling resumes soon after live is switched on.
+    let livePossible = false;
     const set = (values: Partial<PublicData>) => {
       if (!mounted) return;
+      if (Array.isArray(values.tournaments)) {
+        const active = values.tournaments.find((t) => t.active) || values.tournaments[0];
+        livePossible = Boolean(active) && active.show_tournament !== 0 && active.live_enabled !== 0 && active.registration_mode !== 1;
+      }
       setData((current) => {
         const next = { ...current, ...values };
         if (next.ready) {
@@ -502,7 +514,7 @@ function usePublicData(): PublicData {
     }, interval);
     const liveTimer = location.pathname === "/" || location.pathname.startsWith("/tournament/")
       ? setInterval(async () => {
-          if (document.hidden || refreshBusy) return;
+          if (document.hidden || refreshBusy || !livePossible) return;
           refreshBusy = true;
           try {
             const { match } = await api("/live-state");
@@ -518,7 +530,7 @@ function usePublicData(): PublicData {
         }, 2000)
       : undefined;
     const onVisibility = () => {
-      if (!document.hidden) {
+      if (!document.hidden && livePossible) {
         void api("/live-state").then(({ match }) => {
           if (!match || !mounted) return;
           setData((current) => ({ ...current, matches: current.matches.some((item) => item.id === match.id) ? current.matches.map((item) => item.id === match.id ? match : item) : [match, ...current.matches], updatedAt: new Date().toISOString() }));
@@ -692,7 +704,7 @@ function PreRegistrationDialog() {
             </button>
           </div>
         ) : (
-          <form className="portal-form" onSubmit={submit} toolname="pre_register_team" tooldescription="Submit a club name and contact email to pre-register a team for PCF BATTLE.">
+          <form className="portal-form" method="post" onSubmit={submit} toolname="pre_register_team" tooldescription="Submit a club name and contact email to pre-register a team for PCF BATTLE.">
             <label className="portal-field">
               <span>Club name</span>
               <input name="club_name" required placeholder="Your club" toolparamdescription="The name of the club or team." />
@@ -1699,15 +1711,26 @@ function LegalPage({ page }: { page: "terms" | "privacy" | "cookies" | "accessib
   return <><PublicHeader settings={tournament} currentPath={`/${page}`} loading={!d.ready} /><main className="public legal-page"><div className="pagehero"><span>PCF BATTLE</span><h1>{content.title}</h1><p>{content.intro}</p></div><section className="block legal-content">{content.sections.map(([title, text]) => <article key={title}><h2>{title}</h2><p>{text}</p></article>)}</section></main><PublicFooter /><DeferredPublicChat /></>;
 }
 
+const TOURNAMENT_VIEWS = ["live", "schedule", "standings", "brackets", "statistics"];
+
+// Homepage only: React hoists these into <head>. The media queries match the
+// hero's <picture> sources, so each device preloads only the image it shows.
+function HeroPreload() {
+  return (
+    <>
+      <link rel="preload" as="image" href="/pcf-battle-hero-high.svg" type="image/svg+xml" media="(min-width: 801px)" fetchPriority="high" />
+      <link rel="preload" as="image" href="/pcf-battle-hero-mobile.svg" type="image/svg+xml" media="(max-width: 800px)" fetchPriority="high" />
+    </>
+  );
+}
+
 export default function App({ params }: { params: Promise<{ slug?: string[] }> }) {
   const { slug = [] } = use(params);
   const p = `/${slug.join("/")}`.replace(/\/$/, "") || "/";
   useEffect(() => {
-    const nl = window.localStorage.getItem("pcf-public-language") === "nl";
-    const names: Record<string, [string, string]> = { "/": ["PCF BATTLE | Powerchair Floorball Tournament", "PCF BATTLE | Powerchair floorballtoernooi"], "/about": ["Practical Information | PCF BATTLE", "Praktische informatie | PCF BATTLE"], "/faq": ["FAQ | Powerchair Floorball Battle", "FAQ | Powerchair Floorball Battle"], "/livestream": ["Watch PCF BATTLE Live", "Bekijk PCF BATTLE live"], "/tournament/schedule": ["Match Schedule | PCF BATTLE", "Wedstrijdschema | PCF BATTLE"], "/tournament/standings": ["Standings | PCF BATTLE", "Stand | PCF BATTLE"] };
-    document.title = names[p]?.[nl ? 1 : 0] || "PCF BATTLE | Powerchair Floorball";
+    document.title = getPageMetadata(p).title;
   }, [p]);
-  if (p === "/") return <DynamicLanding />;
+  if (p === "/") return <><HeroPreload /><DynamicLanding /></>;
   if (p === "/login") return <Login />;
   if (p.startsWith("/signup")) return <Signup />;
   if (p === "/admin") return <Suspense fallback={<div className="route-loading" />}><PortalApp role="admin" /></Suspense>;
@@ -1721,7 +1744,7 @@ export default function App({ params }: { params: Promise<{ slug?: string[] }> }
   if (p.startsWith("/teams/")) return <TeamOverview id={p.split("/").pop() || ""}/>;
   if (p === "/gallery") return <Suspense fallback={<div className="route-loading gallery-route-loading" aria-label="Loading media" />}><Gallery /></Suspense>;
   if (["/terms", "/privacy", "/cookies", "/accessibility"].includes(p)) return <LegalPage page={p.slice(1) as "terms" | "privacy" | "cookies" | "accessibility"} />;
-  if (p.startsWith("/tournament/"))
-    return <DynamicPublic view={p.split("/").pop() || "live"} />;
+  const tournamentView = /^\/tournament\/([a-z]+)$/.exec(p)?.[1];
+  if (tournamentView && TOURNAMENT_VIEWS.includes(tournamentView)) return <DynamicPublic view={tournamentView} />;
   notFound();
 }
