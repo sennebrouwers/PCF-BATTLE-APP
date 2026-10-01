@@ -113,6 +113,15 @@ test("publishes a standalone Contact page and keeps Practical focused on event d
   assert.doesNotMatch(practical, /contact-section|Follow on Instagram|mailto:/);
 });
 
+test("shows Admin-configured participation prices on the Practical page", () => {
+  assert.match(api, /fixed_tournament_costs,single_room_supplement/);
+  assert.match(page, /Participation price/);
+  assert.match(page, /formatPrice\(participationPrice\)/);
+  assert.match(page, /singleRoomSupplement > 0/);
+  assert.match(portal, /Base tournament price per person/);
+  assert.match(portal, /Single room supplement per person/);
+});
+
 test("minimizes audit details and preserves payment invariants", () => {
   assert.match(api, /function redactAuditDetails/);
   assert.match(api, /JSON\.stringify\(redactAuditDetails\(details\)\)/);

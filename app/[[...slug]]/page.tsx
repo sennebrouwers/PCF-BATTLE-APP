@@ -1470,6 +1470,8 @@ function About() {
   const { language } = usePublicLanguage(), copy = publicCopy[language],
     d = usePublicData(),
     t = d.tournaments.find((x: any) => x.active) || d.tournaments[0] || {},
+    participationPrice = Number(t.fixed_tournament_costs) || 0,
+    singleRoomSupplement = Number(t.single_room_supplement) || 0,
     venueName = localized(t.venue_name, language) || "Sportoase Philipssite Arena",
     venueAddress = localized(t.venue_address, language) || "",
     hotelName = localized(t.hotel_name, language) || "Park Inn by Radisson Leuven",
@@ -1481,6 +1483,7 @@ function About() {
       { label: "Award ceremony", value: localized(t.award_info, language), icon: <Trophy aria-hidden="true" /> },
       { label: "Additional match information", value: localized(t.format_rules, language), icon: <Swords aria-hidden="true" /> },
     ].filter((item) => item.value?.trim());
+  const formatPrice = (amount: number) => new Intl.NumberFormat("en-BE", { style: "currency", currency: "EUR" }).format(amount);
   return (
     <>
       <PublicHeader settings={t} currentPath="/about" loading={!d.ready} />
@@ -1508,6 +1511,14 @@ function About() {
             ].map((item) => <article className="practical-stat" key={item.label}><span>{item.icon}</span><b>{item.number}</b><small>{item.label}</small></article>)}
           </div>
         </section>
+        {participationPrice > 0 && <section className="practical-price" aria-labelledby="participation-price-title">
+          <div className="practical-section-heading compact"><span className="practical-eyebrow">TEAMS</span><h2 id="participation-price-title">Participation price</h2></div>
+          <div className="practical-price-content">
+            <div className="practical-price-main"><b>{formatPrice(participationPrice)}</b><span>per person</span></div>
+            {singleRoomSupplement > 0 && <p><span>Single-room supplement</span><b>{formatPrice(singleRoomSupplement)} per person</b></p>}
+          </div>
+          <small>The total is based on the delegation size. A single-room supplement applies when a room is assigned to one person.</small>
+        </section>}
         <section className="practical-places" aria-label="Venue and hotel">
           <PracticalPlace
             title={venueName}

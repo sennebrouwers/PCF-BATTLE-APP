@@ -2062,6 +2062,16 @@ body {
 .practical-stat svg { width: 17px; height: 17px; }
 .practical-stat > b { font-size: 21px; line-height: 1.05; }
 .practical-stat > small { color: var(--muted); font-size: 11px; font-weight: 700; }
+.practical-price { margin: -20px 0 48px; padding: 20px 22px; border: 1px solid color-mix(in srgb, var(--pink) 28%, var(--line)); border-radius: 16px; background: color-mix(in srgb, var(--pink) 5%, var(--card)); }
+.practical-price .practical-section-heading { margin-bottom: 12px; }
+.practical-price .practical-section-heading h2 { font-size: 21px; }
+.practical-price-content { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 36px; }
+.practical-price-main { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+.practical-price-main b { color: var(--pink); font-size: clamp(26px, 4vw, 36px); letter-spacing: -.04em; }
+.practical-price-main span,.practical-price-content p { color: var(--muted); font-size: 13px; }
+.practical-price-content p { display: grid; gap: 3px; margin: 0; }
+.practical-price-content p b { color: var(--ink); font-size: 14px; }
+.practical-price > small { display: block; margin-top: 9px; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .practical-places { display: grid; gap: 28px; margin: 0 0 80px; }
 .practical-place { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); align-items: stretch; overflow: hidden; border: 1px solid var(--line); border-radius: 22px; background: var(--card); box-shadow: 0 12px 36px #2115210a; }
 .practical-place.reverse .practical-place-photo { order: 2; }
@@ -2170,6 +2180,7 @@ body {
   .practical-event-guide { padding-top: 30px; }
   .practical-event-guide .practical-hero > p { font-size: 15px; }
   .practical-glance { margin: 24px 0 38px; }
+  .practical-price { margin: -14px 0 36px; padding: 17px 15px; border-radius: 14px; }
   .practical-stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .practical-stat { grid-template-columns: 1fr; justify-items: start; gap: 7px; padding: 11px; }
   .practical-stat > span { grid-row: auto; width: 30px; height: 30px; border-radius: 9px; }
