@@ -8,7 +8,7 @@ import { createServer } from "vite";
 
 test("confirmation sends, explicit resend, and failed attempts are recoverable", { timeout: 30_000 }, async () => {
   const directory = await mkdtemp(join(tmpdir(), "pcf-registration-email-test-"));
-  const envNames = ["TURSO_DATABASE_URL", "TURSO_AUTH_TOKEN", "SESSION_SECRET", "RESEND_API_KEY", "RESEND_FROM", "SITE_ORIGIN"];
+  const envNames = ["TURSO_DATABASE_URL", "TURSO_AUTH_TOKEN", "SESSION_SECRET", "RESEND_API_KEY", "RESEND_FROM", "SITE_ORIGIN", "NODE_ENV"];
   const originalEnv = Object.fromEntries(envNames.map((name) => [name, process.env[name]]));
   const originalFetch = globalThis.fetch;
   const sessionSecret = "local-test-session-secret-with-at-least-32-bytes";
@@ -18,12 +18,17 @@ test("confirmation sends, explicit resend, and failed attempts are recoverable",
   process.env.RESEND_API_KEY = "test-resend-key";
   process.env.RESEND_FROM = "noreply@example.test";
   process.env.SITE_ORIGIN = "https://www.pcfbattle.be";
+  process.env.NODE_ENV = "production";
   globalThis.crypto ??= webcrypto;
   let emailMode = "accept";
   let emailCalls = 0;
   globalThis.fetch = async (input, init) => {
     if (String(input) !== "https://api.resend.com/emails") return originalFetch(input, init);
     emailCalls += 1;
+    if (emailCalls === 1) {
+      const sent = JSON.parse(String(init?.body));
+      assert.match(sent.html, /https:\/\/www\.pcfbattle\.be\/PFB_Logo_Pink\.svg/);
+    }
     if (emailMode === "reject") return Response.json({ name: "invalid_api_key" }, { status: 401 });
     return Response.json({ id: "email_" + emailCalls });
   };
@@ -69,7 +74,8 @@ test("confirmation sends, explicit resend, and failed attempts are recoverable",
       return { status: response.status, body: await response.json() };
     };
 
-    assert.equal((await call()).status, 200);
+    delete process.env.SITE_ORIGIN;
+    assert.equal((await call()).status, 200, "production sends should not depend on SITE_ORIGIN being configured");
     assert.equal(emailCalls, 1);
     const firstSentAt = (await db.prepare("SELECT registration_confirmation_sent_at FROM preregistrations WHERE id=?").bind("registration-test").first()).registration_confirmation_sent_at;
     assert.ok(firstSentAt);

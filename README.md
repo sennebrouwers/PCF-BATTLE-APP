@@ -19,7 +19,7 @@ Set these values in the Vercel project before enabling production workflows:
 | `BLOB_READ_WRITE_TOKEN` | Private Vercel Blob uploads and reads |
 | `RESEND_API_KEY` | Transactional email delivery |
 | `RESEND_FROM` | Verified sender address for transactional emails |
-| `SITE_ORIGIN` | Canonical HTTPS site origin used in email assets and links |
+| `SITE_ORIGIN` | Optional canonical HTTPS origin override for email assets and links; defaults to `https://www.pcfbattle.be` |
 
 Set secrets in Vercel's environment settings. Do not commit `.env` files or
 secret values. For local development, use a separate database and storage

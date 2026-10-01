@@ -11,7 +11,8 @@ these values in the Vercel project's environment settings:
 - `BLOB_READ_WRITE_TOKEN`: private upload and download access.
 - `RESEND_API_KEY` and `RESEND_FROM`: transactional confirmation, selection,
   waiting-list and portal invitation emails.
-- `SITE_ORIGIN`: canonical HTTPS origin for generated email links and images.
+- `SITE_ORIGIN`: optional canonical HTTPS origin override for generated email
+  links and images. It defaults to `https://www.pcfbattle.be`.
 
 Use separate credentials and databases for Preview and Development. Never
 commit runtime values, tokens, database credentials or local `.env` files.

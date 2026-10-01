@@ -1003,8 +1003,10 @@ async function sendEmail(
 }
 function emailOrigin(req: NextRequest) {
   const configured = runtimeEnv.SITE_ORIGIN?.trim();
-  if (!configured && process.env.NODE_ENV === "production") throw new Error("SITE_ORIGIN is required in production");
-  const origin = new URL(configured || new URL(req.url).origin);
+  // Email links must never depend on the incoming request host. In production,
+  // a missing optional override should use the app's canonical domain rather
+  // than silently preventing every transactional email from being sent.
+  const origin = new URL(configured || "https://www.pcfbattle.be");
   if (!/^https?:$/.test(origin.protocol) || origin.username || origin.password)
     throw new Error("SITE_ORIGIN must be an HTTP or HTTPS origin without credentials");
   if (process.env.NODE_ENV === "production" && origin.protocol !== "https:")
