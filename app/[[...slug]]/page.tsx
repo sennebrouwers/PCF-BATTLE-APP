@@ -1401,6 +1401,11 @@ function DynamicPublic({ view }: { view: string }) {
   );
 }
 
+function practicalImageSource(url: string) {
+  if (!url.startsWith("/api/files/")) return url;
+  return url + (url.includes("?") ? "&" : "?") + "variant=practical-960";
+}
+
 type PracticalRow = { label: string; value?: string; icon: ReactNode };
 
 function PracticalPlace({
@@ -1427,7 +1432,7 @@ function PracticalPlace({
     <section className={`practical-place${reverse ? " reverse" : ""}`}>
       <div className="practical-place-photo">
         {image ? (
-          <Image src={image} alt={imageAlt} fill sizes="(max-width: 800px) 100vw, 50vw" loading="lazy" />
+          <Image src={practicalImageSource(image)} alt={imageAlt} fill sizes="(max-width: 800px) 100vw, 50vw" loading="lazy" unoptimized={image.startsWith("/api/files/")} />
         ) : (
           <div className="practical-photo-empty" aria-label={`${title} photo not uploaded`}>
             <span><Hotel aria-hidden="true" /></span>

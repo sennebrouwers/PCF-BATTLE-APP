@@ -17,3 +17,11 @@ export async function optimizeSponsorLogo(input: Buffer): Promise<Buffer> {
     .webp({ quality: 80, effort: 4 })
     .toBuffer();
 }
+
+export async function optimizePracticalImage(input: Buffer): Promise<Buffer> {
+  return sharp(input, { limitInputPixels: 40_000_000 })
+    .rotate()
+    .resize({ width: 960, height: 720, fit: "inside", withoutEnlargement: true })
+    .webp({ quality: 78, effort: 4 })
+    .toBuffer();
+}
