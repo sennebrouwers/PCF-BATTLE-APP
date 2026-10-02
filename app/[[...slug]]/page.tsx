@@ -482,6 +482,54 @@ function usePublicData(): PublicData {
   }, []);
   return data;
 }
+function usePracticalData(): PublicData {
+  const [data, setData] = useState<PublicData>(emptyPublicData);
+  useEffect(() => {
+    let mounted = true;
+    let refreshBusy = false;
+    const cacheKey = "pcf-practical-data-cache";
+    const apply = (values: Partial<PublicData>) => {
+      if (!mounted) return;
+      setData((current) => ({ ...current, ...values, ready: true }));
+    };
+    try {
+      const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+      if (cached?.version === 1 && cached?.payload && Date.now() - Number(cached.savedAt || 0) < 60_000) {
+        apply({ ...cached.payload, updatedAt: new Date(cached.savedAt).toISOString() });
+      }
+    } catch {}
+    const refresh = async () => {
+      if (refreshBusy) return;
+      refreshBusy = true;
+      try {
+        const values = await api("/practical-data");
+        if (!mounted) return;
+        const updatedAt = new Date().toISOString();
+        apply({ ...values, updatedAt, error: "" });
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify({
+            version: 1,
+            savedAt: Date.now(),
+            payload: { tournaments: values.tournaments, teams: values.teams, referees: values.referees },
+          }));
+        } catch {}
+      } catch (error: unknown) {
+        if (mounted) apply({ error: error instanceof Error ? error.message : "Unable to load practical information." });
+      } finally {
+        refreshBusy = false;
+      }
+    };
+    void refresh();
+    const refreshTimer = setInterval(() => {
+      if (!document.hidden) void refresh();
+    }, 300_000);
+    return () => {
+      mounted = false;
+      clearInterval(refreshTimer);
+    };
+  }, []);
+  return data;
+}
 function PublicDataError({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return <div className="empty-state error-state" role="alert"><p>{message}</p>{onRetry && <button className="btn" onClick={onRetry}>Retry</button>}</div>;
 }
@@ -1488,7 +1536,7 @@ function TournamentFlow() {
 
 function About() {
   const { language } = usePublicLanguage(), copy = publicCopy[language],
-    d = usePublicData(),
+    d = usePracticalData(),
     t = d.tournaments.find((x: any) => x.active) || d.tournaments[0] || {},
     participationPrice = Number(t.fixed_tournament_costs) || 0,
     singleRoomSupplement = Number(t.single_room_supplement) || 0,

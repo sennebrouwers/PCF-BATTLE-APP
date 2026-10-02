@@ -16,6 +16,7 @@ const secureToken = (bytes = 24) => {
   return [...values].map((value) => value.toString(16).padStart(2, "0")).join("").toUpperCase();
 };
 let publicDataCache: { expiresAt: number; payload: unknown } | null = null;
+let practicalDataCache: { expiresAt: number; payload: unknown } | null = null;
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
@@ -1860,6 +1861,28 @@ export async function GET(
       const settings = await db().prepare("SELECT match_duration_minutes,halftime_duration_minutes,scoreboard_background,scoreboard_accent,scoreboard_logo_scale,scoreboard_show_sponsors FROM tournaments WHERE id=?").bind(match.tournament_id).first();
       const sponsors = await list("links", "WHERE category='Sponsor' AND active=1 ORDER BY sort_order,title");
       return NextResponse.json({ match, teams, goals, incidents, settings, sponsors }, { headers: { "Cache-Control": "private, no-store" } });
+    }
+    if (path === "practical-data") {
+      const cached = practicalDataCache;
+      if (cached && cached.expiresAt > Date.now()) {
+        return NextResponse.json(cached.payload, { headers: { "Cache-Control": "public, max-age=5, s-maxage=15, stale-while-revalidate=60" } });
+      }
+      await ensureMediaSchema();
+      await ensureScheduleSchema();
+      const [
+        tournaments,
+        teams,
+        referees,
+      ] = await Promise.all([
+        list("tournaments", "ORDER BY active DESC,start_date DESC", [], "id,name,start_date,end_date,city,country,active,registration_mode,registration_enabled,live_enabled,show_tournament,show_referees,show_livestream,livestream_url,show_teams,show_matches,show_standings,show_brackets,show_statistics,show_about,show_gallery,gallery_url,public_message,opening_hours,hotel_name,hotel_address,hotel_image,hotel_checkin,hotel_checkout,hotel_accessibility_info,hotel_info,venue_name,venue_address,venue_image,parking_info,accessibility_info,catering_info,award_info,visitor_info,format_rules,pcf_battle_info,fixed_tournament_costs,single_room_supplement"),
+        list("teams", "", [], "id,name,color,logo,team_photo,group_id"),
+        db().prepare(
+          "SELECT id,name,country,photo,NULL team_id,'USER' source FROM users WHERE role='REFEREE' AND active=1 UNION ALL SELECT dm.id,dm.name,NULL country,CASE WHEN dm.photo_consent=1 THEN dm.photo ELSE NULL END photo,dm.team_id,'DELEGATION' source FROM delegation_members dm WHERE dm.role='REFEREE' AND dm.privacy_consent=1 AND dm.id NOT IN (SELECT id FROM users) ORDER BY name",
+        ).all().then((result: any) => result.results),
+      ]);
+      const payload = { tournaments, teams, referees };
+      practicalDataCache = { expiresAt: Date.now() + 5000, payload };
+      return NextResponse.json(payload, { headers: { "Cache-Control": "public, max-age=5, s-maxage=15, stale-while-revalidate=60" } });
     }
     if (path === "public-data") {
       await ensureMediaSchema();
