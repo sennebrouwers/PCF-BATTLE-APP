@@ -388,31 +388,40 @@ const emptyPublicData: PublicData = {
     players: [],
     schedule_items: [],
     ready: false,
+    visibilityReady: false,
     updatedAt: null,
   };
 let publicDataCache: PublicData | null = null;
+let publicHomeDataCache: PublicData | null = null;
 const publicDataStorageKey = "pcf-public-data-cache";
+const publicHomeDataStorageKey = "pcf-home-data-cache";
 const publicDataCacheVersion = 3;
-function readPublicDataCache(): PublicData | null {
-  if (publicDataCache) return publicDataCache;
+const publicHomeDataCacheVersion = 1;
+function readPublicDataCache(homeOnly = false): PublicData | null {
+  const cacheKey = homeOnly ? publicHomeDataStorageKey : publicDataStorageKey;
+  const cacheVersion = homeOnly ? publicHomeDataCacheVersion : publicDataCacheVersion;
+  const memoryCache = homeOnly ? publicHomeDataCache : publicDataCache;
+  if (memoryCache) return memoryCache;
   try {
-    const stored = JSON.parse(localStorage.getItem(publicDataStorageKey) || "null");
-    if (stored?.version === publicDataCacheVersion && stored?.payload && Date.now() - Number(stored.savedAt || 0) < 60_000) {
-      publicDataCache = stored.payload;
+    const stored = JSON.parse(localStorage.getItem(cacheKey) || "null");
+    if (stored?.version === cacheVersion && stored?.payload && Date.now() - Number(stored.savedAt || 0) < 60_000) {
+      if (homeOnly) publicHomeDataCache = stored.payload;
+      else publicDataCache = stored.payload;
+      return stored.payload;
     }
   } catch {}
-  return publicDataCache;
+  return null;
 }
 
-function usePublicData(): PublicData {
+function usePublicData(homeOnly = false): PublicData {
   // Start empty so the first client render matches the server; the cache is
   // applied right after hydration.
   const [data, setData] = useState<PublicData>(emptyPublicData);
   useEffect(() => {
-    const cached = readPublicDataCache();
-    // Cached settings can be stale after an Admin visibility change. Keep the
-    // loading gate closed until the current server response confirms visibility.
-    if (cached) setData((current) => (current.ready ? current : { ...emptyPublicData, ...cached, ready: false }));
+    const cached = readPublicDataCache(homeOnly);
+    // Reuse content immediately, but do not trust cached visibility flags until
+    // the current server response confirms them.
+    if (cached) setData((current) => (current.ready ? current : { ...emptyPublicData, ...cached, ready: true, visibilityReady: false }));
   }, []);
   useEffect(() => {
     let mounted = true;
@@ -429,24 +438,28 @@ function usePublicData(): PublicData {
       setData((current) => {
         const next = { ...current, ...values };
         if (next.ready) {
-          publicDataCache = next;
+          if (homeOnly) publicHomeDataCache = next;
+          else publicDataCache = next;
+          const cacheKey = homeOnly ? publicHomeDataStorageKey : publicDataStorageKey;
+          const cacheVersion = homeOnly ? publicHomeDataCacheVersion : publicDataCacheVersion;
           try {
-            const serialized = JSON.stringify({ version: publicDataCacheVersion, savedAt: Date.now(), payload: next });
-            if (serialized.length <= 1_500_000) localStorage.setItem(publicDataStorageKey, serialized);
-            else localStorage.removeItem(publicDataStorageKey);
-          } catch { try { localStorage.removeItem(publicDataStorageKey); } catch {} }
+            const serialized = JSON.stringify({ version: cacheVersion, savedAt: Date.now(), payload: next });
+            if (serialized.length <= 1_500_000) localStorage.setItem(cacheKey, serialized);
+            else localStorage.removeItem(cacheKey);
+          } catch { try { localStorage.removeItem(cacheKey); } catch {} }
         }
         return next;
       });
     };
-    api("/public-data")
-      .then((values: PublicData) => set({ ...values, ready: true, error: "", updatedAt: new Date().toISOString() }))
-      .catch((error: unknown) => set({ ready: true, error: error instanceof Error ? error.message : "Unable to load tournament data." }));
+    const dataEndpoint = homeOnly ? "/public-home-data" : "/public-data";
+    api(dataEndpoint)
+      .then((values: PublicData) => set({ ...values, ready: true, visibilityReady: true, error: "", updatedAt: new Date().toISOString() }))
+      .catch((error: unknown) => set({ ready: true, visibilityReady: false, error: error instanceof Error ? error.message : "Unable to load tournament data." }));
     const interval = location.pathname === "/" || location.pathname.startsWith("/tournament/") ? 10000 : 300000;
     const refreshTimer = setInterval(async () => {
       if (document.hidden || refreshBusy) return;
       refreshBusy = true;
-      try { set({ ...(await api("/public-data")), ready: true, error: "", updatedAt: new Date().toISOString() }); } catch (error: unknown) { set({ error: error instanceof Error ? error.message : "Unable to refresh tournament data." }); }
+      try { set({ ...(await api(dataEndpoint)), ready: true, visibilityReady: true, error: "", updatedAt: new Date().toISOString() }); } catch (error: unknown) { set({ visibilityReady: false, error: error instanceof Error ? error.message : "Unable to refresh tournament data." }); }
       finally { refreshBusy = false; }
     }, interval);
     const liveTimer = location.pathname === "/" || location.pathname.startsWith("/tournament/")
@@ -790,7 +803,7 @@ function PublicHomeLoading() {
 function DynamicLanding() {
   const { language } = usePublicLanguage();
   const copy = publicCopy[language];
-  const d = usePublicData();
+  const d = usePublicData(true);
   const [favouriteTeamId, setFavouriteTeamId] = useState("");
   useEffect(() => setFavouriteTeamId(localStorage.getItem("pcf_favourite_team") || ""), []);
   if (!d.ready) return <PublicHomeLoading />;
@@ -799,7 +812,8 @@ function DynamicLanding() {
     registration = Number(tournament.registration_mode) !== 0,
     registrationsOpen = registration && Number(tournament.registration_enabled ?? 1) !== 0,
     liveEnabled = tournament.live_enabled !== 0,
-    live = liveEnabled ? d.matches.find((m) => m.status === "live") : null,
+    settingsKnown = Boolean(d.visibilityReady && tournament.id),
+    live = settingsKnown && liveEnabled ? d.matches.find((m) => m.status === "live") : null,
     home = d.teams.find((t: Team) => t.id === live?.home_team_id),
     away = d.teams.find((t: Team) => t.id === live?.away_team_id),
     sponsors = d.links
@@ -812,7 +826,7 @@ function DynamicLanding() {
       href: "/tournament/live",
       icon: Zap,
       tone: "pink",
-      show: tournament.show_tournament !== 0 && liveEnabled && tournament.show_matches !== 0,
+      show: settingsKnown && tournament.show_tournament !== 0 && liveEnabled && tournament.show_matches !== 0,
     },
     {
       name: copy.schedule,
@@ -820,7 +834,7 @@ function DynamicLanding() {
       href: "/tournament/schedule",
       icon: CalendarDays,
       tone: "blue",
-      show: tournament.show_tournament !== 0 && tournament.show_matches !== 0,
+      show: settingsKnown && tournament.show_tournament !== 0 && tournament.show_matches !== 0,
     },
     {
       name: copy.standings,
@@ -828,7 +842,7 @@ function DynamicLanding() {
       href: "/tournament/standings",
       icon: Trophy,
       tone: "orange",
-      show: tournament.show_tournament !== 0 && tournament.show_standings !== 0,
+      show: settingsKnown && tournament.show_tournament !== 0 && tournament.show_standings !== 0,
     },
     {
       name: copy.brackets,
@@ -836,12 +850,12 @@ function DynamicLanding() {
       href: "/tournament/brackets",
       icon: Swords,
       tone: "purple",
-      show: tournament.show_tournament !== 0 && tournament.show_brackets !== 0,
+      show: settingsKnown && tournament.show_tournament !== 0 && tournament.show_brackets !== 0,
     },
   ].filter((x) => x.show);
   return (
     <>
-      <PublicHeader settings={tournament} currentPath="/" />
+      <PublicHeader settings={tournament} currentPath="/" loading={!settingsKnown} />
       <main className="reference-home">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
           "@context": "https://schema.org",
@@ -865,15 +879,17 @@ function DynamicLanding() {
         }) }} />
         <section className="reference-hero">
           <div className="reference-copy">
-            <span className={`live-pill${registration && !registrationsOpen ? " registration-closed" : ""}`}>
+            <span className={`live-pill${settingsKnown && registration && !registrationsOpen ? " registration-closed" : ""}`}>
               <i />{" "}
-              {registration
-                ? registrationsOpen
-                  ? copy.registrationOpen
-                  : copy.registrationClosed
-                : live
-                  ? copy.liveTournament
-                  : copy.tournamentTag}
+              {!settingsKnown
+                ? copy.tournamentTag
+                : registration
+                  ? registrationsOpen
+                    ? copy.registrationOpen
+                    : copy.registrationClosed
+                  : live
+                    ? copy.liveTournament
+                    : copy.tournamentTag}
             </span>
             <h1>
               <strong>
@@ -886,14 +902,16 @@ function DynamicLanding() {
             </h1>
             <TournamentHeroDetails tournament={tournament} />
             <p>
-              {registration
-                ? localized(tournament.public_message, language) ||
-                  (registrationsOpen
-                    ? "Team registration is currently open. Tournament details will be published soon."
-                    : copy.registrationClosed)
-                : copy.followTournament}
+              {!settingsKnown
+                ? copy.followTournament
+                : registration
+                  ? localized(tournament.public_message, language) ||
+                    (registrationsOpen
+                      ? "Team registration is currently open. Tournament details will be published soon."
+                      : copy.registrationClosed)
+                  : copy.followTournament}
             </p>
-            {registration && (
+            {settingsKnown && registration && (
               <div className="reference-actions registration-actions">
                 {tournament.registration_enabled !== 0 && (
                   <PreRegistrationDialog />
@@ -903,7 +921,7 @@ function DynamicLanding() {
                 </Link>
               </div>
             )}
-            {!registration && (
+            {settingsKnown && !registration && (
               <div className="reference-actions">
                 {liveEnabled && tournament.show_matches !== 0 && (
                   <Link className="btn primary" href="/tournament/live">
@@ -930,7 +948,7 @@ function DynamicLanding() {
                 sizes="(max-width: 800px) 100vw, 56vw"
               />
             </picture>
-            {!registration && live && (
+            {settingsKnown && !registration && live && (
               <Link className="live-score" href="/tournament/live">
                 <span>
                   <i /> LIVE · {live.court || "COURT"}
@@ -950,7 +968,7 @@ function DynamicLanding() {
             )}
           </div>
         </section>
-        {!registration && tournament.show_teams !== 0 && (
+        {settingsKnown && !registration && tournament.show_teams !== 0 && (
           <section className="block team-overview">
             <div className="title">
               <div>
@@ -983,7 +1001,7 @@ function DynamicLanding() {
             </div>
           </section>
         )}
-        <SponsorBanner sponsors={sponsors} />
+        {settingsKnown && <SponsorBanner sponsors={sponsors} />
         <section className="quick-grid">
             {quick.map(({ name, detail, href, icon: Icon, tone }) => (
               <Link href={href} key={name}>
