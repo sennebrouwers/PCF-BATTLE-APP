@@ -410,7 +410,9 @@ function usePublicData(): PublicData {
   const [data, setData] = useState<PublicData>(emptyPublicData);
   useEffect(() => {
     const cached = readPublicDataCache();
-    if (cached) setData((current) => (current.ready ? current : { ...emptyPublicData, ...cached, ready: true }));
+    // Cached settings can be stale after an Admin visibility change. Keep the
+    // loading gate closed until the current server response confirms visibility.
+    if (cached) setData((current) => (current.ready ? current : { ...emptyPublicData, ...cached, ready: false }));
   }, []);
   useEffect(() => {
     let mounted = true;
