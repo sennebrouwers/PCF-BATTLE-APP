@@ -5,6 +5,7 @@ import { removeMatchAndScheduleItem } from "@/lib/match-deletion";
 import { deliverEmail } from "@/lib/email-delivery";
 import { answerTournamentQuestion, calculateGroupStandings, parseAiKnowledge } from "@/lib/tournament-assistant";
 import { getPublicFaq } from "@/lib/public-faq";
+import { optimizeSponsorLogo } from "@/lib/sponsor-images";
 
 const db = getDatabase;
 const now = () => new Date().toISOString();
@@ -1737,7 +1738,10 @@ export async function GET(
       await ensureMediaSchema();
       await ensureScheduleSchema();
       const fileUrl = `/api/files/${objectKey}`;
-      const sharedResource = await db().prepare("SELECT id FROM links WHERE active=1 AND (url=? OR dark_url=?) UNION ALL SELECT id FROM teams WHERE logo=? OR team_photo=? UNION ALL SELECT id FROM delegation_members WHERE photo=? AND privacy_consent=1 AND photo_consent=1 UNION ALL SELECT id FROM users WHERE photo=? AND role='REFEREE' AND active=1 UNION ALL SELECT id FROM tournaments WHERE active=1 AND (venue_image=? OR hotel_image=?) LIMIT 1").bind(fileUrl, fileUrl, fileUrl, fileUrl, fileUrl, fileUrl, fileUrl, fileUrl).first();
+      const sponsorVariant = req.nextUrl.searchParams.get("variant") === "sponsor",
+        sharedResource = sponsorVariant
+          ? await db().prepare("SELECT id FROM links WHERE active=1 AND category='Sponsor' AND (url=? OR dark_url=?) LIMIT 1").bind(fileUrl, fileUrl).first()
+          : await db().prepare("SELECT id FROM links WHERE active=1 AND (url=? OR dark_url=?) UNION ALL SELECT id FROM teams WHERE logo=? OR team_photo=? UNION ALL SELECT id FROM delegation_members WHERE photo=? AND privacy_consent=1 AND photo_consent=1 UNION ALL SELECT id FROM users WHERE photo=? AND role='REFEREE' AND active=1 UNION ALL SELECT id FROM tournaments WHERE active=1 AND (venue_image=? OR hotel_image=?) LIMIT 1").bind(fileUrl, fileUrl, fileUrl, fileUrl, fileUrl, fileUrl, fileUrl, fileUrl).first();
       let teamResource: unknown = null;
       if (u?.role === "TEAM" && u.teamId) {
         teamResource = await db().prepare("SELECT id FROM teams WHERE id=? AND (logo=? OR team_photo=?) UNION ALL SELECT id FROM delegation_members WHERE team_id=? AND photo=? LIMIT 1").bind(u.teamId, fileUrl, fileUrl, u.teamId, fileUrl).first();
@@ -1752,6 +1756,33 @@ export async function GET(
         return out({ error: "Forbidden" }, 403);
       if (!sharedResource && !teamResource && u?.role !== "ADMIN" && !owned)
         return out({ error: u ? "Forbidden" : "Unauthorized" }, u ? 403 : 401);
+      if (sponsorVariant && !sharedResource) return new NextResponse("Not found", { status: 404 });
+      if (sponsorVariant && ["image/jpeg", "image/png", "image/webp"].includes(object.contentType || "")) {
+        try {
+          const source = Buffer.from(await new Response(object.body).arrayBuffer()),
+            optimized = await optimizeSponsorLogo(source);
+          const responseBody = new ArrayBuffer(optimized.byteLength);
+          new Uint8Array(responseBody).set(optimized);
+          return new NextResponse(responseBody, {
+            headers: {
+              "Content-Type": "image/webp",
+              "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
+              ...securityHeaders,
+            },
+          });
+        } catch (error) {
+          console.error(JSON.stringify({ event: "sponsor_image_optimization_failed", objectKey, error: error instanceof Error ? error.name : "UnknownError" }));
+          const fallback = await readBlob(objectKey);
+          if (!fallback) return new NextResponse("Not found", { status: 404 });
+          return new NextResponse(fallback.body, {
+            headers: {
+              "Content-Type": fallback.contentType || "application/octet-stream",
+              "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
+              ...securityHeaders,
+            },
+          });
+        }
+      }
       return new NextResponse(object.body, {
         headers: {
           "Content-Type": object.contentType || "application/octet-stream",

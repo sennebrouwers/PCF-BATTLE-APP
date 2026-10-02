@@ -558,6 +558,9 @@ function TournamentHeroDetails({ tournament }: { tournament?: Tournament }) {
 function SponsorBanner({ sponsors }: { sponsors: PublicLink[] }) {
   const looping = sponsors.length > 1;
   const items = looping ? [...sponsors, ...sponsors] : sponsors;
+  const logoUrl = (url?: string) => !url ? "" : url.startsWith("/api/files/")
+    ? `${url}${url.includes("?") ? "&" : "?"}variant=sponsor`
+    : url;
   if (!sponsors.length) return null;
   return (
     <section
@@ -570,7 +573,7 @@ function SponsorBanner({ sponsors }: { sponsors: PublicLink[] }) {
               <span className={`sponsor-v3-frame${s.dark_url ? " has-dark-logo" : ""}`}>
                 <img
                   className="sponsor-v3-logo sponsor-v3-light"
-                  src={s.url}
+                  src={logoUrl(s.url)}
                   alt={i < sponsors.length ? s.title || "Tournament sponsor" : ""}
                   loading="eager"
                   fetchPriority="high"
@@ -579,7 +582,7 @@ function SponsorBanner({ sponsors }: { sponsors: PublicLink[] }) {
                 {s.dark_url ? (
                   <img
                     className="sponsor-v3-logo sponsor-v3-dark"
-                    src={s.dark_url}
+                    src={logoUrl(s.dark_url)}
                     alt=""
                     aria-hidden="true"
                     loading="eager"

@@ -285,15 +285,16 @@ async function api(path: string, options: RequestInit = {}) {
       pendingGetRequests.delete(path);
   }
 }
-async function prepareUploadFile(file: File) {
+type UploadImageOptions = { maxSide?: number; optimizeSmall?: boolean };
+async function prepareUploadFile(file: File, options: UploadImageOptions = {}) {
   if (
     !file.type.startsWith("image/") ||
     file.type === "image/svg+xml" ||
-    file.size <= 750 * 1024
+    (!options.optimizeSmall && file.size <= 750 * 1024)
   )
     return file;
   const bitmap = await createImageBitmap(file);
-  const maxSide = 2200;
+  const maxSide = options.maxSide || 2200;
   const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.max(1, Math.round(bitmap.width * scale));
@@ -309,8 +310,8 @@ async function prepareUploadFile(file: File) {
       })
     : file;
 }
-async function uploadFile(file: File) {
-  const upload = await prepareUploadFile(file);
+async function uploadFile(file: File, imageOptions?: UploadImageOptions) {
+  const upload = await prepareUploadFile(file, imageOptions);
   if (upload.size > 4 * 1024 * 1024)
     throw new Error("Files must be 4 MB or smaller. Choose a smaller file and try again.");
   const body = new FormData();
@@ -5108,13 +5109,13 @@ function SponsorPanel({ refresh }: { refresh: number }) {
       file = b.logo_file;
     try {
       if (file instanceof File && file.size) {
-        const uploaded = await uploadFile(file);
+        const uploaded = await uploadFile(file, { maxSide: 1200, optimizeSmall: true });
         b.url = uploaded.url;
       } else if (editing?.url) b.url = editing.url;
       else throw new Error("Choose a sponsor logo");
       const darkFile = b.dark_logo_file;
       if (darkFile instanceof File && darkFile.size) {
-        const uploadedDark = await uploadFile(darkFile);
+        const uploadedDark = await uploadFile(darkFile, { maxSide: 1200, optimizeSmall: true });
         b.dark_url = uploadedDark.url;
       } else if (editing?.dark_url) b.dark_url = editing.dark_url;
       delete b.logo_file;
