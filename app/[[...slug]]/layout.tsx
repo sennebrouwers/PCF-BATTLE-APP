@@ -20,18 +20,14 @@ export async function generateMetadata({
     "/login",
     "/signup",
     "/admin",
-  ].includes(path);
+  ].includes(path) || path === "/signup" || path.startsWith("/signup/") ||
+  ["/my-team", "/referee", "/scoreboard"].some((route) => path === route || path.startsWith(route + "/"));
   return {
     title: metadata.title,
     description: metadata.description,
     robots: privatePage ? { index: false, follow: false } : undefined,
     alternates: {
       canonical: `${baseUrl}${path === "/" ? "/" : path}`,
-      languages: {
-        en: `${baseUrl}${path === "/" ? "/" : path}`,
-        nl: `${baseUrl}${path === "/" ? "/" : path}`,
-        "x-default": `${baseUrl}${path === "/" ? "/" : path}`,
-      },
     },
     openGraph: {
       title: metadata.title,

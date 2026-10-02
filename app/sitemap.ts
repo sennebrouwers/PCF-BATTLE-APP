@@ -42,10 +42,9 @@ async function activeTournamentSettings(): Promise<PublishSettings | null> {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const settings = await activeTournamentSettings();
   // Without settings, list only the pages that are always public.
-  const routes = ["/", "/about", "/faq", ...(settings ? publishedSections(settings) : [])];
+  const routes = ["/", "/about", "/contact", "/faq", ...(settings ? publishedSections(settings) : [])];
   return routes.map((route) => ({
     url: `${baseUrl}${route}`,
-    lastModified: new Date(),
     changeFrequency: route === "/" || route === "/tournament/live" || route === "/tournament/schedule" ? "daily" : "weekly",
     priority: route === "/" ? 1 : 0.7,
   }));
