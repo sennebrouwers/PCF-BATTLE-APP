@@ -573,7 +573,7 @@ function SponsorBanner({ sponsors }: { sponsors: PublicLink[] }) {
                   src={s.url}
                   alt={i < sponsors.length ? s.title || "Tournament sponsor" : ""}
                   loading="eager"
-                  fetchPriority={i < 2 ? "high" : "low"}
+                  fetchPriority="high"
                   decoding="async"
                 />
                 {s.dark_url ? (
@@ -583,7 +583,7 @@ function SponsorBanner({ sponsors }: { sponsors: PublicLink[] }) {
                     alt=""
                     aria-hidden="true"
                     loading="eager"
-                    fetchPriority="low"
+                    fetchPriority="high"
                     decoding="async"
                   />
                 ) : null}
