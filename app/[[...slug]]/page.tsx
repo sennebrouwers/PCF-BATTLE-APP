@@ -488,14 +488,14 @@ function usePracticalData(): PublicData {
     let mounted = true;
     let refreshBusy = false;
     const cacheKey = "pcf-practical-data-cache";
-    const apply = (values: Partial<PublicData>) => {
+    const apply = (values: Partial<PublicData>, ready = true) => {
       if (!mounted) return;
-      setData((current) => ({ ...current, ...values, ready: true }));
+      setData((current) => ({ ...current, ...values, ready }));
     };
     try {
       const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
       if (cached?.version === 1 && cached?.payload && Date.now() - Number(cached.savedAt || 0) < 60_000) {
-        apply({ ...cached.payload, updatedAt: new Date(cached.savedAt).toISOString() });
+        apply({ ...cached.payload, updatedAt: new Date(cached.savedAt).toISOString() }, false);
       }
     } catch {}
     const refresh = async () => {
@@ -514,7 +514,7 @@ function usePracticalData(): PublicData {
           }));
         } catch {}
       } catch (error: unknown) {
-        if (mounted) apply({ error: error instanceof Error ? error.message : "Unable to load practical information." });
+        if (mounted) apply({ error: error instanceof Error ? error.message : "Unable to load practical information." }, false);
       } finally {
         refreshBusy = false;
       }
@@ -1629,12 +1629,12 @@ function About() {
           <div className="practical-section-heading"><span className="practical-eyebrow">GOOD TO KNOW</span><h2>More practical information</h2></div>
           <div className="practical-additional-grid">{practicalInfo.map((item) => <article key={item.label}><span>{item.icon}</span><div><h3>{item.label}</h3><p>{item.value}</p></div></article>)}</div>
         </section>}
-        {t.show_teams !== 0 && (
+        {d.ready && t.show_teams !== 0 && (
           <section className="block"><div className="title"><h2>Participating teams</h2></div><div className="people-grid">
             {d.teams.map((team: any) => <Link href={`/teams/${teamSlug(team.name, team.id)}`} className="team-overview-card" key={team.id}>{team.logo ? <img src={team.logo} alt={`${team.name} logo`} /> : <LiveMark team={team} />}<b>{team.name}</b><small>{copy.groupLabel} {team.group_id}</small></Link>)}
           </div></section>
         )}
-        {t.show_referees !== 0 && <section className="block"><div className="title"><h2>Tournament referees</h2></div><div className="people-grid">
+        {d.ready && t.show_referees !== 0 && <section className="block"><div className="title"><h2>Tournament referees</h2></div><div className="people-grid">
           {d.referees.map((ref: any) => <article key={ref.id}>{ref.photo ? <img src={ref.photo} alt={`${ref.name}, tournament referee`} /> : <span className="person-placeholder">{ref.name?.slice(0, 1)}</span>}<b>{ref.name}</b><small>{ref.country || "Tournament referee"}</small></article>)}
         </div></section>}
       </main>
