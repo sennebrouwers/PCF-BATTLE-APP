@@ -1738,7 +1738,7 @@ export async function GET(
       await ensureMediaSchema();
       await ensureScheduleSchema();
       const fileUrl = `/api/files/${objectKey}`;
-      const sponsorVariant = req.nextUrl.searchParams.get("variant") === "sponsor",
+      const sponsorVariant = req.nextUrl.searchParams.get("variant") === "sponsor-480",
         sharedResource = sponsorVariant
           ? await db().prepare("SELECT id FROM links WHERE active=1 AND category='Sponsor' AND (url=? OR dark_url=?) LIMIT 1").bind(fileUrl, fileUrl).first()
           : await db().prepare("SELECT id FROM links WHERE active=1 AND (url=? OR dark_url=?) UNION ALL SELECT id FROM teams WHERE logo=? OR team_photo=? UNION ALL SELECT id FROM delegation_members WHERE photo=? AND privacy_consent=1 AND photo_consent=1 UNION ALL SELECT id FROM users WHERE photo=? AND role='REFEREE' AND active=1 UNION ALL SELECT id FROM tournaments WHERE active=1 AND (venue_image=? OR hotel_image=?) LIMIT 1").bind(fileUrl, fileUrl, fileUrl, fileUrl, fileUrl, fileUrl, fileUrl, fileUrl).first();

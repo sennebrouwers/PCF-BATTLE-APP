@@ -20,7 +20,7 @@ test("sponsor logo variants are capped to display size and encoded as WebP", { t
   const metadata = await sharp(optimized).metadata();
 
   assert.equal(metadata.format, "webp");
-  assert.ok(metadata.width <= 640);
-  assert.ok(metadata.height <= 240);
+  assert.ok(metadata.width <= 480);
+  assert.ok(metadata.height <= 200);
   assert.ok(optimized.length < original.length);
 });

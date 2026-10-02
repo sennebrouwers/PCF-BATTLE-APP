@@ -559,7 +559,7 @@ function SponsorBanner({ sponsors }: { sponsors: PublicLink[] }) {
   const looping = sponsors.length > 1;
   const items = looping ? [...sponsors, ...sponsors] : sponsors;
   const logoUrl = (url?: string) => !url ? "" : url.startsWith("/api/files/")
-    ? `${url}${url.includes("?") ? "&" : "?"}variant=sponsor`
+    ? `${url}${url.includes("?") ? "&" : "?"}variant=sponsor-480`
     : url;
   if (!sponsors.length) return null;
   return (
