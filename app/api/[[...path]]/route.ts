@@ -1887,6 +1887,47 @@ export async function GET(
       practicalDataCache = { expiresAt: Date.now() + 5000, payload };
       return NextResponse.json(payload, { headers: { "Cache-Control": "public, max-age=5, s-maxage=15, stale-while-revalidate=60" } });
     }
+    if (path === "public-home-data") {
+      const cached = publicDataCache;
+      if (cached && cached.expiresAt > Date.now()) {
+        const payload = {
+          tournaments: cached.payload.tournaments,
+          teams: cached.payload.teams,
+          links: cached.payload.links.filter((link: any) => link.category === "Sponsor" && link.active !== 0),
+          matches: cached.payload.matches.filter((match: any) => match.status === "live").slice(0, 1),
+          standings: [],
+          brackets: [],
+          schedule_items: [],
+          referees: [],
+          scorers: [],
+          players: [],
+        };
+        return NextResponse.json(payload, { headers: { "Cache-Control": "public, max-age=5, s-maxage=15, stale-while-revalidate=60" } });
+      }
+      await ensureScheduleSchema();
+      const [tournaments, teams, links, liveMatch] = await Promise.all([
+        list("tournaments", "", [], "id,name,start_date,end_date,city,country,active,registration_mode,registration_enabled,live_enabled,show_tournament,show_referees,show_livestream,livestream_url,show_teams,show_matches,show_standings,show_brackets,show_statistics,show_about,show_gallery,public_message"),
+        list("teams", "", [], "id,name,color,logo,group_id"),
+        list("links", "WHERE category='Sponsor' AND active=1 ORDER BY sort_order,title", [], "id,title,url,dark_url,target_url,description,category,sort_order,active"),
+        db().prepare("SELECT id,tournament_id,home_team_id,away_team_id,home_score,away_score,status,court,match_date,start_time,group_id,period,clock,clock_running,clock_started_at FROM matches WHERE tournament_id=(SELECT id FROM tournaments WHERE active=1 LIMIT 1) AND status='live' ORDER BY updated_at DESC LIMIT 1").first<any>(),
+      ]);
+      if (typeof liveMatch?.referee_ids === "string") {
+        try { liveMatch.referee_ids = JSON.parse(liveMatch.referee_ids); } catch { liveMatch.referee_ids = []; }
+      }
+      const payload = {
+        tournaments,
+        teams,
+        links,
+        matches: liveMatch ? [liveMatch] : [],
+        standings: [],
+        brackets: [],
+        schedule_items: [],
+        referees: [],
+        scorers: [],
+        players: [],
+      };
+      return NextResponse.json(payload, { headers: { "Cache-Control": "public, max-age=5, s-maxage=15, stale-while-revalidate=60" } });
+    }
     if (path === "public-data") {
       await ensureMediaSchema();
       // Tournament/delegation columns queried below are added by ensureScheduleSchema;
