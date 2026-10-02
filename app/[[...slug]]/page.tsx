@@ -568,8 +568,25 @@ function SponsorBanner({ sponsors }: { sponsors: PublicLink[] }) {
           {items.map((s: PublicLink, i: number) => {
             const logo = (
               <span className={`sponsor-v3-frame${s.dark_url ? " has-dark-logo" : ""}`}>
-                <img className="sponsor-v3-logo sponsor-v3-light" src={s.url} alt={i < sponsors.length ? s.title || "Tournament sponsor" : ""} loading="lazy" />
-                {s.dark_url ? <img className="sponsor-v3-logo sponsor-v3-dark" src={s.dark_url} alt="" aria-hidden="true" loading="lazy" /> : null}
+                <img
+                  className="sponsor-v3-logo sponsor-v3-light"
+                  src={s.url}
+                  alt={i < sponsors.length ? s.title || "Tournament sponsor" : ""}
+                  loading="eager"
+                  fetchPriority={i < 2 ? "high" : "low"}
+                  decoding="async"
+                />
+                {s.dark_url ? (
+                  <img
+                    className="sponsor-v3-logo sponsor-v3-dark"
+                    src={s.dark_url}
+                    alt=""
+                    aria-hidden="true"
+                    loading="eager"
+                    fetchPriority="low"
+                    decoding="async"
+                  />
+                ) : null}
               </span>
             );
             if (i >= sponsors.length) return <span className="sponsor-v3-item" aria-hidden="true" key={`${s.id}-${i}`}>{logo}</span>;
