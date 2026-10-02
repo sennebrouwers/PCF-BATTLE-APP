@@ -148,6 +148,7 @@ export type PublicData = {
   players: PublicPlayer[];
   schedule_items: PublicScheduleItem[];
   ready: boolean;
+  visibilityReady?: boolean;
   error?: string;
   updatedAt: string | null;
 };
