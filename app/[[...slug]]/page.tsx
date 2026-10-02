@@ -1001,7 +1001,7 @@ function DynamicLanding() {
             </div>
           </section>
         )}
-        {settingsKnown && <SponsorBanner sponsors={sponsors} />
+        {settingsKnown && <SponsorBanner sponsors={sponsors} />}
         <section className="quick-grid">
             {quick.map(({ name, detail, href, icon: Icon, tone }) => (
               <Link href={href} key={name}>
