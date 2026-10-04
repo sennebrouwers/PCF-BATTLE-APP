@@ -1015,7 +1015,13 @@ async function sendEmail(
   context: { operation?: string; registrationId?: string } = {},
 ) {
   const key = runtimeEnv.RESEND_API_KEY,
-    from = runtimeEnv.RESEND_FROM;
+    configuredFrom = runtimeEnv.RESEND_FROM?.trim(),
+    configuredAddress = configuredFrom?.match(/<([^<>]+)>/)?.[1] || configuredFrom,
+    // Keep production sends on the site's verified domain. Resend's shared
+    // resend.dev test sender cannot deliver registrations to other clubs.
+    from = configuredAddress?.toLowerCase().endsWith("@pcfbattle.be")
+      ? configuredFrom
+      : "PCF BATTLE <hello@pcfbattle.be>";
   const result = await deliverEmail({ apiKey: key, from, to, subject, html });
   const operation = context.operation || "transactional_email";
   if (!result.ok) {
