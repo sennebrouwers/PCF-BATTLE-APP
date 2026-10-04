@@ -667,6 +667,7 @@ function PreRegistrationDialog() {
   const [open, setOpen] = useState(false),
     [busy, setBusy] = useState(false),
     [done, setDone] = useState(false),
+    [emailWarning, setEmailWarning] = useState(false),
     [error, setError] = useState("");
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -674,7 +675,7 @@ function PreRegistrationDialog() {
     setError("");
     const b = Object.fromEntries(new FormData(e.currentTarget));
     try {
-      await api("/preregister", {
+      const result = await api("/preregister", {
         method: "POST",
         body: JSON.stringify({
           club_name: b.club_name,
@@ -682,6 +683,7 @@ function PreRegistrationDialog() {
           terms_accepted: b.terms_accepted === "on",
         }),
       });
+      setEmailWarning(result.emailSent === false);
       setDone(true);
     } catch (err: unknown) {
       setError(errorMessage(err, "Unable to register"));
@@ -696,6 +698,7 @@ function PreRegistrationDialog() {
         setOpen(v);
         if (!v) {
           setDone(false);
+          setEmailWarning(false);
           setError("");
         }
       }}
@@ -717,6 +720,14 @@ function PreRegistrationDialog() {
           <div className="registration-success">
             <h3>Thanks — you’re on the list.</h3>
             <p>We’ll contact your club with the next registration steps.</p>
+            {emailWarning ? (
+              <p className="formerror" role="alert">
+                Your registration was saved, but the confirmation email could not be sent. Please email{" "}
+                <a href={`mailto:${PUBLIC_CONTACT_EMAIL}`}>{PUBLIC_CONTACT_EMAIL}</a> so the organisers can resend it.
+              </p>
+            ) : (
+              <p className="registration-email-note">A confirmation email should arrive shortly.</p>
+            )}
             <button className="btn primary" onClick={() => setOpen(false)}>
               Close
             </button>
