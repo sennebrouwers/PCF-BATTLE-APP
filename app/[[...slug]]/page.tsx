@@ -1599,7 +1599,6 @@ function About() {
               { number: "2", label: "Groups", icon: <Users aria-hidden="true" /> },
               { number: "2", label: "Days", icon: <CalendarDays aria-hidden="true" /> },
               { number: "20", label: "Matches", icon: <Swords aria-hidden="true" /> },
-              { number: "1", label: "Court", icon: <MapPin aria-hidden="true" /> },
               { number: "5v5", label: "Format", icon: <Zap aria-hidden="true" /> },
             ].map((item) => <article className="practical-stat" key={item.label}><span>{item.icon}</span><b>{item.number}</b><small>{item.label}</small></article>)}
           </div>
