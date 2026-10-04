@@ -334,6 +334,11 @@ async function ensureMvpSchema() {
 async function ensureScheduleSchema() {
   if (scheduleSchemaReady) return scheduleSchemaReady;
   scheduleSchemaReady = (async () => {
+  // Persist this migration marker so serverless cold starts do not re-run
+  // dozens of idempotent DDL statements. Bump the key when adding migrations.
+  await db().prepare("CREATE TABLE IF NOT EXISTS app_schema_migrations (name text PRIMARY KEY NOT NULL, applied_at text NOT NULL)").run();
+  const migration = await db().prepare("SELECT name FROM app_schema_migrations WHERE name=?").bind("schedule-v1").first<{ name: string }>();
+  if (migration) return;
   // Schedule was introduced after the first production schema. Keep the
   // endpoint self-healing for databases that missed a later migration instead
   // of allowing a missing table/column to surface as an opaque 500.
@@ -447,6 +452,7 @@ async function ensureScheduleSchema() {
       if (!/duplicate column|already exists/i.test(String(error instanceof Error ? error.message : error))) throw error;
     }
   }
+  await db().prepare("INSERT OR IGNORE INTO app_schema_migrations (name,applied_at) VALUES (?,?)").bind("schedule-v1", now()).run();
   })();
   try { await scheduleSchemaReady; } catch (error) { scheduleSchemaReady = null; throw error; }
 }
@@ -1929,14 +1935,14 @@ export async function GET(
       return NextResponse.json(payload, { headers: { "Cache-Control": "public, max-age=5, s-maxage=15, stale-while-revalidate=60" } });
     }
     if (path === "public-data") {
-      await ensureMediaSchema();
-      // Tournament/delegation columns queried below are added by ensureScheduleSchema;
-      // without this a fresh database returns no tournaments.
-      await ensureScheduleSchema();
       const cached = publicDataCache;
       if (cached && cached.expiresAt > Date.now()) {
         return NextResponse.json(cached.payload, { headers: { "Cache-Control": "public, max-age=5, s-maxage=15, stale-while-revalidate=60" } });
       }
+      await ensureMediaSchema();
+      // Tournament/delegation columns queried below are added by ensureScheduleSchema.
+      // Keep the one-time schema repair before the uncached database read.
+      await ensureScheduleSchema();
       const activeTournament: any = await db().prepare("SELECT id FROM tournaments WHERE active=1 LIMIT 1").first();
       if (activeTournament) {
         await resolveBracketProgression(activeTournament.id);
