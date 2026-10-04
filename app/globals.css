@@ -2056,7 +2056,7 @@ body {
 .practical-eyebrow { color: var(--pink); font-size: 11px; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
 .practical-about { margin: 0 0 56px; padding-top: 36px; }
 .practical-glance { margin: 30px 0 48px; }
-.practical-stats-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.practical-stats-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
 .practical-stat { min-width: 0; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; align-items: center; column-gap: 10px; padding: 14px 15px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
 .practical-stat > span { grid-row: 1 / 3; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px; background: color-mix(in srgb, var(--pink) 11%, var(--card)); color: var(--pink); }
 .practical-stat svg { width: 17px; height: 17px; }
