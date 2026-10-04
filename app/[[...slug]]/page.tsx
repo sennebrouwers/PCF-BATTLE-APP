@@ -756,6 +756,8 @@ function PreRegistrationDialog() {
   );
 }
 function PublicHomeLoading() {
+  const { language } = usePublicLanguage();
+  const copy = publicCopy[language];
   return (
     <>
       <PublicHeader loading />
@@ -776,9 +778,11 @@ function PublicHomeLoading() {
               <span />
             </div>
             <p className="loading-copy" />
-            <div className="reference-actions loading-actions">
-              <span />
-              <span />
+            <div className="reference-actions registration-actions">
+              <PreRegistrationDialog />
+              <Link className="btn" href="/about">
+                {copy.practicalInformation}
+              </Link>
             </div>
           </div>
           <div className="action-frame">
