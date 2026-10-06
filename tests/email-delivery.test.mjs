@@ -80,3 +80,47 @@ test("handles network failures without exposing exception text", async () => {
   });
   assert.deepEqual(result, { ok: false, reason: "network_error", errorName: "TypeError" });
 });
+
+
+test("adds the PCF BATTLE signature and SVG social links to outgoing email", async () => {
+  let sentHtml = "";
+  const result = await deliverEmail({
+    apiKey: "test-key",
+    from: "noreply@example.test",
+    to: "team@example.test",
+    subject: "Registration received",
+    html: "<html><body><p>Thanks</p></body></html>",
+    fetcher: async (_url, options) => {
+      sentHtml = JSON.parse(String(options.body)).html;
+      return Response.json({ id: "msg_signature" });
+    },
+  });
+  assert.equal(result.ok, true);
+  assert.match(sentHtml, /Senne Brouwers &amp; Seppe Hemerijckx/);
+  assert.match(sentHtml, /ORGANIZERS/);
+  assert.match(sentHtml, /hello@pcfbattle\.be/);
+  assert.match(sentHtml, /https:\/\/www\.pcfbattle\.be/);
+  assert.match(sentHtml, /https:\/\/www\.facebook\.com\/pcfbattle/);
+  assert.match(sentHtml, /https:\/\/www\.instagram\.com\/pcfbattle\//);
+  assert.match(sentHtml, /<svg/);
+  assert.match(sentHtml, /<\/body><\/html>/);
+});
+
+test("adds SVG social links without duplicating existing organizer signatures", async () => {
+  let sentHtml = "";
+  const result = await deliverEmail({
+    apiKey: "test-key",
+    from: "noreply@example.test",
+    to: "team@example.test",
+    subject: "Invitation",
+    html: "<html><body><p>Senne Brouwers &amp;<br>Seppe Hemerijckx</p><p>ORGANIZERS</p><p>hello@pcfbattle.be</p></body></html>",
+    fetcher: async (_url, options) => {
+      sentHtml = JSON.parse(String(options.body)).html;
+      return Response.json({ id: "msg_existing_signature" });
+    },
+  });
+  assert.equal(result.ok, true);
+  assert.equal((sentHtml.match(/Senne Brouwers/g) || []).length, 1);
+  assert.equal((sentHtml.match(/title="PCF BATTLE on Instagram"/g) || []).length, 1);
+  assert.match(sentHtml, /<svg/);
+});
