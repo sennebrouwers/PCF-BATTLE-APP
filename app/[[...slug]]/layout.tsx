@@ -11,6 +11,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const slug = (await params).slug || [];
   const path = `/${slug.join("/")}`.replace(/\/$/, "") || "/";
+  const canonicalPath = path === "/about" ? "/practical" : path;
   const metadata = getPageMetadata(path);
   const privatePage = [
     "/terms",
@@ -27,12 +28,12 @@ export async function generateMetadata({
     description: metadata.description,
     robots: privatePage ? { index: false, follow: false } : undefined,
     alternates: {
-      canonical: `${baseUrl}${path === "/" ? "/" : path}`,
+      canonical: `${baseUrl}${canonicalPath === "/" ? "/" : canonicalPath}`,
     },
     openGraph: {
       title: metadata.title,
       description: metadata.description,
-      url: `${baseUrl}${path === "/" ? "/" : path}`,
+      url: `${baseUrl}${canonicalPath === "/" ? "/" : canonicalPath}`,
       siteName: "PCF BATTLE",
       type: "website",
       images: [{ url: "/pcf-social-graph.jpg", width: 2048, height: 1075, alt: "Powerchair Floorball Battle" }],
