@@ -82,7 +82,7 @@ test("handles network failures without exposing exception text", async () => {
 });
 
 
-test("adds the PCF BATTLE signature and SVG social links to outgoing email", async () => {
+test("adds the PCF BATTLE signature and PNG social icons to outgoing email", async () => {
   let sentHtml = "";
   const result = await deliverEmail({
     apiKey: "test-key",
@@ -102,18 +102,18 @@ test("adds the PCF BATTLE signature and SVG social links to outgoing email", asy
   assert.match(sentHtml, /https:\/\/www\.pcfbattle\.be/);
   assert.match(sentHtml, /https:\/\/www\.facebook\.com\/pcfbattle/);
   assert.match(sentHtml, /https:\/\/www\.instagram\.com\/pcfbattle\//);
-  assert.match(sentHtml, /<svg/);
+  assert.match(sentHtml, /<img src="https:\/\/www\.pcfbattle\.be\/email-signature-website\.png"/);
   assert.match(sentHtml, /<\/body><\/html>/);
 });
 
-test("adds SVG social links without duplicating existing organizer signatures", async () => {
+test("adds PNG social icons without duplicating existing organizer signatures", async () => {
   let sentHtml = "";
   const result = await deliverEmail({
     apiKey: "test-key",
     from: "noreply@example.test",
     to: "team@example.test",
     subject: "Invitation",
-    html: "<html><body><p>Senne Brouwers &amp;<br>Seppe Hemerijckx</p><p>ORGANIZERS</p><p>hello@pcfbattle.be</p></body></html>",
+    html: '<html><body><table><tr><td><p>Senne Brouwers &amp;<br>Seppe Hemerijckx</p><p>ORGANIZERS</p><p>POWERCHAIR FLOORBALL BATTLE</p><div><a href="mailto:hello@pcfbattle.be">hello@pcfbattle.be</a></div></td></tr></table></body></html>',
     fetcher: async (_url, options) => {
       sentHtml = JSON.parse(String(options.body)).html;
       return Response.json({ id: "msg_existing_signature" });
@@ -122,5 +122,6 @@ test("adds SVG social links without duplicating existing organizer signatures", 
   assert.equal(result.ok, true);
   assert.equal((sentHtml.match(/Senne Brouwers/g) || []).length, 1);
   assert.equal((sentHtml.match(/title="PCF BATTLE on Instagram"/g) || []).length, 1);
-  assert.match(sentHtml, /<svg/);
+  assert.match(sentHtml, /email-signature-instagram\.png/);
+  assert.ok(sentHtml.indexOf("email-signature-instagram.png") < sentHtml.indexOf("</td>"));
 });
