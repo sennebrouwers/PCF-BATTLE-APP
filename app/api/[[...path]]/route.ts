@@ -457,12 +457,18 @@ async function ensureScheduleSchema() {
   try { await scheduleSchemaReady; } catch (error) { scheduleSchemaReady = null; throw error; }
 }
 async function ensureMessagesSchema() {
-  await db().prepare("CREATE INDEX IF NOT EXISTS idx_messages_reply_to ON messages(reply_to_message_id)").run().catch(async () => {
-    try { await db().prepare("ALTER TABLE messages ADD COLUMN reply_to_message_id text").run(); } catch (error: unknown) {
+  for (const statement of [
+    "ALTER TABLE messages ADD COLUMN deleted_by_sender integer NOT NULL DEFAULT 0",
+    "ALTER TABLE messages ADD COLUMN deleted_by_recipient integer NOT NULL DEFAULT 0",
+    "ALTER TABLE messages ADD COLUMN reply_to_message_id text",
+  ]) {
+    try {
+      await db().prepare(statement).run();
+    } catch (error: unknown) {
       if (!/duplicate column|already exists/i.test(String(error instanceof Error ? error.message : error))) throw error;
     }
-    await db().prepare("CREATE INDEX IF NOT EXISTS idx_messages_reply_to ON messages(reply_to_message_id)").run();
-  });
+  }
+  await db().prepare("CREATE INDEX IF NOT EXISTS idx_messages_reply_to ON messages(reply_to_message_id)").run();
 }
 async function ensureContactsSchema() {
   if (contactsSchemaReady) return contactsSchemaReady;
@@ -4361,6 +4367,7 @@ export async function DELETE(
   }
   if (parts[0] === "messages" && parts[1] === "conversation" && parts[2]) {
     if (!u) return out({ error: "Unauthorized" }, 401);
+    await ensureMessagesSchema();
     const other = parts[2];
     await db().batch([
       db()
@@ -4378,18 +4385,14 @@ export async function DELETE(
   }
   if (parts[0] === "messages" && rid) {
     if (!u) return out({ error: "Unauthorized" }, 401);
-    await db().batch([
-      db()
-        .prepare(
-          "UPDATE messages SET deleted_by_sender=1 WHERE id=? AND sender_user_id=?",
-        )
-        .bind(rid, u.id),
-      db()
-        .prepare(
-          "UPDATE messages SET deleted_by_recipient=1 WHERE id=? AND recipient_user_id=?",
-        )
-        .bind(rid, u.id),
-    ]);
+    await ensureMessagesSchema();
+    const result = await db()
+      .prepare(
+        "UPDATE messages SET deleted_by_sender=CASE WHEN sender_user_id=? THEN 1 ELSE deleted_by_sender END,deleted_by_recipient=CASE WHEN recipient_user_id=? THEN 1 ELSE deleted_by_recipient END WHERE id=? AND (sender_user_id=? OR recipient_user_id=?)",
+      )
+      .bind(u.id, u.id, rid, u.id, u.id)
+      .run();
+    if (!Number(result.meta.changes || 0)) return out({ error: "Message not found" }, 404);
     return out({ ok: true });
   }
   if (parts[0] === "contacts" && rid) {
