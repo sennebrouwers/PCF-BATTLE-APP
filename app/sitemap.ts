@@ -12,6 +12,7 @@ type PublishSettings = {
   show_statistics?: number;
   show_livestream?: number;
   show_gallery?: number;
+  show_about?: number;
 };
 
 // Same visibility rules as the public pages (app/[[...slug]]/page.tsx), so the
@@ -24,6 +25,7 @@ function publishedSections(t: PublishSettings) {
     tournament && t.show_standings !== 0 && "/tournament/standings",
     tournament && t.show_brackets !== 0 && "/tournament/brackets",
     tournament && t.show_statistics !== 0 && "/tournament/statistics",
+    t.show_about !== 0 && "/practical",
     t.show_livestream === 1 && "/livestream",
     t.show_gallery === 1 && "/gallery",
   ].filter((route): route is string => Boolean(route));
@@ -32,7 +34,7 @@ function publishedSections(t: PublishSettings) {
 async function activeTournamentSettings(): Promise<PublishSettings | null> {
   try {
     return await getDatabase()
-      .prepare("SELECT show_tournament,live_enabled,show_matches,show_standings,show_brackets,show_statistics,show_livestream,show_gallery FROM tournaments WHERE active=1 LIMIT 1")
+      .prepare("SELECT show_tournament,live_enabled,show_matches,show_standings,show_brackets,show_statistics,show_livestream,show_gallery,show_about FROM tournaments WHERE active=1 LIMIT 1")
       .first<PublishSettings>();
   } catch {
     return null;
@@ -42,7 +44,7 @@ async function activeTournamentSettings(): Promise<PublishSettings | null> {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const settings = await activeTournamentSettings();
   // Without settings, list only the pages that are always public.
-  const routes = ["/", "/about", "/contact", "/faq", ...(settings ? publishedSections(settings) : [])];
+  const routes = ["/", ...(settings ? publishedSections(settings) : ["/practical"]), "/contact", "/faq"];
   return routes.map((route) => ({
     url: `${baseUrl}${route}`,
     changeFrequency: route === "/" || route === "/tournament/live" || route === "/tournament/schedule" ? "daily" : "weekly",

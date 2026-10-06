@@ -70,7 +70,7 @@ export default function PublicHeader({
   const tournamentHref = tournamentPages.find(([, visible]) => visible)?.[0] || "/tournament/live";
   const links = [
     [tournamentHref, copy.tournament, ready && tournamentPages.some(([, visible]) => visible)],
-    ["/about", copy.practical, ready && navigationSettings!.show_about !== 0],
+    ["/practical", copy.practical, ready && navigationSettings!.show_about !== 0],
     ["/faq", copy.faq, ready],
     ["/livestream", copy.livestream, ready && navigationSettings!.show_livestream === 1],
     ["/gallery", copy.media, ready && navigationSettings!.show_gallery === 1],

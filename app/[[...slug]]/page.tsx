@@ -791,7 +791,7 @@ function PublicHomeLoading() {
             <p className="loading-copy" />
             <div className="reference-actions registration-actions">
               <PreRegistrationDialog />
-              <Link className="btn" href="/about">
+              <Link className="btn" href="/practical">
                 {copy.practicalInformation}
               </Link>
             </div>
@@ -1594,7 +1594,7 @@ function About() {
   const formatPrice = (amount: number) => new Intl.NumberFormat("en-BE", { style: "currency", currency: "EUR" }).format(amount);
   return (
     <>
-      <PublicHeader settings={t} currentPath="/about" loading={!d.ready} />
+      <PublicHeader settings={t} currentPath="/practical" loading={!d.ready} />
       <main className="public about-page practical-event-guide">
         <div className="pagehero practical-hero">
           <span>PCF BATTLE · {String(t.start_date || "").slice(0, 4) || "TOURNAMENT GUIDE"}</span>
@@ -1920,7 +1920,7 @@ export default function App({ params }: { params: Promise<{ slug?: string[] }> }
   if (p === "/referee") return <Suspense fallback={<div className="route-loading" />}><PortalApp role="referee" /></Suspense>;
   if (p === "/scoreboard") return <Suspense fallback={<div className="route-loading" />}><PortalApp role="scoreboard" /></Suspense>;
   if (p === "/scoreboard/display") return <Suspense fallback={<div className="scoreboard-screen loading" />}><ScoreboardDisplay /></Suspense>;
-  if (p === "/about") return <About />;
+  if (p === "/practical" || p === "/about") return <About />;
   if (p === "/contact") return <Contact />;
   if (p === "/faq") return <FAQ />;
   if (p === "/livestream") return <Livestream />;
