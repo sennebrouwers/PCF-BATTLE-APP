@@ -113,7 +113,7 @@ test("adds PNG social icons without duplicating existing organizer signatures", 
     from: "noreply@example.test",
     to: "team@example.test",
     subject: "Invitation",
-    html: "<html><body><table><tr><td><p>Senne Brouwers &amp;<br>Seppe Hemerijckx</p><p>ORGANIZERS</p><p>POWERCHAIR FLOORBALL BATTLE</p><div><a href="mailto:hello@pcfbattle.be">hello@pcfbattle.be</a></div></td></tr></table></body></html>",
+    html: '<html><body><table><tr><td><p>Senne Brouwers &amp;<br>Seppe Hemerijckx</p><p>ORGANIZERS</p><p>POWERCHAIR FLOORBALL BATTLE</p><div><a href="mailto:hello@pcfbattle.be">hello@pcfbattle.be</a></div></td></tr></table></body></html>',
     fetcher: async (_url, options) => {
       sentHtml = JSON.parse(String(options.body)).html;
       return Response.json({ id: "msg_existing_signature" });
