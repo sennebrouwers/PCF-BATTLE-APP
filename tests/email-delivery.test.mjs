@@ -97,6 +97,7 @@ test("adds the PCF BATTLE signature and PNG social icons to outgoing email", asy
   });
   assert.equal(result.ok, true);
   assert.match(sentHtml, /Senne Brouwers &amp; Seppe Hemerijckx/);
+  assert.match(sentHtml, /#FF2992/);
   assert.match(sentHtml, /ORGANIZERS/);
   assert.match(sentHtml, /hello@pcfbattle\.be/);
   assert.match(sentHtml, /https:\/\/www\.pcfbattle\.be/);

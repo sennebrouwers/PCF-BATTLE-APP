@@ -76,6 +76,14 @@ function appendEmailSignature(html: string) {
   return html + signature;
 }
 
+function applyEmailBrandPink(html: string) {
+  return html
+    .replaceAll("#ff1c83", "#FF2992")
+    .replaceAll("#ec4899", "#FF2992")
+    .replaceAll("#ec1970", "#FF2992")
+    .replaceAll("#db2777", "#FF2992");
+}
+
 export async function deliverEmail({
   apiKey,
   from,
@@ -93,7 +101,7 @@ export async function deliverEmail({
         Authorization: "Bearer " + apiKey,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ from, to, subject, html: appendEmailSignature(html) }),
+      body: JSON.stringify({ from, to, subject, html: applyEmailBrandPink(appendEmailSignature(html)) }),
       signal: AbortSignal.timeout(8_000),
     });
     const responseBody = await response.json().catch(() => null) as Record<string, unknown> | null;
