@@ -7792,7 +7792,7 @@ function ChatPanel({ refresh }: { refresh: number }) {
   useEffect(() => {
     const closePopovers = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
-      if (target?.closest("[data-popover-trigger],.chat-portal-menu,.chat-hover-actions,.chat-actions-wrap,.chat-composer,.chat-new-wrap")) return;
+      if (target?.closest("[data-popover-trigger],.chat-portal-menu,.chat-hover-actions,.chat-actions-wrap,.chat-composer,.chat-new-wrap,.confirm-dialog,[role=\"dialog\"]")) return;
       setMessageMenu(null); setReactionMenu(null); setActionsOpen(false); setNewOpen(false); setEmojiOpen(false); setMenuPosition(null);
     };
     document.addEventListener("pointerdown", closePopovers);
