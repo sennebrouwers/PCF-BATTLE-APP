@@ -2119,6 +2119,8 @@ body {
 .format-rule-details li::marker, .format-rule-tiebreak li::marker { color: var(--pink); }
 .format-rule-tiebreak { margin-top: 14px; padding: 12px; border-left: 3px solid var(--pink); border-radius: 0 10px 10px 0; background: color-mix(in srgb, var(--pink) 7%, var(--card)); }
 .format-rule-tiebreak > b { display: block; font-size: 11px; line-height: 1.4; }
+.format-rule-tiebreak > p { margin: 7px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.format-rule-tiebreak > small { display: block; margin-top: 6px; color: var(--muted); font-size: 10px; line-height: 1.45; }
 .format-rule-tiebreak ol { display: grid; gap: 5px; margin: 7px 0 0; padding-left: 16px; color: var(--muted); font-size: 11px; line-height: 1.5; }
 .format-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .format-group-card { padding: 19px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface-2); }
