@@ -1526,6 +1526,77 @@ function TournamentFlow() {
         <h2 id="practical-format-title">Tournament format</h2>
         <p>8 teams. 2 groups. 2 days. One champion.</p>
       </div>
+      <div className="format-rules-overview">
+        <section className="format-rules-block" aria-labelledby="general-tournament-rules-title">
+          <div className="format-rules-heading">
+            <span className="practical-eyebrow">GENERAL RULES</span>
+            <h3 id="general-tournament-rules-title">General tournament rules</h3>
+          </div>
+          <div className="practical-additional-grid">
+            <article>
+              <span><Zap aria-hidden="true" /></span>
+              <div><h3>No speed limit</h3><p>The tournament is played without a speed limit for powerchairs.</p></div>
+            </article>
+            <article>
+              <span><Users aria-hidden="true" /></span>
+              <div><h3>No points system</h3><p>There is no player classification points system and no maximum number of team points allowed on court.</p></div>
+            </article>
+          </div>
+        </section>
+        <section className="format-rules-block" aria-labelledby="match-format-title">
+          <div className="format-rules-heading">
+            <span className="practical-eyebrow">MATCH FORMAT</span>
+            <h3 id="match-format-title">Match format by stage</h3>
+          </div>
+          <div className="format-rules-grid">
+            <article className="format-rule-card">
+              <header>
+                <span className="format-rule-icon"><Users aria-hidden="true" /></span>
+                <div><span>GROUP STAGE</span><h4>2 × 15 minutes</h4></div>
+              </header>
+              <ul className="format-rule-details">
+                <li>Running clock</li>
+                <li>No timeouts</li>
+              </ul>
+            </article>
+            <article className="format-rule-card">
+              <header>
+                <span className="format-rule-icon"><Swords aria-hidden="true" /></span>
+                <div><span>PLAYOFFS &amp; FINALS</span><h4>2 × 20 minutes</h4></div>
+              </header>
+              <ul className="format-rule-details">
+                <li>Running clock</li>
+                <li>Timeouts allowed</li>
+              </ul>
+              <div className="format-rule-tiebreak">
+                <b>If tied after regulation</b>
+                <ol>
+                  <li>Each team takes 3 penalty shots, taken alternately.</li>
+                  <li>If still tied, teams take one penalty each, alternately, until a winner is determined.</li>
+                </ol>
+              </div>
+            </article>
+            <article className="format-rule-card">
+              <header>
+                <span className="format-rule-icon"><Trophy aria-hidden="true" /></span>
+                <div><span>1ST / 2ND PLACE FINAL</span><h4>2 × 20 minutes</h4></div>
+              </header>
+              <ul className="format-rule-details">
+                <li>Running clock</li>
+                <li>Timeouts allowed</li>
+                <li>If tied after regulation, play 2 × 5 minutes of extra time.</li>
+              </ul>
+              <div className="format-rule-tiebreak">
+                <b>If still tied after extra time</b>
+                <ol>
+                  <li>Each team takes 3 penalty shots, taken alternately.</li>
+                  <li>If still tied, teams take one penalty each, alternately, until a winner is determined.</li>
+                </ol>
+              </div>
+            </article>
+          </div>
+        </section>
+      </div>
       <section className="format-day format-day-one" aria-labelledby="group-stage-title">
         <header className="format-day-heading"><span>DAY 1</span><div><h3 id="group-stage-title">Group stage</h3><p>Every team plays each of the other teams in its group once.</p></div></header>
         <div className="format-groups">
