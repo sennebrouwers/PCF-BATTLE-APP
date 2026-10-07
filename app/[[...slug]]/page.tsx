@@ -1584,12 +1584,11 @@ function TournamentFlow() {
               <ul className="format-rule-details">
                 <li>Running clock</li>
                 <li>Timeouts allowed</li>
-                <li>If tied after regulation, play 2 × 5 minutes of extra time.</li>
               </ul>
               <div className="format-rule-tiebreak">
-                <b>If still tied after extra time</b>
+                <b>If tied after regulation, play 2 × 5 minutes of extra time.</b>
                 <ol>
-                  <li>Each team takes 3 penalty shots, taken alternately.</li>
+                  <li>If still tied after extra time, each team takes 3 penalty shots, taken alternately.</li>
                   <li>If still tied, teams take one penalty each, alternately, until a winner is determined.</li>
                 </ol>
               </div>
