@@ -2776,13 +2776,13 @@ header nav a.active:after {
     margin: 0 24px 28px;
   }
   .action-frame {
-    order: 5;
+    order: 6;
     width: 100%;
     min-height: 540px;
     margin: 0;
   }
   .reference-actions {
-    order: 6;
+    order: 5;
     margin: 24px;
     width: calc(100% - 48px);
   }
