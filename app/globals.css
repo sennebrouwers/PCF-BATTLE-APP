@@ -2105,6 +2105,21 @@ body {
 .format-day-heading > span { flex: 0 0 auto; padding: 7px 10px; border-radius: 8px; background: var(--pink); color: #fff; font-size: 10px; font-weight: 900; letter-spacing: .08em; }
 .format-day-heading h3 { margin: 0 0 3px; font-size: clamp(19px, 2.2vw, 24px); letter-spacing: -.03em; }
 .format-day-heading p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.format-rules-overview { display: grid; gap: 22px; margin: 0 0 24px; }
+.format-rules-heading { display: grid; gap: 5px; margin: 0 0 13px; }
+.format-rules-heading h3 { margin: 0; font-size: clamp(18px, 2vw, 22px); letter-spacing: -.025em; }
+.format-rules-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.format-rule-card { min-width: 0; display: flex; flex-direction: column; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface-2); }
+.format-rule-card > header { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
+.format-rule-icon { flex: 0 0 auto; width: 39px; height: 39px; display: grid; place-items: center; border-radius: 12px; background: color-mix(in srgb, var(--pink) 13%, var(--card)); color: var(--pink); }
+.format-rule-icon svg { width: 19px; height: 19px; }
+.format-rule-card > header > div > span { display: block; color: var(--pink); font-size: 9px; font-weight: 900; letter-spacing: .12em; }
+.format-rule-card > header h4 { margin: 3px 0 0; font-size: 16px; letter-spacing: -.02em; }
+.format-rule-details { display: grid; gap: 6px; margin: 0; padding: 0 0 0 17px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.format-rule-details li::marker, .format-rule-tiebreak li::marker { color: var(--pink); }
+.format-rule-tiebreak { margin-top: 14px; padding: 12px; border-left: 3px solid var(--pink); border-radius: 0 10px 10px 0; background: color-mix(in srgb, var(--pink) 7%, var(--card)); }
+.format-rule-tiebreak > b { display: block; font-size: 11px; line-height: 1.4; }
+.format-rule-tiebreak ol { display: grid; gap: 5px; margin: 7px 0 0; padding-left: 16px; color: var(--muted); font-size: 11px; line-height: 1.5; }
 .format-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .format-group-card { padding: 19px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface-2); }
 .format-group-name { display: flex; align-items: center; gap: 8px; color: var(--pink); font-size: 11px; font-weight: 900; letter-spacing: .1em; }
@@ -2168,6 +2183,8 @@ body {
 @media (max-width: 1000px) {
   .practical-stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .format-paths { grid-template-columns: 1fr; }
+  .format-rules-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .format-rule-card:last-child { grid-column: 1 / -1; }
 }
 @media (max-width: 800px) {
   .practical-place, .practical-place.reverse { grid-template-columns: minmax(0, 1fr); }
@@ -2209,7 +2226,9 @@ body {
   .flow-destination small { font-size: 9px; }
   .format-every-team { align-items: flex-start; padding: 13px; }
   .format-every-trophy { display: none; }
-  .format-groups, .format-match-grid, .format-destinations { grid-template-columns: 1fr; }
+  .format-groups, .format-match-grid, .format-destinations, .format-rules-grid { grid-template-columns: 1fr; }
+  .format-rule-card:last-child { grid-column: auto; }
+  .format-rule-card { padding: 13px; }
   .practical-additional-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 380px) {
