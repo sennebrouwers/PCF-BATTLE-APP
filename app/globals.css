@@ -2184,7 +2184,7 @@ body {
   .practical-stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .format-paths { grid-template-columns: 1fr; }
   .format-rules-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .format-rule-card:last-child { grid-column: 1 / -1; }
+  .format-rule-card:first-child { grid-column: 1 / -1; }
 }
 @media (max-width: 800px) {
   .practical-place, .practical-place.reverse { grid-template-columns: minmax(0, 1fr); }
@@ -2227,7 +2227,7 @@ body {
   .format-every-team { align-items: flex-start; padding: 13px; }
   .format-every-trophy { display: none; }
   .format-groups, .format-match-grid, .format-destinations, .format-rules-grid { grid-template-columns: 1fr; }
-  .format-rule-card:last-child { grid-column: auto; }
+  .format-rule-card:first-child { grid-column: auto; }
   .format-rule-card { padding: 13px; }
   .practical-additional-grid { grid-template-columns: 1fr; }
 }
