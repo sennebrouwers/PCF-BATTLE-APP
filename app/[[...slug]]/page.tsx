@@ -629,7 +629,9 @@ function SponsorBanner({ sponsors }: { sponsors: PublicLink[] }) {
   return (
     <section
       className={`sponsor-banner sponsor-carousel-v3${looping ? " is-looping" : ""}`}
+      aria-labelledby="home-partners-title"
     >
+      <h2 id="home-partners-title" style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0, 0, 0, 0)", whiteSpace: "nowrap", border: 0 }}>Tournament partners</h2>
       <div className="sponsor-carousel-v3-viewport">
         <div className="sponsor-carousel-v3-track">
           {items.map((s: PublicLink, i: number) => {
@@ -1018,7 +1020,8 @@ function DynamicLanding() {
           </section>
         )}
         {settingsKnown && <SponsorBanner sponsors={sponsors} />}
-        <section className="quick-grid">
+        <section className="quick-grid" aria-labelledby="home-explore-title">
+          <h2 id="home-explore-title" style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0, 0, 0, 0)", whiteSpace: "nowrap", border: 0 }}>Explore the tournament</h2>
             {quick.map(({ name, detail, href, icon: Icon, tone }) => (
               <Link href={href} key={name}>
                 <span className={`quick-icon ${tone}`}>
@@ -1479,7 +1482,7 @@ function PracticalPlace({
       </div>
       <div className="practical-place-copy">
         <span className="practical-eyebrow">{kicker}</span>
-        <h2>{title}</h2>
+        <h3>{title}</h3>
         <p className="practical-location"><MapPin aria-hidden="true" />{location}</p>
         {visibleRows.length > 0 && (
           <div className="practical-place-details">
@@ -1536,11 +1539,11 @@ function TournamentFlow() {
           <div className="practical-additional-grid">
             <article>
               <span><Zap aria-hidden="true" /></span>
-              <div><h3>No speed limit</h3><p>The tournament is played without a speed limit for powerchairs.</p></div>
+              <div><h4>No speed limit</h4><p>The tournament is played without a speed limit for powerchairs.</p></div>
             </article>
             <article>
               <span><Users aria-hidden="true" /></span>
-              <div><h3>No points system</h3><p>There is no player classification points system and no maximum number of team points allowed on court.</p></div>
+              <div><h4>No points system</h4><p>There is no player classification points system and no maximum number of team points allowed on court.</p></div>
             </article>
           </div>
         </section>
@@ -1693,7 +1696,8 @@ function About() {
           </div>
           <small>The total is based on the delegation size. A single-room supplement applies when a room is assigned to one person.</small>
         </section>}
-        <section className="practical-places" aria-label="Venue and hotel">
+        <section className="practical-places" aria-labelledby="practical-places-title">
+          <h2 id="practical-places-title" style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0, 0, 0, 0)", whiteSpace: "nowrap", border: 0 }}>Venue and accommodation</h2>
           <PracticalPlace
             title={venueName}
             kicker="THE VENUE"
