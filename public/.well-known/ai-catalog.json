@@ -2,17 +2,36 @@
   "specVersion": "1.0",
   "host": {
     "displayName": "Powerchair Floorball Battle",
-    "identifier": "https://pcfbattle.be/",
-    "documentationUrl": "https://pcfbattle.be/about"
+    "identifier": "https://www.pcfbattle.be/",
+    "documentationUrl": "https://www.pcfbattle.be/practical"
   },
   "entries": [
     {
       "identifier": "urn:air:pcfbattle.be:website",
-      "displayName": "PCF BATTLE website",
+      "displayName": "Powerchair Floorball Battle official website",
       "type": "text/html",
-      "url": "https://pcfbattle.be/",
-      "description": "Public tournament information, schedules, standings and brackets for the Powerchair Floorball Battle.",
-      "tags": ["powerchair floorball", "powerchair hockey", "tournament"]
+      "url": "https://www.pcfbattle.be/",
+      "description": "Official event information for the Powerchair Floorball Battle in Leuven, Belgium, 1–2 May 2027.",
+      "tags": [
+        "powerchair floorball",
+        "international tournament",
+        "Leuven",
+        "2027"
+      ]
+    },
+    {
+      "identifier": "urn:air:pcfbattle.be:practical",
+      "displayName": "Tournament practical information",
+      "type": "text/html",
+      "url": "https://www.pcfbattle.be/practical",
+      "description": "Venue, hotel, accessibility and tournament format."
+    },
+    {
+      "identifier": "urn:air:pcfbattle.be:llms",
+      "displayName": "AI-readable website guide",
+      "type": "text/plain",
+      "url": "https://www.pcfbattle.be/llms.txt",
+      "description": "Official website summary and links for AI systems."
     }
   ]
 }

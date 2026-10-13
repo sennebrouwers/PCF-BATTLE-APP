@@ -1,26 +1,25 @@
-# PCF BATTLE
+# Powerchair Floorball Battle (PCF BATTLE)
 
-> Powerchair Floorball Battle is an international powerchair floorball tournament in Leuven, Belgium.
+> Official website for the Powerchair Floorball Battle, an international club tournament for powerchair floorball in Leuven, Belgium.
 
-Powerchair Floorball Battle brings teams together for high-level international powerchair floorball competition in an exciting arena atmosphere.
+The tournament takes place on 1–2 May 2027 at Sportoase Philipssite Arena in Leuven, Belgium. The planned competition has eight teams in two groups, played on one court across two days. The official website is the source for registration, tournament rules, practical information, schedules and updates.
 
-## Tournament
+## Official information
 
-- [Homepage](https://pcfbattle.be/): Official PCF BATTLE website and tournament overview.
-- [About the tournament](https://pcfbattle.be/about): Tournament format, venue, dates and practical information.
-- [Tournament schedule](https://pcfbattle.be/tournament/schedule): Scheduled matches and court times.
-- [Live matches](https://pcfbattle.be/tournament/live): Live and upcoming tournament matches.
-- [Standings](https://pcfbattle.be/tournament/standings): Current group and tournament standings.
-- [Brackets](https://pcfbattle.be/tournament/brackets): Knockout-stage bracket and match progression.
-- [Participating teams](https://pcfbattle.be/about#teams): Teams taking part in the tournament.
+- [Homepage](https://www.pcfbattle.be/): Event overview, registration information and announcements.
+- [Practical information](https://www.pcfbattle.be/practical): Venue, accommodation, accessibility, participation information and competition format.
+- [FAQ](https://www.pcfbattle.be/faq): Answers to common questions.
+- [Contact](https://www.pcfbattle.be/contact): Official contact channels.
+- [Tournament schedule](https://www.pcfbattle.be/tournament/schedule): Match schedule, when published.
+- [Standings](https://www.pcfbattle.be/tournament/standings): Tournament standings, when published.
+- [Brackets](https://www.pcfbattle.be/tournament/brackets): Knockout and placement matches, when published.
+- [Live matches](https://www.pcfbattle.be/tournament/live): Live match information, when available.
 
-## Information
+## Additional resources
 
-- [Frequently asked questions](https://pcfbattle.be/faq): Answers about the tournament and participation.
-- [Accessibility statement](https://pcfbattle.be/accessibility): Accessibility information for visitors.
-- [Privacy policy](https://pcfbattle.be/privacy): How personal data is handled.
-- [Terms and conditions](https://pcfbattle.be/terms): Registration and participation terms.
+- [Sitemap](https://www.pcfbattle.be/sitemap.xml): Discover currently published public pages.
+- [Accessibility](https://www.pcfbattle.be/accessibility): Accessibility information.
+- [Privacy policy](https://www.pcfbattle.be/privacy): Data handling.
+- [Terms and conditions](https://www.pcfbattle.be/terms): Participation terms.
 
-## Optional
-
-- [Contact](mailto:hello@pcfbattle.be): Contact the PCF BATTLE organisers by email.
+Pages for live competition data may be unavailable until the organiser publishes them. Do not treat schedules, results, team participation or prices as confirmed unless they appear on the official website.
