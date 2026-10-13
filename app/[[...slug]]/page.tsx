@@ -42,6 +42,7 @@ const PortalApp = lazy(() => import("@/components/portal-app"));
 const Gallery = lazy(() => import("@/components/gallery"));
 const ScoreboardDisplay = lazy(() => import("@/components/scoreboard-display"));
 const PublicChat = lazy(() => import("@/components/public-chat"));
+import { sponsorAlt } from "@/lib/sponsor-alt";
 const LOGO = "/PFB_Logo_Pink.svg";
 
 function DeferredPublicChat() {
@@ -132,7 +133,7 @@ function Login() {
   return (
     <main className="loginpage">
       <Link className="brand" href="/">
-        <Image src={LOGO} alt="PCF Battle" width={58} height={58} unoptimized />
+        <Image src={LOGO} alt="Powerchair Floorball Battle logo" width={58} height={58} unoptimized />
         <span>
           PCF <b>BATTLE</b>
         </span>
@@ -212,7 +213,7 @@ function Signup() {
   return (
     <main className="loginpage">
       <Link className="brand" href="/">
-        <Image src={LOGO} alt="PCF Battle" width={58} height={58} unoptimized />
+        <Image src={LOGO} alt="Powerchair Floorball Battle logo" width={58} height={58} unoptimized />
         <span>
           PCF <b>BATTLE</b>
         </span>
@@ -637,7 +638,7 @@ function SponsorBanner({ sponsors }: { sponsors: PublicLink[] }) {
                 <img
                   className="sponsor-v3-logo sponsor-v3-light"
                   src={logoUrl(s.url)}
-                  alt={i < sponsors.length ? s.title || "Tournament sponsor" : ""}
+                  alt={i < sponsors.length ? sponsorAlt(s.title, s.url) : ""}
                   loading="eager"
                   fetchPriority="high"
                   decoding="async"
@@ -802,7 +803,7 @@ function PublicHomeLoading() {
               <source media="(max-width: 800px)" srcSet="/pcf-battle-hero-mobile.svg" />
               <Image
                 src="/pcf-battle-hero-high.svg"
-                alt="Powerchair floorball player competing during a match"
+                alt="Powerchair Floorball Battle tournament"
                 fill
                 priority
                 sizes="(max-width: 800px) 100vw, 56vw"
@@ -957,7 +958,7 @@ function DynamicLanding() {
               <source media="(max-width: 800px)" srcSet="/pcf-battle-hero-mobile.svg" />
               <Image
                 src="/pcf-battle-hero-high.svg"
-                alt="Powerchair floorball player competing during a match"
+                alt="Powerchair Floorball Battle tournament"
                 fill
                 priority
                 sizes="(max-width: 800px) 100vw, 56vw"

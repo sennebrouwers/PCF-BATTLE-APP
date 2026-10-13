@@ -82,7 +82,7 @@ export default function PublicHeader({
     {settings?.emergency_enabled === 1 && settings.emergency_message?.trim() && <aside className="public-emergency" role="alert"><strong>Important tournament update</strong><span>{settings.emergency_message}</span></aside>}
     <header className="public-header">
       <Link className="brand" href="/">
-        <Image src="/PFB_Logo_Pink.svg" alt="PCF Battle" width={54} height={64} unoptimized loading="eager" />
+        <Image src="/PFB_Logo_Pink.svg" alt="Powerchair Floorball Battle logo" width={54} height={64} unoptimized loading="eager" />
         <span>PCF <b>BATTLE</b></span>
       </Link>
       {!hideNav && (

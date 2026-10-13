@@ -52,6 +52,7 @@ import {
   Monitor,
 } from "lucide-react";
 import ThemeToggle from "@/components/theme-toggle";
+import { sponsorAlt } from "@/lib/sponsor-alt";
 const ScheduleWorkspaceLazy = lazy(() => import("@/components/schedule-workspace"));
 const BracketBuilderLazy = lazy(() => import("@/components/bracket-builder"));
 const GroupBuilderLazy = lazy(() => import("@/components/group-builder"));
@@ -968,7 +969,7 @@ export default function PortalApp({ role }: { role: Role }) {
     <div className="portal">
       <header>
         <Link className="brand" href="/">
-          <img src="/PFB_Logo_Pink.svg" alt="PCF Battle" />
+          <img src="/PFB_Logo_Pink.svg" alt="Powerchair Floorball Battle logo" />
           <span>
             PCF <b>BATTLE</b>
           </span>
@@ -5169,7 +5170,7 @@ function SponsorPanel({ refresh }: { refresh: number }) {
         {sponsors.map((s: Row, i: number) => (
           <article className="sponsor-admin-card" key={s.id}>
             <picture>
-              <img src={s.url} alt={s.title} />
+              <img src={s.url} alt={sponsorAlt(s.title, s.url)} />
             </picture>
             <div>
               <b>{s.title}</b>

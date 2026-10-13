@@ -25,7 +25,7 @@ function safeProviderCode(value: unknown) {
 const PCF_BATTLE_EMAIL_SIGNATURE = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;border-spacing:0;font-family:Arial,Helvetica,sans-serif;">
     <tr>
       <td style="padding:0 16px 0 0;vertical-align:middle;">
-        <img src="https://www.pcfbattle.be/email-signature/pcfbattle-logo.png" width="80" alt="Powerchair Floorball Battle Logo" style="display:block;">
+        <img src="https://www.pcfbattle.be/email-signature/pcfbattle-logo.png" width="80" alt="Powerchair Floorball Battle logo" style="display:block;">
       </td>
       <td aria-hidden="true" style="width:2px;padding:0;background-color:#ff1c83;font-size:0;line-height:0;">
         <div style="width:2px;height:80px;">&nbsp;</div>

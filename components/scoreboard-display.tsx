@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
+import { sponsorAlt } from "@/lib/sponsor-alt";
 
 type ScoreboardTeam = { id: string; name?: string; logo?: string; color?: string };
 type ScoreboardMatch = {
@@ -134,8 +135,8 @@ export default function ScoreboardDisplay() {
     await document.documentElement.requestFullscreen?.().catch(() => undefined);
     setStarted(true);
   }
-  if (!state) return <main className="scoreboard-screen loading"><img src="/PFB_Logo_Pink.svg" alt="PCF Battle" /></main>;
-  if (!match) return <main className="scoreboard-screen waiting"><img src="/PFB_Logo_Pink.svg" alt="PCF Battle" /><h1>Waiting for the next match</h1></main>;
+  if (!state) return <main className="scoreboard-screen loading"><img src="/PFB_Logo_Pink.svg" alt="Powerchair Floorball Battle logo" /></main>;
+  if (!match) return <main className="scoreboard-screen waiting"><img src="/PFB_Logo_Pink.svg" alt="Powerchair Floorball Battle logo" /><h1>Waiting for the next match</h1></main>;
   const settings = state.settings || {},
     sponsors = state.sponsors || [],
     sponsor = sponsors[Math.floor(tick / 16) % Math.max(1, sponsors.length)],
@@ -144,15 +145,15 @@ export default function ScoreboardDisplay() {
   if (match.scoreboard_mode === "black") return <main className="scoreboard-black" />;
   if (match.scoreboard_mode === "sponsors") return <main className="scoreboard-sponsor-screen">
     {!started && <button className="scoreboard-start" onClick={startScoreboard}><img src="/PFB_Logo_Pink.svg" alt="" /><b>Start sponsor screen</b><span>Enables fullscreen and sound</span></button>}
-    <header><img src="/PFB_Logo_Pink.svg" alt="PCF Battle" /><span>TOURNAMENT PARTNERS</span></header>
-    <section>{sponsor ? <img src={sponsor.url} alt={sponsor.title || "Tournament partner"} /> : <><h1>No sponsors configured</h1><p>Add active sponsors in the Admin Portal.</p></>}</section>
+    <header><img src="/PFB_Logo_Pink.svg" alt="Powerchair Floorball Battle logo" /><span>TOURNAMENT PARTNERS</span></header>
+    <section>{sponsor ? <img src={sponsor.url} alt={sponsorAlt(sponsor.title, sponsor.url)} /> : <><h1>No sponsors configured</h1><p>Add active sponsors in the Admin Portal.</p></>}</section>
   </main>;
   return <main className={`scoreboard-screen ${match.status}`} style={style}>
     {!started && <button className="scoreboard-start" onClick={startScoreboard}><img src="/PFB_Logo_Pink.svg" alt="" /><b>Start scoreboard</b><span>Enables fullscreen and the final buzzer</span></button>}
     {goalFlash && <div className={`scoreboard-goal-flash celebration-${celebration}`}><strong>GOAL!</strong><span>{match.home_score} : {match.away_score}</span></div>}
     {offline && <div className="scoreboard-connection-warning">Connection lost — showing the last received score</div>}
     <header>
-      <div className="scoreboard-brand"><img src="/PFB_Logo_Pink.svg" alt="PCF Battle" /><span>PCF <b>BATTLE</b></span></div>
+      <div className="scoreboard-brand"><img src="/PFB_Logo_Pink.svg" alt="Powerchair Floorball Battle logo" /><span>PCF <b>BATTLE</b></span></div>
       <strong className="scoreboard-status"><i />{match.status === "live" ? "LIVE" : match.status}</strong>
     </header>
     <section className="scoreboard-main">
@@ -170,7 +171,7 @@ export default function ScoreboardDisplay() {
         <h1>{away?.name || "Away"}</h1>
       </article>
     </section>
-    {showSponsorRibbon && sponsor && <aside className="scoreboard-sponsor"><small>PARTNER</small><img src={sponsor.url} alt={sponsor.title || "Tournament partner"} /></aside>}
+    {showSponsorRibbon && sponsor && <aside className="scoreboard-sponsor"><small>PARTNER</small><img src={sponsor.url} alt={sponsorAlt(sponsor.title, sponsor.url)} /></aside>}
     <div className="scoreboard-penalties home">{state.incidents?.filter((item) => item.team_id === match.home_team_id).slice(-2).map((item) => <span key={item.id}>{item.type}{item.details ? ` · ${item.details}` : ""}</span>)}</div>
     <div className="scoreboard-penalties away">{state.incidents?.filter((item) => item.team_id === match.away_team_id).slice(-2).map((item) => <span key={item.id}>{item.type}{item.details ? ` · ${item.details}` : ""}</span>)}</div>
     <footer><span>{match.start_time ? `Start · ${match.start_time}` : ""}</span><span className={offline ? "offline" : ""}>{offline ? "Reconnecting" : "Live sync"}</span></footer>
